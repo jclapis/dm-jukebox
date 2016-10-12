@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Discord_Jukebox
+namespace DiscordJukebox
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -23,6 +23,9 @@ namespace Discord_Jukebox
         public MainWindow()
         {
             InitializeComponent();
+
+            AvFormatInterface.av_register_all();
         }
+
     }
 }
