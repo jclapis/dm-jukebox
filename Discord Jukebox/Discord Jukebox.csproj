@@ -83,10 +83,15 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="AVFormat\AVCodecID.cs" />
+    <Compile Include="AVCodec\AVCodec.cs" />
+    <Compile Include="AVCodec\AVCodecID.cs" />
+    <Compile Include="AVFormat\AVDurationEstimationMethod.cs" />
+    <Compile Include="AVFormat\AVFMT_AVOID_NEG_TS.cs" />
     <Compile Include="AVFormat\AVFormatContext.cs" />
     <Compile Include="AVFormat\AvFormatFlags.cs" />
     <Compile Include="AVFormat\AvFormatInterface.cs" />
+    <Compile Include="AVFormat\AVIOInterruptCB.cs" />
+    <Compile Include="AVUtil\AVMediaType.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

@@ -1,12 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DiscordJukebox.Interop
 {
+    /// <summary>
+    /// Callback used by devices to communicate with application.
+    /// </summary>
+    internal delegate int av_format_control_message(IntPtr s, int type, IntPtr data, UIntPtr data_size);
+
+    /// <summary>
+    /// A callback for opening new IO streams.
+    /// Whenever a muxer or a demuxer needs to open an IO stream (typically from
+    /// avformat_open_input() for demuxers, but for certain formats can happen at
+    /// other times as well), it will call this callback to obtain an IO context.
+    /// </summary>
+    /// <param name="s">the format context</param>
+    /// <param name="pb">on success, the newly opened IO context should be returned here</param>
+    /// <param name="url">url the url to open</param>
+    /// <param name="flags">flags a combination of AVIO_FLAG_*</param>
+    /// <param name="options">options a dictionary of additional options, with the same
+    /// semantics as in avio_open2()</param>
+    /// <returns>0 on success, a negative AVERROR code on failure</returns>
+    /// <remarks>Certain muxers and demuxers do nesting, i.e. they open one or more
+    /// additional internal format contexts.Thus the AVFormatContext pointer
+    /// passed to this callback may be different from the one facing the caller.
+    /// It will, however, have the same 'opaque' field.</remarks>
+    internal delegate int io_open_Delegate(IntPtr s, ref IntPtr pb, string url, int flags, ref IntPtr options);
+
+    /// <summary>
+    /// A callback for closing the streams opened with AVFormatContext.io_open().
+    /// </summary>
+    internal delegate void io_close_Delegate(IntPtr s, IntPtr pb);
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVFormatContext
     {
@@ -233,6 +258,280 @@ namespace DiscordJukebox.Interop
         /// open the file.
         /// </summary>
         public AVIOInterruptCB interrupt_callback;
+
+        /// <summary>
+        /// Flags to enable debugging.
+        /// </summary>
+        public int debug;
+
+        /// <summary>
+        /// Maximum buffering duration for interleaving.
+        /// To ensure all the streams are interleaved correctly,
+        /// av_interleaved_write_frame() will wait until it has at least one packet
+        /// for each stream before actually writing any packets to the output file.
+        /// When some streams are "sparse" (i.e.there are large gaps between
+        /// successive packets), this can result in excessive buffering.
+        /// This field specifies the maximum difference between the timestamps of the
+        /// first and the last packet in the muxing queue, above which libavformat
+        /// will output a packet regardless of whether it has queued a packet for all
+        /// the streams.
+        /// Muxing only, set by the caller before avformat_write_header().
+        /// </summary>
+        public long max_interleave_delta;
+
+        /// <summary>
+        /// Allow non-standard and experimental extension
+        /// <see cref="AVCodecContext.strict_std_compliance"/>
+        /// </summary>
+        public int strict_std_compliance;
+
+        /// <summary>
+        /// Flags for the user to detect events happening on the file. Flags must
+        /// be cleared by the user once the event has been handled.
+        /// A combination of AVFMT_EVENT_FLAG_*.
+        /// </summary>
+        public int event_flags;
+
+        /// <summary>
+        /// Maximum number of packets to read while waiting for the first timestamp.
+        /// Decoding only.
+        /// </summary>
+        public int max_ts_probe;
+
+        /// <summary>
+        /// Avoid negative timestamps during muxing.
+        /// Any value of the AVFMT_AVOID_NEG_TS_* constants.
+        /// Note, this only works when using av_interleaved_write_frame. (interleave_packet_per_dts is in use)
+        /// - muxing: Set by user
+        /// - demuxing: unused
+        /// </summary>
+        public AVFMT_AVOID_NEG_TS avoid_negative_ts;
+
+        /// <summary>
+        /// Transport stream id.
+        /// This will be moved into demuxer private options.Thus no API/ABI compatibility
+        /// </summary>
+        public int ts_id;
+
+        /// <summary>
+        /// Audio preload in microseconds.
+        /// Note, not all formats support this and unpredictable things may happen if it is used when not supported.
+        /// - encoding: Set by user via AVOptions (NO direct access)
+        /// - decoding: unused
+        /// </summary>
+        public int audio_preload;
+
+        /// <summary>
+        /// Max chunk time in microseconds.
+        /// Note, not all formats support this and unpredictable things may happen if it is used when not supported.
+        /// - encoding: Set by user via AVOptions (NO direct access)
+        /// - decoding: unused
+        /// </summary>
+        public int max_chunk_duration;
+
+        /// <summary>
+        /// Max chunk size in bytes
+        /// Note, not all formats support this and unpredictable things may happen if it is used when not supported.
+        /// - encoding: Set by user via AVOptions (NO direct access)
+        /// - decoding: unused
+        /// </summary>
+        public int max_chunk_size;
+
+        /// <summary>
+        /// forces the use of wallclock timestamps as pts/dts of packets
+        /// This has undefined results in the presence of B frames.
+        /// - encoding: unused
+        /// - decoding: Set by user via AVOptions(NO direct access)
+        /// </summary>
+        public int use_wallclock_as_timestamps;
+
+        /// <summary>
+        /// avio flags, used to force AVIO_FLAG_DIRECT.
+        /// - encoding: unused
+        /// - decoding: Set by user via AVOptions (NO direct access)
+        /// </summary>
+        public int avio_flags;
+
+        /// <summary>
+        /// The duration field can be estimated through various ways, and this field can be used
+        /// to know how the duration was estimated.
+        /// - encoding: unused
+        /// - decoding: Read by user via AVOptions(NO direct access)
+        /// </summary>
+        public AVDurationEstimationMethod duration_estimation_method;
+
+        /// <summary>
+        /// Skip initial bytes when opening stream
+        /// - encoding: unused
+        /// - decoding: Set by user via AVOptions(NO direct access)
+        /// </summary>
+        public long skip_initial_bytes;
+
+        /// <summary>
+        /// Correct single timestamp overflows
+        /// - encoding: unused
+        /// - decoding: Set by user via AVOptions(NO direct access)
+        /// </summary>
+        public uint correct_ts_overflow;
+
+        /// <summary>
+        /// Force seeking to any (also non key) frames.
+        /// - encoding: unused
+        /// - decoding: Set by user via AVOptions(NO direct access)
+        /// </summary>
+        public int seek2any;
+
+        /// <summary>
+        /// Flush the I/O context after each packet.
+        /// - encoding: Set by user via AVOptions(NO direct access)
+        /// - decoding: unused
+        /// </summary>
+        public int flush_packets;
+
+        /// <summary>
+        /// format probing score.
+        /// The maximal score is AVPROBE_SCORE_MAX, its set when the demuxer probes
+        /// the format.
+        /// - encoding: unused
+        /// - decoding: set by avformat, read by user via av_format_get_probe_score() (NO direct access)
+        /// </summary>
+        public int probe_score;
+
+        /// <summary>
+        /// number of bytes to read maximally to identify format.
+        /// - encoding: unused
+        /// - decoding: set by user through AVOPtions(NO direct access)
+        /// </summary>
+        public int format_probesize;
+
+        /// <summary>
+        /// ',' separated list of allowed decoders.
+        /// If NULL then all are allowed
+        /// - encoding: unused
+        /// - decoding: set by user through AVOptions(NO direct access)
+        /// </summary>
+        public string codec_whitelist;
+
+        /// <summary>
+        /// ',' separated list of allowed demuxers.
+        /// If NULL then all are allowed
+        /// - encoding: unused
+        /// - decoding: set by user through AVOptions(NO direct access)
+        /// </summary>
+        public string format_whitelist;
+
+        /// <summary>
+        /// An opaque field for libavformat internal usage.
+        /// Must not be accessed in any way by callers.
+        /// </summary>
+        public IntPtr @internal;
+
+        /// <summary>
+        /// IO repositioned flag.
+        /// This is set by avformat when the underlaying IO context read pointer
+        /// is repositioned, for example when doing byte based seeking.
+        /// Demuxers can use the flag to detect such changes.
+        /// </summary>
+        public int io_repositioned;
+
+        /// <summary>
+        /// Forced video codec.
+        /// This allows forcing a specific decoder, even when there are multiple with
+        /// the same codec_id.
+        /// Demuxing: Set by user via av_format_set_video_codec (NO direct access).
+        /// </summary>
+        public IntPtr video_codec;
+
+        /// <summary>
+        /// Forced audio codec.
+        /// This allows forcing a specific decoder, even when there are multiple with
+        /// the same codec_id.
+        /// Demuxing: Set by user via av_format_set_audio_codec (NO direct access).
+        /// </summary>
+        public IntPtr audio_codec;
+
+        /// <summary>
+        /// Forced subtitle codec.
+        /// This allows forcing a specific decoder, even when there are multiple with
+        /// the same codec_id.
+        /// Demuxing: Set by user via av_format_set_subtitle_codec (NO direct access).
+        /// </summary>
+        public IntPtr subtitle_codec;
+
+        /// <summary>
+        /// Forced data codec.
+        /// This allows forcing a specific decoder, even when there are multiple with
+        /// the same codec_id.
+        /// Demuxing: Set by user via av_format_set_data_codec (NO direct access).
+        /// </summary>
+        public IntPtr data_codec;
+
+        /// <summary>
+        /// Number of bytes to be written as padding in a metadata header.
+        /// Demuxing: Unused.
+        /// Muxing: Set by user via av_format_set_metadata_header_padding.
+        /// </summary>
+        public int metadata_header_padding;
+
+        /// <summary>
+        /// User data.
+        /// This is a place for some private data of the user.
+        /// </summary>
+        public IntPtr opaque;
+
+        /// <summary>
+        /// Callback used by devices to communicate with application.
+        /// </summary>
+        [MarshalAs(UnmanagedType.FunctionPtr)]
+        public av_format_control_message control_message_cb;
+
+        /// <summary>
+        /// Output timestamp offset, in microseconds.
+        /// Muxing: set by user via AVOptions(NO direct access)
+        /// </summary>
+        public long output_ts_offset;
+
+        /// <summary>
+        /// dump format separator.
+        /// can be ", " or "\n      " or anything else
+        /// Code outside libavformat should access this field using AVOptions
+        /// (NO direct access).
+        /// - muxing: Set by user.
+        /// - demuxing: Set by user.
+        /// </summary>
+        public IntPtr dump_separator;
+
+        /// <summary>
+        /// Forced Data codec_id.
+        /// Demuxing: Set by user.
+        /// </summary>
+        public AVCodecID data_codec_id;
+
+        /// <summary>
+        /// ',' separated list of allowed protocols.
+        /// - encoding: unused
+        /// - decoding: set by user through AVOptions (NO direct access)
+        /// </summary>
+        public string protocol_whitelist;
+
+        /// <summary>
+        /// A callback for opening new IO streams.
+        /// </summary>
+        [MarshalAs(UnmanagedType.FunctionPtr)]
+        public io_open_Delegate io_open;
+
+        /// <summary>
+        /// A callback for closing the streams opened with AVFormatContext.io_open().
+        /// </summary>
+        [MarshalAs(UnmanagedType.FunctionPtr)]
+        public io_close_Delegate io_close;
+
+        /// <summary>
+        /// ',' separated list of disallowed protocols.
+        /// - encoding: unused
+        /// - decoding: set by user through AVOptions(NO direct access)
+        /// </summary>
+        public string protocol_blacklist;
 
         #endregion
     }
