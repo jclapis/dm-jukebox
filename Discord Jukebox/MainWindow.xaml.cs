@@ -33,7 +33,7 @@ namespace DiscordJukebox
             StringBuilder builder = new StringBuilder(Msvcrt._vscprintf(fmt, args) + 1);
             Msvcrt.vsprintf(builder, fmt, args);
 
-            StuffBox.Text += builder.ToString() + Environment.NewLine;
+            //StuffBox.Text += $"[{level}] {builder.ToString()}";
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -60,9 +60,14 @@ namespace DiscordJukebox
                         return;
                     }
                     AVFormatContext format = (AVFormatContext)Marshal.PtrToStructure(formatContext, typeof(AVFormatContext));
+                    StuffBox.Text += $"Loaded!{Environment.NewLine}";
 
-                    AvFormatInterface.av_dump_format(formatContext, 0, filename, 0);
-                    StuffBox.Text += $"Loaded!" + Environment.NewLine;
+                    StuffBox.Text += $"Found {format.nb_streams} streams.{Environment.NewLine}";
+                    for (int i = 0; i < format.nb_streams; i++)
+                    {
+                        IntPtr streamPtr = Marshal.ReadIntPtr(format.streams + i);
+                        AVStream stream = Marshal.PtrToStructure<AVStream>(streamPtr);
+                    }
                 }
                 finally
                 {

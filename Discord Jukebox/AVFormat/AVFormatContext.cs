@@ -530,6 +530,9 @@ namespace DiscordJukebox.Interop
         /// </summary>
         public AVCodecID data_codec_id;
 
+        /// <summary>
+        /// Called to open further IO contexts when needed for demuxing.
+        /// </summary>
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public open_cb_Delegate open_cb;
 

@@ -92,6 +92,7 @@
     <Compile Include="AVFormat\AvFormatFlags.cs" />
     <Compile Include="AVFormat\AvFormatInterface.cs" />
     <Compile Include="AVFormat\AVIOInterruptCB.cs" />
+    <Compile Include="AVFormat\AVStream.cs" />
     <Compile Include="AVUtil\AVMediaType.cs" />
     <Compile Include="Interop\Msvcrt.cs" />
     <Compile Include="MainWindow.xaml.cs">
