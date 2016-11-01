@@ -6,6 +6,7 @@ namespace DiscordJukebox.Interop
     /// <summary>
     /// Callback used by devices to communicate with application.
     /// </summary>
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate int av_format_control_message(IntPtr s, int type, IntPtr data, UIntPtr data_size);
 
     /// <summary>
@@ -25,12 +26,34 @@ namespace DiscordJukebox.Interop
     /// additional internal format contexts.Thus the AVFormatContext pointer
     /// passed to this callback may be different from the one facing the caller.
     /// It will, however, have the same 'opaque' field.</remarks>
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate int io_open_Delegate(IntPtr s, ref IntPtr pb, string url, int flags, ref IntPtr options);
 
     /// <summary>
     /// A callback for closing the streams opened with AVFormatContext.io_open().
     /// </summary>
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate void io_close_Delegate(IntPtr s, IntPtr pb);
+
+    /// <summary>
+    /// Called to open further IO contexts when needed for demuxing.
+    /// This can be set by the user application to perform security checks on
+    /// the URLs before opening them.
+    /// The function should behave like avio_open2(), AVFormatContext is provided
+    /// as contextual information and to reach AVFormatContext.opaque.
+    /// If NULL then some simple checks are used together with avio_open2().
+    /// Must not be accessed directly from outside avformat.
+    /// Demuxing: Set by user.
+    /// </summary>
+    /// <param name="s"></param>
+    /// <param name="p"></param>
+    /// <param name="url"></param>
+    /// <param name="flags"></param>
+    /// <param name="int_cb"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    internal delegate int open_cb_Delegate(IntPtr s, ref IntPtr p, string url, int flags, IntPtr int_cb, ref IntPtr options);
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVFormatContext
@@ -116,7 +139,7 @@ namespace DiscordJukebox.Interop
 
         /// <summary>
         /// Duration of the stream, in AV_TIME_BASE fractional
-        /// seconds.Only set this value if you know none of the individual stream
+        /// seconds. Only set this value if you know none of the individual stream
         /// durations and also do not set any of them.This is deduced from the
         /// AVStream values if not set.
         /// Demuxing only, set by libavformat.
@@ -356,34 +379,34 @@ namespace DiscordJukebox.Interop
         /// The duration field can be estimated through various ways, and this field can be used
         /// to know how the duration was estimated.
         /// - encoding: unused
-        /// - decoding: Read by user via AVOptions(NO direct access)
+        /// - decoding: Read by user via AVOptions (NO direct access)
         /// </summary>
         public AVDurationEstimationMethod duration_estimation_method;
 
         /// <summary>
         /// Skip initial bytes when opening stream
         /// - encoding: unused
-        /// - decoding: Set by user via AVOptions(NO direct access)
+        /// - decoding: Set by user via AVOptions (NO direct access)
         /// </summary>
         public long skip_initial_bytes;
 
         /// <summary>
         /// Correct single timestamp overflows
         /// - encoding: unused
-        /// - decoding: Set by user via AVOptions(NO direct access)
+        /// - decoding: Set by user via AVOptions (NO direct access)
         /// </summary>
         public uint correct_ts_overflow;
 
         /// <summary>
         /// Force seeking to any (also non key) frames.
         /// - encoding: unused
-        /// - decoding: Set by user via AVOptions(NO direct access)
+        /// - decoding: Set by user via AVOptions (NO direct access)
         /// </summary>
         public int seek2any;
 
         /// <summary>
         /// Flush the I/O context after each packet.
-        /// - encoding: Set by user via AVOptions(NO direct access)
+        /// - encoding: Set by user via AVOptions (NO direct access)
         /// - decoding: unused
         /// </summary>
         public int flush_packets;
@@ -408,7 +431,7 @@ namespace DiscordJukebox.Interop
         /// ',' separated list of allowed decoders.
         /// If NULL then all are allowed
         /// - encoding: unused
-        /// - decoding: set by user through AVOptions(NO direct access)
+        /// - decoding: set by user through AVOptions (NO direct access)
         /// </summary>
         public string codec_whitelist;
 
@@ -416,7 +439,7 @@ namespace DiscordJukebox.Interop
         /// ',' separated list of allowed demuxers.
         /// If NULL then all are allowed
         /// - encoding: unused
-        /// - decoding: set by user through AVOptions(NO direct access)
+        /// - decoding: set by user through AVOptions (NO direct access)
         /// </summary>
         public string format_whitelist;
 
@@ -506,6 +529,9 @@ namespace DiscordJukebox.Interop
         /// Demuxing: Set by user.
         /// </summary>
         public AVCodecID data_codec_id;
+
+        [MarshalAs(UnmanagedType.FunctionPtr)]
+        public open_cb_Delegate open_cb;
 
         /// <summary>
         /// ',' separated list of allowed protocols.

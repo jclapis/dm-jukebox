@@ -48,7 +48,7 @@ namespace DiscordJukebox.Interop
         /// On return this parameter will be destroyed and replaced with a dict containing options that were not found. May be NULL.</param>
         /// <returns>0 on success, a negative AVERROR on failure.</returns>
         [DllImport(AvFormatLibrary)]
-        public static extern int avformat_open_input(out IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
+        public static extern int avformat_open_input(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
 
         /// <summary>
         /// Close an opened input AVFormatContext.
@@ -57,6 +57,40 @@ namespace DiscordJukebox.Interop
         /// <param name="s">The AVFormatContext to free.</param>
         [DllImport(AvFormatLibrary)]
         public static extern void avformat_close_input(ref IntPtr s);
-    }
 
+        /// <summary>
+        /// Read packets of a media file to get stream information.
+        /// This is useful for file formats with no headers such as MPEG. This function also computes the real framerate in case of
+        /// MPEG-2 repeat frame mode. The logical file position is not changed by this function; examined packets may be buffered
+        /// for later processing.
+        /// </summary>
+        /// <param name="ic">media file handle</param>
+        /// <param name="options">If non-NULL, an ic.nb_streams long array of pointers to dictionaries, where i-th member contains
+        /// options for codec corresponding to i-th stream. On return each dictionary will be filled with options that were not
+        /// found.</param>
+        /// <returns>>=0 if OK, AVERROR_xxx on error</returns>
+        [DllImport(AvFormatLibrary)]
+        public static extern int avformat_find_stream_info(IntPtr ic, ref IntPtr options);
+
+        /// <summary>
+        /// Print detailed information about the input or output format, such as duration, bitrate, streams, container, programs, metadata,
+        /// side data, codec and time base.
+        /// </summary>
+        /// <param name="ic">the context to analyze</param>
+        /// <param name="index">index of the stream to dump information about</param>
+        /// <param name="url">the URL to print, such as source or destination file</param>
+        /// <param name="is_output">Select whether the specified context is an input(0) or output(1)</param>
+        [DllImport(AvFormatLibrary)]
+        public static extern void av_dump_format(IntPtr ic, int index, string url, int is_output);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern int SetStdHandle(int device, IntPtr handle);
+
+        [DllImport("avutil-55.dll")]
+        public static extern void av_log_set_callback(
+            [MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
+    }
+    
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public delegate void LogCallback(IntPtr avcl, int level, string fmt, IntPtr args);
 }
