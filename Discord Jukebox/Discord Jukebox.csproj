@@ -85,14 +85,22 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="AVCodec\AVCodec.cs" />
+    <Compile Include="AVCodec\AVCodecContext.cs" />
     <Compile Include="AVCodec\AVCodecID.cs" />
+    <Compile Include="AVCodec\AVDiscard.cs" />
+    <Compile Include="AVCodec\AVPacket.cs" />
+    <Compile Include="AVCodec\AV_PKT_FLAG.cs" />
     <Compile Include="AVFormat\AVDurationEstimationMethod.cs" />
     <Compile Include="AVFormat\AVFMT_AVOID_NEG_TS.cs" />
     <Compile Include="AVFormat\AVFormatContext.cs" />
     <Compile Include="AVFormat\AvFormatFlags.cs" />
     <Compile Include="AVFormat\AvFormatInterface.cs" />
+    <Compile Include="AVFormat\AVFrac.cs" />
     <Compile Include="AVFormat\AVIOInterruptCB.cs" />
+    <Compile Include="AVFormat\AVRational.cs" />
     <Compile Include="AVFormat\AVStream.cs" />
+    <Compile Include="AVFormat\AVSTREAM_EVENT_FLAG.cs" />
+    <Compile Include="AVFormat\AV_DISPOSITION.cs" />
     <Compile Include="AVUtil\AVMediaType.cs" />
     <Compile Include="Interop\Msvcrt.cs" />
     <Compile Include="MainWindow.xaml.cs">

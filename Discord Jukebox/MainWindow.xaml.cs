@@ -67,6 +67,7 @@ namespace DiscordJukebox
                     {
                         IntPtr streamPtr = Marshal.ReadIntPtr(format.streams + i);
                         AVStream stream = Marshal.PtrToStructure<AVStream>(streamPtr);
+                        stream.codec
                     }
                 }
                 finally
