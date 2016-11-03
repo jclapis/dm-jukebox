@@ -89,6 +89,8 @@
     <Compile Include="AVCodec\AVCodecID.cs" />
     <Compile Include="AVCodec\AVDiscard.cs" />
     <Compile Include="AVCodec\AVPacket.cs" />
+    <Compile Include="AVCodec\AV_CODEC_FLAG.cs" />
+    <Compile Include="AVCodec\AV_CODEC_FLAG2.cs" />
     <Compile Include="AVCodec\AV_PKT_FLAG.cs" />
     <Compile Include="AVFormat\AVDurationEstimationMethod.cs" />
     <Compile Include="AVFormat\AVFMT_AVOID_NEG_TS.cs" />
@@ -101,7 +103,10 @@
     <Compile Include="AVFormat\AVStream.cs" />
     <Compile Include="AVFormat\AVSTREAM_EVENT_FLAG.cs" />
     <Compile Include="AVFormat\AV_DISPOSITION.cs" />
+    <Compile Include="AVUtil\AVClass.cs" />
+    <Compile Include="AVUtil\AVClassCategory.cs" />
     <Compile Include="AVUtil\AVMediaType.cs" />
+    <Compile Include="AVUtil\AVPixelFormat.cs" />
     <Compile Include="Interop\Msvcrt.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
