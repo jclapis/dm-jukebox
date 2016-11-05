@@ -9,7 +9,7 @@ namespace DiscordJukebox.Interop
     /// then passed to muxers.
     ///
     /// For video, it should typically contain one compressed frame. For audio it may
-    /// contain several compressed frames.Encoders are allowed to output empty
+    /// contain several compressed frames. Encoders are allowed to output empty
     /// packets, with no compressed data, containing only side data
     /// (e.g. to update some stream parameters at the end of encoding).
     ///

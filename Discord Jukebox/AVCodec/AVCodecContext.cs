@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DiscordJukebox.Interop
 {
@@ -58,14 +54,13 @@ namespace DiscordJukebox.Interop
         public AVCodecID codec_id;
 
         /// <summary>
-        /// fourcc (LSB first, so "ABCD" -> ('D'<<24) + ('C'<<16) + ('B'<<8) + 'A').
+        /// fourcc (LSB first, so "ABCD" -> ('D'&lt;&lt;24) + ('C'&lt;&lt;16) + ('B'&lt;&lt;8) + 'A').
         /// This is used to work around some encoder bugs.
         /// A demuxer should set this to what is stored in the field used to identify the codec.
         /// If there are multiple such fields in a container then the demuxer should choose the one
         /// which maximizes the information about the used codec.
         /// If the codec tag field in a container is larger than 32 bits then the demuxer should
         /// remap the longer ID to 32 bits with a table or other structure. Alternatively a new
-
         /// extra_codec_tag + size could be added but for this a clear advantage must be demonstrated
         /// first.
         /// - encoding: Set by user, if not then the default based on codec_id will be used.
@@ -297,6 +292,188 @@ namespace DiscordJukebox.Interop
         [MarshalAs(UnmanagedType.FunctionPtr)]
         public get_format get_format;
 
-        // TODO: THIS IS WHERE YOU LEFT OFF, avcodec.h line 1935 - max_b_frames
+        /// <summary>
+        /// maximum number of B-frames between non-B-frames
+        /// Note: The output will be delayed by max_b_frames+1 relative to the input.
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int max_b_frames;
+
+        /// <summary>
+        /// qscale factor between IP and B-frames
+        /// If &gt; 0 then the last P-frame quantizer will be used(q= lastp_q * factor + offset).
+        /// If &lt; 0 then normal ratecontrol will be done (q= -normal_q * factor+offset).
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float b_quant_factor;
+
+        /// <summary>
+        /// use codec private option instead
+        /// </summary>
+        public int rc_strategy;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int b_frame_strategy;
+
+        /// <summary>
+        /// qscale offset between IP and B-frames
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float b_quant_offset;
+
+        /// <summary>
+        /// Size of the frame reordering buffer in the decoder.
+        /// For MPEG-2 it is 1 IPB or 0 low delay IP.
+        /// - encoding: Set by libavcodec.
+        /// - decoding: Set by libavcodec.
+        /// </summary>
+        public int has_b_frames;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int mpeg_quant;
+
+        /// <summary>
+        /// qscale factor between P- and I-frames
+        /// If &gt; 0 then the last P-frame quantizer will be used(q = lastp_q * factor + offset).
+        /// If &lt; 0 then normal ratecontrol will be done (q= -normal_q * factor+offset).
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float i_quant_factor;
+
+        /// <summary>
+        /// qscale offset between P and I-frames
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float i_quant_offset;
+
+        /// <summary>
+        /// luminance masking (0-> disabled)
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float lumi_masking;
+
+        /// <summary>
+        /// temporary complexity masking (0-> disabled)
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float temporal_cplx_masking;
+
+        /// <summary>
+        /// spatial complexity masking (0-> disabled)
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float spatial_cplx_masking;
+
+        /// <summary>
+        /// p block masking (0-> disabled)
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float p_masking;
+
+        /// <summary>
+        /// darkness masking (0-> disabled)
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public float dark_masking;
+
+        /// <summary>
+        /// slice count
+        /// - encoding: Set by libavcodec.
+        /// - decoding: Set by user(or 0).
+        /// </summary>
+        public int slice_count;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int prediction_method;
+
+        /// <summary>
+        /// slice offsets in the frame in bytes
+        /// - encoding: Set/allocated by libavcodec.
+        /// - decoding: Set/allocated by user(or NULL).
+        /// </summary>
+        public IntPtr slice_offset;
+
+        /// <summary>
+        /// sample aspect ratio (0 if unknown)
+        /// That is the width of a pixel divided by the height of the pixel.
+        /// Numerator and denominator must be relatively prime and smaller than 256 for some video standards.
+        /// - encoding: Set by user.
+        /// - decoding: Set by libavcodec.
+        /// </summary>
+        public AVRational sample_aspect_ratio;
+
+        /// <summary>
+        /// motion estimation comparison function
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int me_cmp;
+
+        /// <summary>
+        /// subpixel motion estimation comparison function
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int me_sub_cmp;
+
+        /// <summary>
+        /// macroblock comparison function (not supported yet)
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int mb_cmp;
+
+        /// <summary>
+        /// interlaced DCT comparison function
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int ildct_cmp;
+
+        /// <summary>
+        /// ME diamond size & shape
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int dia_size;
+
+        /// <summary>
+        /// amount of previous MV predictors (2a+1 x 2a+1 square)
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int last_predictor_count;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int pre_me;
+
+        /// <summary>
+        /// motion estimation prepass comparison function
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int me_pre_cmp;
+
+        // Left off on avcodec.h line 2128.
+        // This struct has another 1400 lines to go, screw it.
+        // I'll finish it later if there's actually a need for it.
     }
 }

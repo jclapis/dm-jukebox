@@ -87,6 +87,8 @@
     <Compile Include="AVCodec\AVCodec.cs" />
     <Compile Include="AVCodec\AVCodecContext.cs" />
     <Compile Include="AVCodec\AVCodecID.cs" />
+    <Compile Include="AVUtil\AVFrame.cs" />
+    <Compile Include="Interop\AVCodecInterface.cs" />
     <Compile Include="AVCodec\AVDiscard.cs" />
     <Compile Include="AVCodec\AVPacket.cs" />
     <Compile Include="AVCodec\AV_CODEC_FLAG.cs" />
@@ -96,7 +98,7 @@
     <Compile Include="AVFormat\AVFMT_AVOID_NEG_TS.cs" />
     <Compile Include="AVFormat\AVFormatContext.cs" />
     <Compile Include="AVFormat\AvFormatFlags.cs" />
-    <Compile Include="AVFormat\AvFormatInterface.cs" />
+    <Compile Include="Interop\AVFormatInterface.cs" />
     <Compile Include="AVFormat\AVFrac.cs" />
     <Compile Include="AVFormat\AVIOInterruptCB.cs" />
     <Compile Include="AVFormat\AVRational.cs" />
@@ -107,7 +109,9 @@
     <Compile Include="AVUtil\AVClassCategory.cs" />
     <Compile Include="AVUtil\AVMediaType.cs" />
     <Compile Include="AVUtil\AVPixelFormat.cs" />
-    <Compile Include="Interop\Msvcrt.cs" />
+    <Compile Include="Interop\AVUtilInterface.cs" />
+    <Compile Include="Interop\Kernel32Interface.cs" />
+    <Compile Include="Interop\MsvcrtInterface.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

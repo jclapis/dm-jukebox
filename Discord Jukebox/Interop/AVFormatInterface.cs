@@ -6,32 +6,32 @@ namespace DiscordJukebox.Interop
     /// <summary>
     /// This is the wrapper class for the FFMPEG AVFormat library.
     /// </summary>
-    internal static class AvFormatInterface
+    internal static class AVFormatInterface
     {
         /// <summary>
         /// The filename of the AVFormat DLL.
         /// </summary>
-        private const string AvFormatLibrary = "avformat-57.dll";
+        private const string AvFormatDll = "avformat-57.dll";
 
         /// <summary>
         /// Initialize libavformat and register all the muxers, demuxers and protocols.
         /// If you do not call this function, then you can select exactly which formats you want to support.
         /// </summary>
-        [DllImport(AvFormatLibrary)]
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_register_all();
 
         /// <summary>
         /// Allocates an AVFormatContext. Use avformat_free_context() to free it.
         /// </summary>
         /// <returns>A handle to an AVFormatContext object.</returns>
-        [DllImport(AvFormatLibrary)]
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr avformat_alloc_context();
 
         /// <summary>
         /// Free an AVFormatContext created by avformat_alloc_context() and all its streams.
         /// </summary>
         /// <param name="s">The context to free.</param>
-        [DllImport(AvFormatLibrary)]
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void avformat_free_context(IntPtr s);
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace DiscordJukebox.Interop
         /// <param name="options">A dictionary filled with AVFormatContext and demuxer-private options.
         /// On return this parameter will be destroyed and replaced with a dict containing options that were not found. May be NULL.</param>
         /// <returns>0 on success, a negative AVERROR on failure.</returns>
-        [DllImport(AvFormatLibrary)]
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern int avformat_open_input(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace DiscordJukebox.Interop
         /// Free it and all its contents and set *s to NULL.
         /// </summary>
         /// <param name="s">The AVFormatContext to free.</param>
-        [DllImport(AvFormatLibrary)]
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void avformat_close_input(ref IntPtr s);
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace DiscordJukebox.Interop
         /// options for codec corresponding to i-th stream. On return each dictionary will be filled with options that were not
         /// found.</param>
         /// <returns>>=0 if OK, AVERROR_xxx on error</returns>
-        [DllImport(AvFormatLibrary)]
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern int avformat_find_stream_info(IntPtr ic, ref IntPtr options);
 
         /// <summary>
@@ -80,17 +80,31 @@ namespace DiscordJukebox.Interop
         /// <param name="index">index of the stream to dump information about</param>
         /// <param name="url">the URL to print, such as source or destination file</param>
         /// <param name="is_output">Select whether the specified context is an input(0) or output(1)</param>
-        [DllImport(AvFormatLibrary)]
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_dump_format(IntPtr ic, int index, string url, int is_output);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern int SetStdHandle(int device, IntPtr handle);
-
-        [DllImport("avutil-55.dll")]
-        public static extern void av_log_set_callback(
-            [MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
+        /// <summary>
+        /// Return the next frame of a stream.
+        /// This function returns what is stored in the file, and does not validate
+        /// that what is there are valid frames for the decoder. It will split what is
+        /// stored in the file into frames and return one for each call. It will not
+        /// omit invalid data between valid frames so as to give the decoder the maximum
+        /// information possible for decoding.
+        ///
+        /// If pkt->buf is NULL, then the packet is valid until the next
+        /// av_read_frame() or until avformat_close_input(). Otherwise the packet
+        /// is valid indefinitely. In both cases the packet must be freed with
+        /// av_packet_unref when it is no longer needed. For video, the packet contains
+        /// exactly one frame. For audio, it contains an integer number of frames if each
+        /// frame has a known fixed size (e.g. PCM or ADPCM data). If the audio frames
+        /// have a variable size (e.g. MPEG audio), then it contains one frame.
+        /// pkt->pts, pkt->dts and pkt->duration are always set to correct
+        /// values in AVStream
+        /// </summary>
+        /// <param name="s">AVFormatContext</param>
+        /// <param name="pkt">AVPacket</param>
+        /// <returns>0 if OK, &lt; 0 on error or end of file</returns>
+        [DllImport(AvFormatDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int av_read_frame(IntPtr s, IntPtr pkt);
     }
-    
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate void LogCallback(IntPtr avcl, int level, string fmt, IntPtr args);
 }
