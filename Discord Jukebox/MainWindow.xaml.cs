@@ -45,7 +45,7 @@ namespace DiscordJukebox
         {
             OpenFileDialog dialog = new OpenFileDialog();
             bool? result = dialog.ShowDialog();
-            if(result == true)
+            if (result == true)
             {
                 string filename = dialog.FileName;
                 IntPtr formatContext = IntPtr.Zero;
@@ -54,7 +54,7 @@ namespace DiscordJukebox
                     IntPtr options = IntPtr.Zero;
                     formatContext = AVFormatInterface.avformat_alloc_context();
                     int openResult = AVFormatInterface.avformat_open_input(ref formatContext, filename, IntPtr.Zero, ref options);
-                    if(openResult != 0)
+                    if (openResult != 0)
                     {
                         StuffBox.Text += $"Load failed: {openResult}" + Environment.NewLine;
                         return;
@@ -63,16 +63,16 @@ namespace DiscordJukebox
                     StuffBox.Text += $"Loaded!{Environment.NewLine}";
 
                     StuffBox.Text += $"Found {format.nb_streams} streams.{Environment.NewLine}";
-                    
+
                     for (int i = 0; i < format.nb_streams; i++)
                     {
                         IntPtr streamPtr = Marshal.ReadIntPtr(format.streams + i);
                         AVStream stream = Marshal.PtrToStructure<AVStream>(streamPtr);
                         AVCodecContext codecContext = Marshal.PtrToStructure<AVCodecContext>(stream.codec);
-                        if(codecContext.codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO)
+                        if (codecContext.codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO)
                         {
                             IntPtr codecPtr = AVCodecInterface.avcodec_find_decoder(codecContext.codec_id);
-                            if(codecPtr == IntPtr.Zero)
+                            if (codecPtr == IntPtr.Zero)
                             {
                                 StuffBox.Text += $"Error loading audio codec: finding the decoder for codec ID {codecContext.codec_id} failed.{Environment.NewLine}";
                                 return;
@@ -95,7 +95,7 @@ namespace DiscordJukebox
                             packet.size = bufferSize;
                             IntPtr packetPtr = Marshal.AllocHGlobal(Marshal.SizeOf<AVPacket>());
                             Marshal.StructureToPtr(packet, packetPtr, true);
-                            IntPtr frame = AVUtilInterface.av_frame_alloc();
+                            IntPtr framePtr = AVUtilInterface.av_frame_alloc();
 
                             int frames = 0;
                             while (AVFormatInterface.av_read_frame(formatContext, packetPtr) == 0)
@@ -106,13 +106,15 @@ namespace DiscordJukebox
                                     StuffBox.Text += $"Error reading audio packet: {readResult}.{Environment.NewLine}";
                                     return;
                                 }
-                                readResult = AVCodecInterface.avcodec_receive_frame(stream.codec, frame);
+                                readResult = AVCodecInterface.avcodec_receive_frame(stream.codec, framePtr);
                                 if (readResult != 0)
                                 {
                                     StuffBox.Text += $"Error receiving decoded audio frame: {readResult}.{Environment.NewLine}";
                                     return;
                                 }
                                 frames++;
+                                AVFrame frame = Marshal.PtrToStructure<AVFrame>(framePtr);
+                                //StuffBox.Text += $"Finished reading Frame nb_samples: {frame.nb_samples} line size: {frame.linesize[0]}{Environment.NewLine}";
                                 //StuffBox.Text += $"Successfully decoded an audio frame.{Environment.NewLine}";
                             }
                             StuffBox.Text += $"Finished decoding audio. Found {frames} frames.{Environment.NewLine}";
@@ -128,7 +130,7 @@ namespace DiscordJukebox
                 }
                 finally
                 {
-                    if(formatContext != IntPtr.Zero)
+                    if (formatContext != IntPtr.Zero)
                     {
                         AVFormatInterface.avformat_free_context(formatContext);
                     }

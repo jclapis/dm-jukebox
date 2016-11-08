@@ -87,7 +87,14 @@
     <Compile Include="AVCodec\AVCodec.cs" />
     <Compile Include="AVCodec\AVCodecContext.cs" />
     <Compile Include="AVCodec\AVCodecID.cs" />
+    <Compile Include="AVUtil\AVChromaLocation.cs" />
+    <Compile Include="AVUtil\AVColorPrimaries.cs" />
+    <Compile Include="AVUtil\AVColorRange.cs" />
+    <Compile Include="AVUtil\AVColorSpace.cs" />
+    <Compile Include="AVUtil\AVColorTransferCharacteristic.cs" />
     <Compile Include="AVUtil\AVFrame.cs" />
+    <Compile Include="AVUtil\AVPictureType.cs" />
+    <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
     <Compile Include="Interop\AVCodecInterface.cs" />
     <Compile Include="AVCodec\AVDiscard.cs" />
     <Compile Include="AVCodec\AVPacket.cs" />
