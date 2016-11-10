@@ -84,9 +84,13 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="AudioStream.cs" />
     <Compile Include="AVCodec\AVCodec.cs" />
     <Compile Include="AVCodec\AVCodecContext.cs" />
     <Compile Include="AVCodec\AVCodecID.cs" />
+    <Compile Include="AVCodec\AVFieldOrder.cs" />
+    <Compile Include="AVCodec\FF_MB_DECISION.cs" />
+    <Compile Include="AVCodec\SLICE_FLAG.cs" />
     <Compile Include="AVUtil\AVChromaLocation.cs" />
     <Compile Include="AVUtil\AVColorPrimaries.cs" />
     <Compile Include="AVUtil\AVColorRange.cs" />
@@ -94,6 +98,7 @@
     <Compile Include="AVUtil\AVColorTransferCharacteristic.cs" />
     <Compile Include="AVUtil\AVFrame.cs" />
     <Compile Include="AVUtil\AVPictureType.cs" />
+    <Compile Include="AVUtil\AVSampleFormat.cs" />
     <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
     <Compile Include="Interop\AVCodecInterface.cs" />
     <Compile Include="AVCodec\AVDiscard.cs" />
@@ -125,6 +130,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MediaFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

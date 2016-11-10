@@ -472,8 +472,280 @@ namespace DiscordJukebox.Interop
         /// </summary>
         public int me_pre_cmp;
 
-        // Left off on avcodec.h line 2128.
-        // This struct has another 1400 lines to go, screw it.
-        // I'll finish it later if there's actually a need for it.
+        /// <summary>
+        /// ME prepass diamond size & shape
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int pre_dia_size;
+
+        /// <summary>
+        /// subpel ME quality
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int me_subpel_quality;
+
+        /// <summary>
+        /// DTG active format information (additional aspect ratio
+        /// information only used in DVB MPEG-2 transport streams)
+        /// 0 if not set.
+        ///
+        /// - encoding: unused
+        /// - decoding: Set by decoder.
+        /// Deprecated in favor of AVSideData
+        /// </summary>
+        public int dtg_active_format;
+
+        /// <summary>
+        /// maximum motion estimation search range in subpel units
+        /// If 0 then no limit.
+        ///
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int me_range;
+
+        /// <summary>
+        /// use encoder private option instead
+        /// </summary>
+        public int intra_quant_bias;
+
+        /// <summary>
+        /// use encoder private option instead
+        /// </summary>
+        public int inter_quant_bias;
+
+        /// <summary>
+        /// slice flags
+        /// - encoding: unused
+        /// - decoding: Set by user.
+        /// </summary>
+        public SLICE_FLAG slice_flags;
+
+        /// <summary>
+        /// XVideo Motion Acceleration
+        /// - encoding: forbidden
+        /// - decoding: set by decoder
+        /// XvMC doesn't need it anymore.
+        /// </summary>
+        public int xvmc_acceleration;
+
+        /// <summary>
+        /// macroblock decision mode
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public FF_MB_DECISION mb_decision;
+
+        /// <summary>
+        /// custom intra quantization matrix
+        /// - encoding: Set by user, can be NULL.
+        /// - decoding: Set by libavcodec.
+        /// </summary>
+        public IntPtr intra_matrix;
+
+        /// <summary>
+        /// custom inter quantization matrix
+        /// - encoding: Set by user, can be NULL.
+        /// - decoding: Set by libavcodec.
+        /// </summary>
+        public IntPtr inter_matrix;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int scenechange_threshold;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int noise_reduction;
+
+        /// <summary>
+        /// this field is unused
+        /// </summary>
+        public int me_threshold;
+
+        /// <summary>
+        /// this field is unused
+        /// </summary>
+        public int mb_threshold;
+
+        /// <summary>
+        /// precision of the intra DC coefficient - 8
+        /// - encoding: Set by user.
+        /// - decoding: Set by libavcodec
+        /// </summary>
+        public int intra_dc_precision;
+
+        /// <summary>
+        /// Number of macroblock rows at the top which are skipped.
+        /// - encoding: unused
+        /// - decoding: Set by user.
+        /// </summary>
+        public int skip_top;
+
+        /// <summary>
+        /// Number of macroblock rows at the bottom which are skipped.
+        /// - encoding: unused
+        /// - decoding: Set by user.
+        /// </summary>
+        public int skip_bottom;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public float border_masking;
+
+        /// <summary>
+        /// minimum MB Lagrange multiplier
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int mb_lmin;
+
+        /// <summary>
+        /// maximum MB Lagrange multiplier
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int mb_lmax;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int me_penalty_compensation;
+
+        /// <summary>
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int bidir_refine;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int brd_scale;
+
+        /// <summary>
+        /// minimum GOP size
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int keyint_min;
+
+        /// <summary>
+        /// number of reference frames
+        /// - encoding: Set by user.
+        /// - decoding: Set by lavc.
+        /// </summary>
+        public int refs;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int chromaoffset;
+
+        /// <summary>
+        /// Multiplied by qscale for each frame and added to scene_change_score.
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int scenechange_factor;
+
+        /// <summary>
+        /// Note: Value depends upon the compare function used for fullpel ME.
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int mv0_threshold;
+
+        /// <summary>
+        /// use encoder private options instead
+        /// </summary>
+        public int b_sensitivity;
+
+        /// <summary>
+        /// Chromaticity coordinates of the source primaries.
+        /// - encoding: Set by user
+        /// - decoding: Set by libavcodec
+        /// </summary>
+        public AVColorPrimaries color_primaries;
+
+        /// <summary>
+        /// Color Transfer Characteristic.
+        /// - encoding: Set by user
+        /// - decoding: Set by libavcodec
+        /// </summary>
+        public AVColorTransferCharacteristic color_trc;
+
+        /// <summary>
+        /// YUV colorspace type.
+        /// - encoding: Set by user
+        /// - decoding: Set by libavcodec
+        /// </summary>
+        public AVColorSpace colorspace;
+
+        /// <summary>
+        /// MPEG vs JPEG YUV range.
+        /// - encoding: Set by user
+        /// - decoding: Set by libavcodec
+        /// </summary>
+        public AVColorRange color_range;
+
+        /// <summary>
+        /// This defines the location of chroma samples.
+        /// - encoding: Set by user
+        /// - decoding: Set by libavcodec
+        /// </summary>
+        public AVChromaLocation chroma_sample_location;
+
+        /// <summary>
+        /// Number of slices.
+        /// Indicates number of picture subdivisions.Used for parallelized decoding.
+        /// - encoding: Set by user
+        /// - decoding: unused
+        /// </summary>
+        public int slices;
+
+        /// <summary>
+        /// Field order
+        /// - encoding: set by libavcodec
+        /// - decoding: Set by user.
+        /// </summary>
+        public AVFieldOrder field_order;
+
+        /// <summary>
+        /// samples per second
+        /// </summary>
+        public int sample_rate;
+
+        /// <summary>
+        /// number of audio channels
+        /// </summary>
+        public int channels;
+
+        /// <summary>
+        /// audio sample format
+        /// - encoding: Set by user.
+        /// - decoding: Set by libavcodec.
+        /// </summary>
+        public AVSampleFormat sample_fmt;
+
+        /// <summary>
+        /// Number of samples per channel in an audio frame.
+        /// 
+        /// - encoding: set by libavcodec in avcodec_open2(). Each submitted frame
+        ///   except the last must contain exactly frame_size samples per channel.
+        ///   May be 0 when the codec has AV_CODEC_CAP_VARIABLE_FRAME_SIZE set, then the
+        ///   frame size is not restricted.
+        /// - decoding: may be set by some decoders to indicate constant frame size
+        /// </summary>
+        public int frame_size;
+
+        // Left off at avcodec.h line 2430.
+        // If I need more stuff from it, I'll finish implementing it later
+        // but right now this is sufficient.
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -48,9 +49,22 @@ namespace DiscordJukebox
             if (result == true)
             {
                 string filename = dialog.FileName;
-                IntPtr formatContext = IntPtr.Zero;
                 try
                 {
+                    MediaFile file = new MediaFile(filename);
+                    using (StringWriter writer = new StringWriter())
+                    {
+                        AudioStream stream = file.AudioStream;
+                        writer.WriteLine($"Loaded file {Path.GetFileName(filename)}");
+                        writer.WriteLine($"Codec: {stream.CodecName}");
+                        writer.WriteLine($"Bitrate: {stream.Bitrate}");
+                        writer.WriteLine($"Duration: {stream.Duration}");
+                        writer.WriteLine($"Channels: {stream.NumberOfChannels}");
+                        writer.WriteLine($"Samples per Frame: {stream.SamplesPerFrame}");
+                        writer.WriteLine();
+                        StuffBox.Text += writer.ToString();
+                    }
+                    /*
                     IntPtr options = IntPtr.Zero;
                     formatContext = AVFormatInterface.avformat_alloc_context();
                     int openResult = AVFormatInterface.avformat_open_input(ref formatContext, filename, IntPtr.Zero, ref options);
@@ -125,15 +139,12 @@ namespace DiscordJukebox
                             break;
                         }
                     }
-
+                    */
 
                 }
-                finally
+                catch(Exception ex)
                 {
-                    if (formatContext != IntPtr.Zero)
-                    {
-                        AVFormatInterface.avformat_free_context(formatContext);
-                    }
+
                 }
             }
         }
