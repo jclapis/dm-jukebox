@@ -6,13 +6,13 @@ namespace DiscordJukebox
 {
     internal class AudioStream
     {
-        private IntPtr StreamPtr;
+        private readonly IntPtr StreamPtr;
 
-        private AVStream Stream;
+        private readonly AVStream Stream;
 
-        private AVCodecContext CodecContext;
+        private readonly AVCodecContext CodecContext;
 
-        private AVCodec Codec;
+        private readonly AVCodec Codec;
 
         public string CodecName
         {
@@ -72,6 +72,24 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Error loading audio codec: opening codec failed with {openResult}.");
             }
+            
+        }
+
+        public AVFrame GetNextFrame(IntPtr PacketPtr, IntPtr FramePtr)
+        {
+            int result = AVCodecInterface.avcodec_send_packet(Stream.codec, PacketPtr);
+            if (result != 0)
+            {
+                throw new Exception($"Error reading audio packet: {result}");
+            }
+
+            result = AVCodecInterface.avcodec_receive_frame(Stream.codec, FramePtr);
+            if (result != 0)
+            {
+                throw new Exception($"Error receiving decoded audio frame: {result}");
+            }
+
+            return Marshal.PtrToStructure<AVFrame>(FramePtr);
         }
 
     }

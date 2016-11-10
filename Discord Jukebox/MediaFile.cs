@@ -1,5 +1,6 @@
 ﻿using DiscordJukebox.Interop;
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace DiscordJukebox
@@ -9,6 +10,12 @@ namespace DiscordJukebox
         public string FilePath { get; }
 
         private IntPtr FormatContextPtr;
+
+        private IntPtr PacketBufferPtr;
+
+        private IntPtr PacketPtr;
+
+        private IntPtr FramePtr;
 
         public AudioStream AudioStream { get; }
 
@@ -32,6 +39,25 @@ namespace DiscordJukebox
 
             AVFormatContext format = (AVFormatContext)Marshal.PtrToStructure(FormatContextPtr, typeof(AVFormatContext));
             AudioStream = FindAudioStream(format);
+
+            AVPacket packet = new AVPacket();
+            int bufferSize = AVCodecInterface.AVCODEC_MAX_AUDIO_FRAME_SIZE + AVCodecInterface.AV_INPUT_BUFFER_PADDING_SIZE;
+            PacketBufferPtr = Marshal.AllocHGlobal(bufferSize);
+            packet.data = PacketBufferPtr;
+            packet.size = bufferSize;
+            PacketPtr = Marshal.AllocHGlobal(Marshal.SizeOf<AVPacket>());
+            Marshal.StructureToPtr(packet, PacketPtr, true);
+            FramePtr = AVUtilInterface.av_frame_alloc();
+        }
+
+        public AVFrame GetNextFrame()
+        {
+            int result = AVFormatInterface.av_read_frame(FormatContextPtr, PacketPtr);
+            if (result != 0)
+            {
+                throw new Exception($"Reading the next frame from {Path.GetFileName(FilePath)} failed with code {result}");
+            }
+            return AudioStream.GetNextFrame(PacketPtr, FramePtr);
         }
 
         private static AudioStream FindAudioStream(AVFormatContext FormatContext)
@@ -62,9 +88,10 @@ namespace DiscordJukebox
                 {
                     // TODO: dispose managed state (managed objects).
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
+                
+                Marshal.FreeHGlobal(PacketBufferPtr);
+                Marshal.FreeHGlobal(PacketPtr);
+                AVUtilInterface.av_frame_free(ref FramePtr);
                 AVFormatInterface.avformat_free_context(FormatContextPtr);
 
                 disposedValue = true;
