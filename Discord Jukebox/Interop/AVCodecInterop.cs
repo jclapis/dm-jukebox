@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace DiscordJukebox.Interop
 {
-    internal static class AVCodecInterface
+    internal static class AVCodecInterop
     {
-        private const string AVCodecDll = "avcodec-57.dll";
+        private const string AVCodecDll = "lib/avcodec-57.dll";
 
         public const int AV_INPUT_BUFFER_PADDING_SIZE = 32;
 

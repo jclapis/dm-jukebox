@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -18,25 +19,20 @@ namespace DiscordJukebox
 
         private readonly Player Player;
 
-        static MainWindow()
-        {
-
-        }
-
         public MainWindow()
         {
             InitializeComponent();
             LoggerDelegate = Logger;
             Player = new Player();
 
-            AVUtilInterface.av_log_set_callback(LoggerDelegate);
-            AVFormatInterface.av_register_all();
+            AVUtilInterop.av_log_set_callback(LoggerDelegate);
+            AVFormatInterop.av_register_all();
         }
 
         private void Logger(IntPtr avcl, int level, string fmt, IntPtr args)
         {
-            StringBuilder builder = new StringBuilder(MsvcrtInterface._vscprintf(fmt, args) + 1);
-            MsvcrtInterface.vsprintf(builder, fmt, args);
+            StringBuilder builder = new StringBuilder(MsvcrtInterop._vscprintf(fmt, args) + 1);
+            MsvcrtInterop.vsprintf(builder, fmt, args);
 
             //StuffBox.Text += $"[{level}] {builder.ToString()}";
         }
@@ -55,10 +51,9 @@ namespace DiscordJukebox
                 string filename = dialog.FileName;
                 try
                 {
-                    MediaFile file = new MediaFile(filename);
+                    AudioStream stream = new AudioStream(filename);
                     using (StringWriter writer = new StringWriter())
                     {
-                        AudioStream stream = file.AudioStream;
                         writer.WriteLine($"Loaded file {Path.GetFileName(filename)}");
                         writer.WriteLine($"Codec: {stream.CodecName}");
                         writer.WriteLine($"Bitrate: {stream.Bitrate}");
@@ -68,7 +63,7 @@ namespace DiscordJukebox
                         writer.WriteLine();
                         StuffBox.Text += writer.ToString();
                     }
-                    Player.AddFile(file);
+                    Player.AddStream(stream);
                 }
                 catch(Exception ex)
                 {

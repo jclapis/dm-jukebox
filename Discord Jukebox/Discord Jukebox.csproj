@@ -76,6 +76,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="SoundIo\SoundIoError.cs" />
+    <Compile Include="SoundIo\SoundIoFormat.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -84,6 +86,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="AudioFrame.cs" />
     <Compile Include="AudioStream.cs" />
     <Compile Include="AVCodec\AVCodec.cs" />
     <Compile Include="AVCodec\AVCodecContext.cs" />
@@ -99,8 +102,10 @@
     <Compile Include="AVUtil\AVFrame.cs" />
     <Compile Include="AVUtil\AVPictureType.cs" />
     <Compile Include="AVUtil\AVSampleFormat.cs" />
+    <Compile Include="AVUtil\AV_CH.cs" />
+    <Compile Include="AVUtil\AV_CH_LAYOUT.cs" />
     <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
-    <Compile Include="Interop\AVCodecInterface.cs" />
+    <Compile Include="Interop\AVCodecInterop.cs" />
     <Compile Include="AVCodec\AVDiscard.cs" />
     <Compile Include="AVCodec\AVPacket.cs" />
     <Compile Include="AVCodec\AV_CODEC_FLAG.cs" />
@@ -110,7 +115,7 @@
     <Compile Include="AVFormat\AVFMT_AVOID_NEG_TS.cs" />
     <Compile Include="AVFormat\AVFormatContext.cs" />
     <Compile Include="AVFormat\AvFormatFlags.cs" />
-    <Compile Include="Interop\AVFormatInterface.cs" />
+    <Compile Include="Interop\AVFormatInterop.cs" />
     <Compile Include="AVFormat\AVFrac.cs" />
     <Compile Include="AVFormat\AVIOInterruptCB.cs" />
     <Compile Include="AVFormat\AVRational.cs" />
@@ -121,16 +126,16 @@
     <Compile Include="AVUtil\AVClassCategory.cs" />
     <Compile Include="AVUtil\AVMediaType.cs" />
     <Compile Include="AVUtil\AVPixelFormat.cs" />
-    <Compile Include="Interop\AVUtilInterface.cs" />
-    <Compile Include="Interop\Kernel32Interface.cs" />
-    <Compile Include="Interop\MsvcrtInterface.cs" />
+    <Compile Include="Interop\AVUtilInterop.cs" />
+    <Compile Include="Interop\Kernel32Interop.cs" />
+    <Compile Include="Interop\LibSoundIoInterop.cs" />
+    <Compile Include="Interop\MsvcrtInterop.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MediaFile.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -159,22 +164,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="avcodec-57.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="avformat-57.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="avutil-55.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="opus.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="swresample-2.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="lib\avcodec-57.dll" />
+    <Content Include="lib\avformat-57.dll" />
+    <Content Include="lib\avutil-55.dll" />
+    <Content Include="lib\opus.dll" />
+    <Content Include="lib\soundio.dll" />
+    <Content Include="lib\swresample-2.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

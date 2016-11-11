@@ -108,7 +108,7 @@ namespace DiscordJukebox.Interop
         /// Values correspond to enum AVPixelFormat for video frames,
         /// enum AVSampleFormat for audio
         /// </summary>
-        public int format;
+        public AVSampleFormat format;
 
         /// <summary>
         /// 1 -> keyframe, 0-> not
@@ -208,7 +208,7 @@ namespace DiscordJukebox.Interop
         /// <summary>
         /// Channel layout of the audio data.
         /// </summary>
-        public ulong channel_layout;
+        public AV_CH_LAYOUT channel_layout;
 
         /// <summary>
         /// AVBuffer references backing the data for this frame. If all elements of

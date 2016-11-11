@@ -14,7 +14,7 @@
     ///   (such as AVFrame in libavcodec) is as follows:
     ///
     /// For planar sample formats, each audio channel is in a separate data plane,
-    /// and linesize is the buffer size, in bytes, for a single plane.All data
+    /// and linesize is the buffer size, in bytes, for a single plane. All data
     /// planes must be the same size. For packed sample formats, only the first data
     /// plane is used, and samples for each channel are interleaved. In this case,
     /// linesize is the buffer size, in bytes, for the 1 plane.

@@ -6,12 +6,12 @@ namespace DiscordJukebox.Interop
     /// <summary>
     /// This is the wrapper class for the FFMPEG AVFormat library.
     /// </summary>
-    internal static class AVFormatInterface
+    internal static class AVFormatInterop
     {
         /// <summary>
         /// The filename of the AVFormat DLL.
         /// </summary>
-        private const string AvFormatDll = "avformat-57.dll";
+        private const string AvFormatDll = "lib/avformat-57.dll";
 
         /// <summary>
         /// Initialize libavformat and register all the muxers, demuxers and protocols.

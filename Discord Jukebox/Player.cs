@@ -17,9 +17,13 @@ namespace DiscordJukebox
 
         private bool _IsStopping;
 
-        private readonly List<MediaFile> Files;
+        private readonly List<AudioStream> Streams;
 
         private Task PlayTask;
+
+        public bool PlayToSpeakers { get; set; }
+
+        public bool StreamToDiscord { get; set; }
 
         private bool IsStopping
         {
@@ -44,7 +48,7 @@ namespace DiscordJukebox
         {
             StreamLock = new object();
             StopLock = new object();
-            Files = new List<MediaFile>();
+            Streams = new List<AudioStream>();
         }
 
         public void Start()
@@ -53,11 +57,11 @@ namespace DiscordJukebox
             PlayTask = Task.Run((Action)Run);
         }
 
-        public void AddFile(MediaFile File)
+        public void AddStream(AudioStream Stream)
         {
             lock(StreamLock)
             {
-                Files.Add(File);
+                Streams.Add(Stream);
             }
         }
 
@@ -76,25 +80,26 @@ namespace DiscordJukebox
             {
                 lock(StreamLock)
                 {
-                    foreach(MediaFile file in Files)
+                    foreach(AudioStream stream in Streams)
                     {
-                        AVFrame frame = file.GetNextFrame();
-                        StringBuilder builder = new StringBuilder();
-                        builder.Append("Read frame. ");
-
-                        for (int i = 0; i < frame.channels; i++)
-                        {
-                            IntPtr channel = frame.extended_data + i;
-                            byte[] buffer = new byte[frame.linesize[0]];
-                            Marshal.Copy(channel, buffer, 0, buffer.Length);
-                            builder.Append($"Channel {i}: {BitConverter.ToString(buffer)}. ");
-                        }
-
-                        System.Diagnostics.Debug.WriteLine(builder.ToString());
-                        Thread.Sleep(100);
+                        AudioFrame frame = stream.GetNextFrame();
                     }
                 }
             }
+        }
+
+        private void ProcessSingleStream()
+        {
+
+        }
+
+        private void ProcessMultipleStreams()
+        {
+
+        }
+
+        private void Test()
+        {
         }
 
     }

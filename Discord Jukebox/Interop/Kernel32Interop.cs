@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace DiscordJukebox.Interop
 {
-    internal static class Kernel32Interface
+    internal static class Kernel32Interop
     {
         private const string Kernel32Dll = "kernel32.dll";
 

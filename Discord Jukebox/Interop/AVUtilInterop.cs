@@ -6,9 +6,9 @@ namespace DiscordJukebox.Interop
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate void LogCallback(IntPtr avcl, int level, string fmt, IntPtr args);
 
-    internal static class AVUtilInterface
+    internal static class AVUtilInterop
     {
-        private const string AvUtilDll = "avutil-55.dll";
+        private const string AvUtilDll = "lib/avutil-55.dll";
 
         [DllImport(AvUtilDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_log_set_callback(

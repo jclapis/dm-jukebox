@@ -4,93 +4,137 @@ using System.Runtime.InteropServices;
 
 namespace DiscordJukebox
 {
-    internal class AudioStream
+    internal class AudioStream : IDisposable
     {
-        private readonly IntPtr StreamPtr;
+        private readonly IntPtr FormatContextPtr;
 
         private readonly AVStream Stream;
 
         private readonly AVCodecContext CodecContext;
 
-        private readonly AVCodec Codec;
+        private readonly AudioFrame Frame;
 
-        public string CodecName
+        public float Volume { get; set; }
+
+        public bool Loop { get; set; }
+
+        public string CodecName { get; }
+
+        public int NumberOfChannels { get; }
+
+        public long Bitrate { get; }
+
+        public int SamplesPerFrame { get; }
+
+        public TimeSpan Duration { get; }
+
+        public AudioStream(string FilePath)
         {
-            get
+            // Create the FormatContext
+            FormatContextPtr = AVFormatInterop.avformat_alloc_context();
+            IntPtr options = IntPtr.Zero;
+            int result = AVFormatInterop.avformat_open_input(ref FormatContextPtr, FilePath, IntPtr.Zero, ref options);
+            if (result != 0)
             {
-                return Codec.long_name;
+                throw new Exception($"Opening the file failed with code {result}");
             }
-        }
 
-        public int NumberOfChannels
-        {
-            get
+            // Read the info for the streams in the file
+            options = IntPtr.Zero;
+            result = AVFormatInterop.avformat_find_stream_info(FormatContextPtr, ref options);
+            if (result != 0)
             {
-                return CodecContext.channels;
+                throw new Exception($"Reading the file's stream info failed with code {result}");
             }
-        }
 
-        public long Bitrate
-        {
-            get
+            // Find the first audio stream
+            AVFormatContext formatContext = Marshal.PtrToStructure<AVFormatContext>(FormatContextPtr);
+            bool foundStream = false;
+            for (int i = 0; i < formatContext.nb_streams; i++)
             {
-                return CodecContext.bit_rate;
+                IntPtr streamPtr = Marshal.ReadIntPtr(formatContext.streams, IntPtr.Size * i);
+                Stream = Marshal.PtrToStructure<AVStream>(streamPtr);
+                CodecContext = Marshal.PtrToStructure<AVCodecContext>(Stream.codec);
+                if (CodecContext.codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO)
+                {
+                    foundStream = true;
+                    break;
+                }
             }
-        }
-
-        public int SamplesPerFrame
-        {
-            get
+            if(!foundStream)
             {
-                return CodecContext.frame_size;
+                throw new Exception("No audio streams detected in the file.");
             }
-        }
 
-        public long Duration
-        {
-            get
-            {
-                return Stream.duration;
-            }
-        }
-
-        public AudioStream(IntPtr StreamPtr, AVStream Stream, AVCodecContext CodecContext)
-        {
-            this.StreamPtr = StreamPtr;
-            this.Stream = Stream;
-            this.CodecContext = CodecContext;
-            
-            IntPtr codecPtr = AVCodecInterface.avcodec_find_decoder(CodecContext.codec_id);
+            // Prepare the decoder
+            IntPtr codecPtr = AVCodecInterop.avcodec_find_decoder(CodecContext.codec_id);
             if (codecPtr == IntPtr.Zero)
             {
                 throw new Exception($"Error loading audio codec: finding the decoder for codec ID {CodecContext.codec_id} failed.");
             }
-            Codec = Marshal.PtrToStructure<AVCodec>(codecPtr);
-            IntPtr options = IntPtr.Zero;
-            int openResult = AVCodecInterface.avcodec_open2(Stream.codec, codecPtr, ref options);
+            AVCodec codec = Marshal.PtrToStructure<AVCodec>(codecPtr);
+            options = IntPtr.Zero;
+            int openResult = AVCodecInterop.avcodec_open2(Stream.codec, codecPtr, ref options);
             if (openResult != 0)
             {
                 throw new Exception($"Error loading audio codec: opening codec failed with {openResult}.");
             }
-            
+
+            // Create the audio frame for getting decoded data
+            Frame = new AudioFrame(CodecContext.channels, CodecContext.frame_size, CodecContext.sample_fmt);
+
+            CodecName = codec.long_name;
+            NumberOfChannels = CodecContext.channels;
+            Bitrate = CodecContext.bit_rate;
+            SamplesPerFrame = CodecContext.frame_size;
+
+            double timeBaseInSeconds = Stream.time_base.num / (double)Stream.time_base.den;
+            double durationInSeconds = Stream.duration * timeBaseInSeconds;
+            Duration = TimeSpan.FromSeconds(durationInSeconds);
         }
 
-        public AVFrame GetNextFrame(IntPtr PacketPtr, IntPtr FramePtr)
+        public AudioFrame GetNextFrame()
         {
-            int result = AVCodecInterface.avcodec_send_packet(Stream.codec, PacketPtr);
-            if (result != 0)
-            {
-                throw new Exception($"Error reading audio packet: {result}");
-            }
-
-            result = AVCodecInterface.avcodec_receive_frame(Stream.codec, FramePtr);
-            if (result != 0)
-            {
-                throw new Exception($"Error receiving decoded audio frame: {result}");
-            }
-
-            return Marshal.PtrToStructure<AVFrame>(FramePtr);
+            Frame.ReadFrame(Stream.codec);
+            return Frame;
         }
+
+        private unsafe void SetVolume()
+        {
+
+        }
+
+        #region IDisposable Support
+
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Frame.Dispose();
+                }
+
+                AVFormatInterop.avformat_free_context(FormatContextPtr);
+
+                disposedValue = true;
+            }
+        }
+
+        ~AudioStream()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
 
     }
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace DiscordJukebox.Interop
 {
-    internal static class MsvcrtInterface
+    internal static class MsvcrtInterop
     {
         private const string MsvcrtDll = "Msvcrt.dll";
 
