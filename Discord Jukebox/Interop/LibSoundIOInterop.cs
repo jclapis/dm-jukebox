@@ -3,12 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace DiscordJukebox.Interop
 {
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    internal delegate void write_callback(IntPtr outstream, int frame_count_min, int frame_count_max);
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    internal delegate void underflow_callback(IntPtr outstream);
-
     internal static class LibSoundIoInterop
     {
         private const string SoundIoDll = "lib/soundio.dll";

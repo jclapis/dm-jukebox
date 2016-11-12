@@ -25,6 +25,8 @@ namespace DiscordJukebox
 
         public bool StreamToDiscord { get; set; }
 
+
+
         private bool IsStopping
         {
             get

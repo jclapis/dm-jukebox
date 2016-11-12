@@ -76,8 +76,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="SoundIo\SoundIo.cs" />
+    <Compile Include="SoundIo\SoundIoBackend.cs" />
+    <Compile Include="SoundIo\SoundIoChannelArea.cs" />
+    <Compile Include="SoundIo\SoundIoChannelId.cs" />
+    <Compile Include="SoundIo\SoundIoChannelLayout.cs" />
+    <Compile Include="SoundIo\SoundIoDevice.cs" />
+    <Compile Include="SoundIo\SoundIoDeviceAim.cs" />
     <Compile Include="SoundIo\SoundIoError.cs" />
     <Compile Include="SoundIo\SoundIoFormat.cs" />
+    <Compile Include="SoundIo\SoundIoOutStream.cs" />
+    <Compile Include="SoundIo\SoundIoSampleRateRange.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
