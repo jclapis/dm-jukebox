@@ -33,8 +33,8 @@ namespace DiscordJukebox
             // Create the FormatContext
             FormatContextPtr = AVFormatInterop.avformat_alloc_context();
             IntPtr options = IntPtr.Zero;
-            int result = AVFormatInterop.avformat_open_input(ref FormatContextPtr, FilePath, IntPtr.Zero, ref options);
-            if (result != 0)
+            AVERROR result = AVFormatInterop.avformat_open_input(ref FormatContextPtr, FilePath, IntPtr.Zero, ref options);
+            if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Opening the file failed with code {result}");
             }
@@ -42,7 +42,7 @@ namespace DiscordJukebox
             // Read the info for the streams in the file
             options = IntPtr.Zero;
             result = AVFormatInterop.avformat_find_stream_info(FormatContextPtr, ref options);
-            if (result != 0)
+            if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Reading the file's stream info failed with code {result}");
             }
@@ -74,14 +74,14 @@ namespace DiscordJukebox
             }
             AVCodec codec = Marshal.PtrToStructure<AVCodec>(codecPtr);
             options = IntPtr.Zero;
-            int openResult = AVCodecInterop.avcodec_open2(Stream.codec, codecPtr, ref options);
-            if (openResult != 0)
+            result = AVCodecInterop.avcodec_open2(Stream.codec, codecPtr, ref options);
+            if (result != AVERROR.AVERROR_SUCCESS)
             {
-                throw new Exception($"Error loading audio codec: opening codec failed with {openResult}.");
+                throw new Exception($"Error loading audio codec: opening codec failed with {result}.");
             }
 
             // Create the audio frame for getting decoded data
-            Frame = new AudioFrame(CodecContext.channels, CodecContext.frame_size, CodecContext.sample_fmt);
+            Frame = new AudioFrame(CodecContext.sample_fmt, CodecContext.frame_size, CodecContext.channel_layout);
 
             CodecName = codec.long_name;
             NumberOfChannels = CodecContext.channels;
@@ -95,7 +95,11 @@ namespace DiscordJukebox
 
         public AudioFrame GetNextFrame()
         {
-            Frame.ReadFrame(Stream.codec);
+            bool endOfFile = Frame.ReadFrame(FormatContextPtr, Stream.codec);
+            if(endOfFile)
+            {
+                return null;
+            }
             return Frame;
         }
 

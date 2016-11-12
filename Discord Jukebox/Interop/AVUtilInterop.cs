@@ -1,4 +1,20 @@
-﻿using System;
+﻿/* 
+ * This file contains C# wrappers for some of the functions exported by libavutil.
+ * They come from log.h and frame.h. 
+ * 
+ * The documentation and comments have been largely copied from those headers and
+ * are not my own work - they are the work of the contributors to ffmpeg.
+ * Credit goes to them. I may have modified them in places where it made sense
+ * to help document the C# bindings.
+ * 
+ * For more information, please see the documentation at
+ * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
+ * https://github.com/FFmpeg/FFmpeg.
+ * 
+ * Copyright (c) 2016 Joe Clapis.
+ */
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace DiscordJukebox.Interop
@@ -16,12 +32,15 @@ namespace DiscordJukebox.Interop
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate void LogCallback(IntPtr avcl, int level, string fmt, IntPtr args);
 
+    /// <summary>
+    /// This class holds C# bindings for some of the functions exported by libavutil.
+    /// </summary>
     internal static class AVUtilInterop
     {
         /// <summary>
         /// The location of the AVUtil DLL
         /// </summary>
-        private const string AvUtilDll = "lib/avutil-55.dll";
+        private const string AvUtilDll = "avutil-55.dll";
 
         /// <summary>
         /// Set the logging callback

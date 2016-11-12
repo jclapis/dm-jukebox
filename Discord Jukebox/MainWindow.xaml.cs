@@ -3,8 +3,6 @@ using Microsoft.Win32;
 using System;
 using System.ComponentModel;
 using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 
@@ -25,7 +23,7 @@ namespace DiscordJukebox
             LoggerDelegate = Logger;
             Player = new Player();
 
-            AVUtilInterop.av_log_set_callback(LoggerDelegate);
+            //AVUtilInterop.av_log_set_callback(LoggerDelegate);
             AVFormatInterop.av_register_all();
         }
 
@@ -34,7 +32,10 @@ namespace DiscordJukebox
             StringBuilder builder = new StringBuilder(MsvcrtInterop._vscprintf(fmt, args) + 1);
             MsvcrtInterop.vsprintf(builder, fmt, args);
 
-            //StuffBox.Text += $"[{level}] {builder.ToString()}";
+            Dispatcher.Invoke(() =>
+            {
+                StuffBox.Text += $"[{level}] {builder.ToString()}";
+            });
         }
 
         protected override void OnClosing(CancelEventArgs e)

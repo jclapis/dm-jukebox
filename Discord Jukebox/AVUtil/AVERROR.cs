@@ -22,6 +22,18 @@ namespace DiscordJukebox.Interop
     internal enum AVERROR
     {
         /// <summary>
+        /// This isn't actually in the header, but since I made it an enum,
+        /// I need to add this to handle successful return values.
+        /// </summary>
+        AVERROR_SUCCESS = 0,
+
+        AVERROR_EAGAIN = -11,
+
+        AVERROR_ENOMEM = -12,
+
+        AVERROR_EINVAL = -22,
+
+        /// <summary>
         /// Bitstream filter not found
         /// </summary>
         AVERROR_BSF_NOT_FOUND = -0x465342F8,

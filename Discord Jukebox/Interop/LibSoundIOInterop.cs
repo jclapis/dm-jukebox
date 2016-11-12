@@ -20,7 +20,7 @@ namespace DiscordJukebox.Interop
 {
     internal static class LibSoundIoInterop
     {
-        private const string SoundIoDll = "lib/soundio.dll";
+        private const string SoundIoDll = "soundio.dll";
         
         [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr soundio_create();

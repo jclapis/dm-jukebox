@@ -73,13 +73,20 @@ namespace DiscordJukebox
 
         private void Run()
         {
-            while(!IsStopping)
+            int frames = 0;
+            while (!IsStopping)
             {
                 lock(StreamLock)
                 {
                     foreach(AudioStream stream in Streams)
                     {
                         AudioFrame frame = stream.GetNextFrame();
+                        frames++;
+                        if(frame == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Finished decoding, read {frames} frames.");
+                            return;
+                        }
                     }
                 }
             }

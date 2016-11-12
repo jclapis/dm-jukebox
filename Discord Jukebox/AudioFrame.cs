@@ -1,117 +1,96 @@
 ﻿using DiscordJukebox.Interop;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 
 namespace DiscordJukebox
 {
     internal class AudioFrame : IDisposable
     {
-        private readonly IntPtr PacketBufferPtr;
+        private IntPtr PacketPtr;
 
-        private readonly IntPtr FrameExtendedData;
+        private IntPtr InputFramePtr;
 
-        private readonly IntPtr PacketPtr;
+        private IntPtr OutputFramePtr;
 
-        private readonly IntPtr InputFramePtr;
-
-        public ReadOnlyCollection<IntPtr> FrameBuffers { get; }
-
-        public int NumberOfChannels { get; }
-
-        public int SamplesPerFrame { get; }
-
-        public AVSampleFormat SampleFormat { get; }
-
-        public int BufferLength { get; private set; }
+        private IntPtr SwrContextPtr;
 
         public AudioFrame(AVSampleFormat SampleFormat, int SamplesPerChannel, AV_CH_LAYOUT ChannelLayout)
         {
-            // Initialization stuff
-            List<IntPtr> frameBuffers = new List<IntPtr>();
-            this.NumberOfChannels = NumberOfChannels;
-            this.SampleFormat = SampleFormat;
-
             // Set up the packet
-            AVPacket packet = new AVPacket();
-            int bufferSize = AVCodecInterop.AVCODEC_MAX_AUDIO_FRAME_SIZE + AVCodecInterop.AV_INPUT_BUFFER_PADDING_SIZE;
-            PacketBufferPtr = Marshal.AllocHGlobal(bufferSize);
-            packet.data = PacketBufferPtr;
-            packet.size = bufferSize;
-            PacketPtr = Marshal.AllocHGlobal(Marshal.SizeOf<AVPacket>());
-            Marshal.StructureToPtr(packet, PacketPtr, true);
+            PacketPtr = AVCodecInterop.av_packet_alloc();
+            AVERROR result = AVCodecInterop.av_new_packet(PacketPtr, AVCodecInterop.AVCODEC_MAX_AUDIO_FRAME_SIZE + AVCodecInterop.AV_INPUT_BUFFER_PADDING_SIZE);
+            if(result != AVERROR.AVERROR_SUCCESS)
+            {
+                throw new Exception($"Packet allocation failed: {result}");
+            }
 
             // Set up the input frame and its buffers
             InputFramePtr = AVUtilInterop.av_frame_alloc();
-            AVFrame frame = Marshal.PtrToStructure<AVFrame>(InputFramePtr);
-            frame.format = SampleFormat;
-            frame.nb_samples = SamplesPerChannel;
-            frame.channel_layout = ChannelLayout;
-            Marshal.StructureToPtr(frame, InputFramePtr, false);
-
+            AVFrame inputFrame = Marshal.PtrToStructure<AVFrame>(InputFramePtr);
+            inputFrame.format = SampleFormat;
+            inputFrame.nb_samples = SamplesPerChannel;
+            inputFrame.channel_layout = ChannelLayout;
+            Marshal.StructureToPtr(inputFrame, InputFramePtr, false);
+            result = AVUtilInterop.av_frame_get_buffer(InputFramePtr, 0);
+            if(result != AVERROR.AVERROR_SUCCESS)
+            {
+                throw new Exception($"Input frame buffer allocation failed: {result}");
+            }
 
             // Set up the output frame and its buffers
-            AVFrame targetFrame = new AVFrame();
-            targetFrame.channels = 2;
-            targetFrame.channel_layout = AV_CH_LAYOUT.AV_CH_LAYOUT_STEREO;
-            targetFrame.sample_rate = 48000;
-            targetFrame.format = AVSampleFormat.AV_SAMPLE_FMT_FLTP;
+            OutputFramePtr = AVUtilInterop.av_frame_alloc();
+            AVFrame outputFrame = Marshal.PtrToStructure<AVFrame>(OutputFramePtr);
+            outputFrame.channels = 2;
+            outputFrame.channel_layout = AV_CH_LAYOUT.AV_CH_LAYOUT_STEREO;
+            outputFrame.sample_rate = 48000;
+            outputFrame.format = AVSampleFormat.AV_SAMPLE_FMT_FLTP;
+            Marshal.StructureToPtr(outputFrame, OutputFramePtr, false);
+
+            // Set up the swresample context
+            SwrContextPtr = SWResampleInterop.swr_alloc();
+            result = SWResampleInterop.swr_config_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
+            if (result != AVERROR.AVERROR_SUCCESS)
+            {
+                throw new Exception($"Resampling context configuration failed: {result}");
+            }
         }
 
-        public void ReadFrame(IntPtr CodecContext)
+        public bool ReadFrame(IntPtr FormatContext, IntPtr CodecContext)
         {
-            int result = AVCodecInterop.avcodec_send_packet(CodecContext, PacketPtr);
-            if (result != 0)
+            AVERROR result = AVFormatInterop.av_read_frame(FormatContext, PacketPtr);
+            if (result != AVERROR.AVERROR_SUCCESS)
             {
+                if(result == AVERROR.AVERROR_EOF)
+                {
+                    return true;
+                }
                 throw new Exception($"Error reading audio packet: {result}");
             }
 
+            result = AVCodecInterop.avcodec_send_packet(CodecContext, PacketPtr);
+            if (result != AVERROR.AVERROR_SUCCESS)
+            {
+                throw new Exception($"Error decoding audio packet: {result}");
+            }
+
             result = AVCodecInterop.avcodec_receive_frame(CodecContext, InputFramePtr);
-            if (result != 0)
+            if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Error receiving decoded audio frame: {result}");
             }
 
+            result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
+            if (result != AVERROR.AVERROR_SUCCESS)
+            {
+                throw new Exception($"Resampling audio frame failed: {result}");
+            }
+
             // This is cheating, but copying the entire AVFrame over is inefficient when we just care
             // about the linesize.
-            IntPtr linesizePtr = InputFramePtr + IntPtr.Size * 8;
-            BufferLength = Marshal.ReadInt32(linesizePtr);
-        }
+            IntPtr linesizePtr = OutputFramePtr + IntPtr.Size * 8;
+            //BufferLength = Marshal.ReadInt32(linesizePtr);
 
-        private static int GetChannelBufferSize(int SamplesPerFrame, AVSampleFormat SampleFormat)
-        {
-            switch(SampleFormat)
-            {
-                case AVSampleFormat.AV_SAMPLE_FMT_U8P:
-                    return SamplesPerFrame;
-
-                case AVSampleFormat.AV_SAMPLE_FMT_S16P:
-                    return SamplesPerFrame * sizeof(short);
-
-                case AVSampleFormat.AV_SAMPLE_FMT_S32P:
-                    return SamplesPerFrame * sizeof(int);
-
-                case AVSampleFormat.AV_SAMPLE_FMT_FLTP:
-                    return SamplesPerFrame * sizeof(float);
-
-                case AVSampleFormat.AV_SAMPLE_FMT_DBLP:
-                    return SamplesPerFrame * sizeof(double);
-
-                case AVSampleFormat.AV_SAMPLE_FMT_U8:
-                case AVSampleFormat.AV_SAMPLE_FMT_S16:
-                case AVSampleFormat.AV_SAMPLE_FMT_S32:
-                case AVSampleFormat.AV_SAMPLE_FMT_FLT:
-                case AVSampleFormat.AV_SAMPLE_FMT_DBL:
-                    throw new Exception("Packed audio isn't supported yet");
-
-                case AVSampleFormat.AV_SAMPLE_FMT_NONE:
-                case AVSampleFormat.AV_SAMPLE_FMT_NB:
-                    throw new Exception($"Unexpected sample format {SampleFormat}");
-
-                default:
-                    throw new Exception($"Sample format {SampleFormat} was unhandled.");
-            }
+            return false;
         }
 
         #region IDisposable Support
@@ -127,27 +106,20 @@ namespace DiscordJukebox
                     // TODO: dispose managed state (managed objects).
                 }
 
-                IntPtr framePtr = InputFramePtr;
-                AVUtilInterop.av_frame_free(ref framePtr);
-                Marshal.FreeHGlobal(FrameExtendedData);
-                foreach(IntPtr buffer in FrameBuffers)
-                {
-                    Marshal.FreeHGlobal(buffer);
-                }
-                Marshal.FreeHGlobal(PacketPtr);
-                Marshal.FreeHGlobal(PacketBufferPtr);
+                SWResampleInterop.swr_free(ref SwrContextPtr);
+                AVUtilInterop.av_frame_free(ref InputFramePtr);
+                AVUtilInterop.av_frame_free(ref OutputFramePtr);
+                AVCodecInterop.av_packet_free(ref PacketPtr);
 
                 disposedValue = true;
             }
         }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        
         ~AudioFrame()
         {
             Dispose(false);
         }
-
-        // This code added to correctly implement the disposable pattern.
+        
         public void Dispose()
         {
             Dispose(true);

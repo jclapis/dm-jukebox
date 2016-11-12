@@ -5,7 +5,7 @@ namespace DiscordJukebox.Interop
 {
     internal static class AVCodecInterop
     {
-        private const string AVCodecDll = "lib/avcodec-57.dll";
+        private const string AVCodecDll = "avcodec-57.dll";
 
         public const int AV_INPUT_BUFFER_PADDING_SIZE = 32;
 
@@ -15,7 +15,7 @@ namespace DiscordJukebox.Interop
         /// Find a registered decoder with a matching codec ID.
         /// </summary>
         /// <param name="id">AVCodecID of the requested decoder</param>
-        /// <returns>A decoder if one was found, NULL otherwise.</returns>
+        /// <returns>(AVCodec) A decoder if one was found, NULL otherwise.</returns>
         [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr avcodec_find_decoder(AVCodecID id);
 
@@ -32,16 +32,16 @@ namespace DiscordJukebox.Interop
         /// Always call this function before using decoding routines(such as
         /// <see cref="avcodec_receive_frame"/>()).
         /// </summary>
-        /// <param name="avctx">The context to initialize.</param>
-        /// <param name="codec">The codec to open this context for. If a non-NULL codec has been
+        /// <param name="avctx">(AVCodecContext) The context to initialize.</param>
+        /// <param name="codec">(AVCodec) The codec to open this context for. If a non-NULL codec has been
         /// previously passed to avcodec_alloc_context3() or
         /// for this context, then this parameter MUST be either NULL or
         /// equal to the previously passed codec.</param>
-        /// <param name="options">A dictionary filled with AVCodecContext and codec-private options.
+        /// <param name="options">(AVDictionary) A dictionary filled with AVCodecContext and codec-private options.
         /// On return this object will be filled with options that were not found.</param>
         /// <returns>zero on success, a negative value on error</returns>
         [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int avcodec_open2(IntPtr avctx, IntPtr codec, ref IntPtr options);
+        public static extern AVERROR avcodec_open2(IntPtr avctx, IntPtr codec, ref IntPtr options);
 
         /// <summary>
         /// Supply raw packet data as input to a decoder.
@@ -62,8 +62,8 @@ namespace DiscordJukebox.Interop
         /// The AVCodecContext MUST have been opened with @ref avcodec_open2()
         /// before packets may be fed to the decoder.
         /// </summary>
-        /// <param name="avctx">codec context (AVCodecContext)</param>
-        /// <param name="avpkt">The input AVPacket. Usually, this will be a single video
+        /// <param name="avctx">(AVCodecContext) codec context</param>
+        /// <param name="avpkt">(AVPacket) The input AVPacket. Usually, this will be a single video
         /// frame, or several complete audio frames.
         /// Ownership of the packet remains with the caller, and the
         /// decoder will not write to the packet. The decoder may create
@@ -90,13 +90,13 @@ namespace DiscordJukebox.Interop
         /// AVERROR(ENOMEM): failed to add packet to internal queue, or similar
         /// other errors: legitimate decoding errors</returns>
         [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int avcodec_send_packet(IntPtr avctx, IntPtr avpkt);
+        public static extern AVERROR avcodec_send_packet(IntPtr avctx, IntPtr avpkt);
 
         /// <summary>
         /// Return decoded output data from a decoder.
         /// </summary>
-        /// <param name="avctx">codec context (AVCodecContext)</param>
-        /// <param name="frame">This will be set to a reference-counted video or audio
+        /// <param name="avctx">(AVCodecContext) codec context</param>
+        /// <param name="frame">(AVFrame) This will be set to a reference-counted video or audio
         /// frame (depending on the decoder type) allocated by the
         /// decoder. Note that the function will always call
         /// av_frame_unref(frame) before doing anything else.</param>
@@ -107,14 +107,39 @@ namespace DiscordJukebox.Interop
         /// AVERROR(EINVAL): codec not opened, or it is an encoder
         /// other negative values: legitimate decoding errors</returns>
         [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int avcodec_receive_frame(IntPtr avctx, IntPtr frame);
+        public static extern AVERROR avcodec_receive_frame(IntPtr avctx, IntPtr frame);
 
         /// <summary>
-        /// Initialize optional fields of a packet with default values.
-        /// Note, this does not touch the data and size members, which have to be
-        /// initialized separately.
+        /// Allocate an AVPacket and set its fields to default values. The resulting
+        /// struct must be freed using av_packet_free().
+        /// 
+        /// This only allocates the AVPacket itself, not the data buffers. Those
+        /// must be allocated through other means such as av_new_packet.
         /// </summary>
-        /// <param name="pkt">packet</param>
+        /// <returns>(AVPacket) An AVPacket filled with default values or NULL on failure.</returns>
+        [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern IntPtr av_packet_alloc();
+
+        /// <summary>
+        /// Free the packet, if the packet is reference counted, it will be
+        /// unreferenced first.
+        /// 
+        /// Passing NULL is a no-op.
+        /// </summary>
+        /// <param name="pkt">(AVPacket) packet to be freed. The pointer will be set to NULL.</param>
+        [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void av_packet_free(ref IntPtr pkt);
+
+        /// <summary>
+        /// Allocate the payload of a packet and initialize its fields with
+        /// default values.
+        /// </summary>
+        /// <param name="pkt">(AVPacket) packet</param>
+        /// <param name="size">wanted payload size</param>
+        /// <returns>0 if OK, AVERROR_xxx otherwise</returns>
+        [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR av_new_packet(IntPtr pkt, int size);
+
         [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_init_packet(IntPtr pkt);
     }

@@ -744,7 +744,37 @@ namespace DiscordJukebox.Interop
         /// </summary>
         public int frame_size;
 
-        // Left off at avcodec.h line 2430.
+        /// <summary>
+        /// Frame counter, set by libavcodec.
+        /// The counter is not incremented if encoding/decoding resulted in
+        /// an error.
+        ///
+        /// - decoding: total number of frames returned from the decoder so far.
+        /// - encoding: total number of frames passed to the encoder so far.
+        /// </summary>
+        public int frame_number;
+
+        /// <summary>
+        /// number of bytes per packet if constant and known or 0
+        /// Used by some WAV based audio codecs.
+        /// </summary>
+        public int block_align;
+
+        /// <summary>
+        /// Audio cutoff bandwidth (0 means "automatic")
+        /// - encoding: Set by user.
+        /// - decoding: unused
+        /// </summary>
+        public int cutoff;
+
+        /// <summary>
+        /// Audio channel layout.
+        /// - encoding: set by user.
+        /// - decoding: set by user, may be overwritten by libavcodec.
+        /// </summary>
+        public AV_CH_LAYOUT channel_layout;
+
+        // Left off at avcodec.h line 2468.
         // If I need more stuff from it, I'll finish implementing it later
         // but right now this is sufficient.
     }
