@@ -14,7 +14,7 @@ namespace DiscordJukebox
 
         private readonly IntPtr PacketPtr;
 
-        private readonly IntPtr FramePtr;
+        private readonly IntPtr InputFramePtr;
 
         public ReadOnlyCollection<IntPtr> FrameBuffers { get; }
 
@@ -22,20 +22,16 @@ namespace DiscordJukebox
 
         public int SamplesPerFrame { get; }
 
-        public int ChannelBufferSize { get; }
-
         public AVSampleFormat SampleFormat { get; }
 
         public int BufferLength { get; private set; }
 
-        public AudioFrame(int NumberOfChannels, int SamplesPerFrame, AVSampleFormat SampleFormat)
+        public AudioFrame(AVSampleFormat SampleFormat, int SamplesPerChannel, AV_CH_LAYOUT ChannelLayout)
         {
             // Initialization stuff
             List<IntPtr> frameBuffers = new List<IntPtr>();
             this.NumberOfChannels = NumberOfChannels;
-            this.SamplesPerFrame = SamplesPerFrame;
             this.SampleFormat = SampleFormat;
-            ChannelBufferSize = GetChannelBufferSize(SamplesPerFrame, SampleFormat);
 
             // Set up the packet
             AVPacket packet = new AVPacket();
@@ -47,17 +43,13 @@ namespace DiscordJukebox
             Marshal.StructureToPtr(packet, PacketPtr, true);
 
             // Set up the input frame and its buffers
-            FramePtr = AVUtilInterop.av_frame_alloc();
-            AVFrame frame = Marshal.PtrToStructure<AVFrame>(FramePtr);
-            FrameExtendedData = Marshal.AllocHGlobal(IntPtr.Size * NumberOfChannels);
-            for(int i = 0; i < NumberOfChannels; i++)
-            {
-                IntPtr frameBuffer = Marshal.AllocHGlobal(ChannelBufferSize);
-                frameBuffers.Add(frameBuffer);
-                Marshal.WriteIntPtr(FrameExtendedData, IntPtr.Size * i, frameBuffer);
-            }
-            Marshal.StructureToPtr(frame, FramePtr, false);
-            FrameBuffers = new ReadOnlyCollection<IntPtr>(frameBuffers);
+            InputFramePtr = AVUtilInterop.av_frame_alloc();
+            AVFrame frame = Marshal.PtrToStructure<AVFrame>(InputFramePtr);
+            frame.format = SampleFormat;
+            frame.nb_samples = SamplesPerChannel;
+            frame.channel_layout = ChannelLayout;
+            Marshal.StructureToPtr(frame, InputFramePtr, false);
+
 
             // Set up the output frame and its buffers
             AVFrame targetFrame = new AVFrame();
@@ -75,7 +67,7 @@ namespace DiscordJukebox
                 throw new Exception($"Error reading audio packet: {result}");
             }
 
-            result = AVCodecInterop.avcodec_receive_frame(CodecContext, FramePtr);
+            result = AVCodecInterop.avcodec_receive_frame(CodecContext, InputFramePtr);
             if (result != 0)
             {
                 throw new Exception($"Error receiving decoded audio frame: {result}");
@@ -83,7 +75,7 @@ namespace DiscordJukebox
 
             // This is cheating, but copying the entire AVFrame over is inefficient when we just care
             // about the linesize.
-            IntPtr linesizePtr = FramePtr + IntPtr.Size * 8;
+            IntPtr linesizePtr = InputFramePtr + IntPtr.Size * 8;
             BufferLength = Marshal.ReadInt32(linesizePtr);
         }
 
@@ -135,7 +127,7 @@ namespace DiscordJukebox
                     // TODO: dispose managed state (managed objects).
                 }
 
-                IntPtr framePtr = FramePtr;
+                IntPtr framePtr = InputFramePtr;
                 AVUtilInterop.av_frame_free(ref framePtr);
                 Marshal.FreeHGlobal(FrameExtendedData);
                 foreach(IntPtr buffer in FrameBuffers)

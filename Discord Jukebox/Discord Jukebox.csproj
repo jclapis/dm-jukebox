@@ -76,6 +76,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AVUtil\AVERROR.cs" />
     <Compile Include="SoundIo\SoundIo.cs" />
     <Compile Include="SoundIo\SoundIoBackend.cs" />
     <Compile Include="SoundIo\SoundIoChannelArea.cs" />
@@ -180,7 +181,9 @@
     <Content Include="lib\soundio.dll" />
     <Content Include="lib\swresample-2.dll" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="SWResample\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
