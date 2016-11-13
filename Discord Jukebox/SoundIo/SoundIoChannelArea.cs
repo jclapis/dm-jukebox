@@ -19,12 +19,12 @@ using System.Runtime.InteropServices;
 namespace DiscordJukebox.Interop
 {
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal struct SoundIoChannelArea
+    unsafe internal struct SoundIoChannelArea
     {
         /// <summary>
         /// Base address of buffer.
         /// </summary>
-        public IntPtr ptr;
+        public float* ptr;
 
         /// <summary>
         /// How many bytes it takes to get from the beginning of one sample to

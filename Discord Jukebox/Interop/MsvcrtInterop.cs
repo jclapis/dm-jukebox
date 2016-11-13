@@ -13,5 +13,8 @@ namespace DiscordJukebox.Interop
 
         [DllImport(MsvcrtDll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int _vscprintf(string format, IntPtr ptr);
+
+        [DllImport(MsvcrtDll, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr memcpy(IntPtr dest, IntPtr src, IntPtr count);
     }
 }

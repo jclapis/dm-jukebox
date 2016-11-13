@@ -59,7 +59,7 @@ namespace DiscordJukebox.Interop
         public static extern void soundio_device_unref(IntPtr device);
 
         [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_begin_write(IntPtr outstream, IntPtr areas, IntPtr frame_count);
+        public static extern SoundIoError soundio_outstream_begin_write(IntPtr outstream, ref IntPtr areas, ref int frame_count);
 
         [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern SoundIoError soundio_outstream_end_write(IntPtr outstream);

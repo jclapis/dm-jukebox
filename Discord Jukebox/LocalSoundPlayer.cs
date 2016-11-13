@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiscordJukebox
@@ -26,8 +27,11 @@ namespace DiscordJukebox
 
         private bool Started;
 
+        private Queue<AudioFrame> FrameQueue;
+
         public LocalSoundPlayer()
         {
+            FrameQueue = new Queue<AudioFrame>();
             WriteSoundDelegate = WriteSound;
             HandleUnderflowDelegate = HandleUnderflow;
 
@@ -56,6 +60,11 @@ namespace DiscordJukebox
             if (result != SoundIoError.SoundIoErrorNone)
             {
                 throw new Exception($"Opening the local sound stream failed: {result}");
+            }
+            stream = Marshal.PtrToStructure<SoundIoOutStream>(SoundIoOutStreamPtr);
+            if(stream.layout.channel_count != 2)
+            {
+                throw new Exception($"Local sound output does not have two channels. Expected stereo, but it's {stream.layout.name}.");
             }
         }
 
@@ -87,14 +96,67 @@ namespace DiscordJukebox
             }
         }
 
-        private void WriteSound(IntPtr StreamPtr, int MinFrameCount, int MaxFrameCount)
+        unsafe private void WriteSound(IntPtr StreamPtr, int MinFrameCount, int MaxFrameCount)
         {
+            System.Diagnostics.Debug.WriteLine($"current queue size: {FrameQueue.Count}, min = {MinFrameCount}, max = {MaxFrameCount}");
+            IntPtr soundAreas = IntPtr.Zero;
+            int framesLeft = MaxFrameCount;
+            SoundIoOutStream stream = Marshal.PtrToStructure<SoundIoOutStream>(StreamPtr);
 
+            int frameCount = framesLeft;
+            SoundIoError result = SoundIoInterop.soundio_outstream_begin_write(StreamPtr, ref soundAreas, ref frameCount);
+            if (result != SoundIoError.SoundIoErrorNone)
+            {
+                throw new Exception($"Writing to the local sound driver failed on begin: {result}");
+            }
+
+            int totalCount = 0;
+
+            while (framesLeft > 0)
+            {
+                AudioFrame frame = GetNextFrame();
+                frameCount = Math.Min(framesLeft, frame.LeftChannel.Length);
+                SoundIoChannelArea* areas = (SoundIoChannelArea*)soundAreas.ToPointer();
+                float* leftChannelArea = areas[0].ptr;
+                float* rightChannelArea = areas[1].ptr;
+                int stepSize = areas[0].step / sizeof(float);
+                for(int currentFrame = 0; currentFrame < frameCount; currentFrame++)
+                {
+                    int areaIndex = stepSize * (currentFrame + totalCount);
+                    leftChannelArea[areaIndex] = frame.LeftChannel[currentFrame];
+                    rightChannelArea[areaIndex] = frame.RightChannel[currentFrame];
+                }
+                totalCount += frameCount;
+                framesLeft -= frameCount;
+            }
+
+            result = SoundIoInterop.soundio_outstream_end_write(StreamPtr);
+            if (result != SoundIoError.SoundIoErrorNone)
+            {
+                throw new Exception($"Writing to the local sound driver failed on end: {result}");
+            }
+            System.Diagnostics.Debug.WriteLine($"finished writing {MaxFrameCount} frames. current queue size: {FrameQueue.Count}");
         }
 
         private void HandleUnderflow(IntPtr StreamPtr)
         {
+            System.Diagnostics.Debug.WriteLine("Underflow detected.");
+        }
 
+        public void AddFrame(AudioFrame Frame)
+        {
+            FrameQueue.Enqueue(Frame);
+        }
+
+        private AudioFrame GetNextFrame()
+        {
+            while (FrameQueue.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"no frame ready yet, waiting...");
+                Thread.Sleep(100);
+            }
+
+            return FrameQueue.Dequeue();
         }
 
         #region IDisposable Support

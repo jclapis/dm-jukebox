@@ -4,15 +4,60 @@ using System.Runtime.InteropServices;
 
 namespace DiscordJukebox
 {
-    internal class AudioFrame : IDisposable
+    internal class AudioFrame // : IDisposable
     {
-        private IntPtr PacketPtr;
+        public float[] LeftChannel { get; }
+
+        public float[] RightChannel { get; }
+
+        public AudioFrame(float[] LeftChannel, float[] RightChannel)
+        {
+            this.LeftChannel = LeftChannel;
+            this.RightChannel = RightChannel;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* private IntPtr PacketPtr;
 
         private IntPtr InputFramePtr;
 
         private IntPtr OutputFramePtr;
 
         private IntPtr SwrContextPtr;
+
+        public float[] LeftChannelBuffer { get; }
+
+        public float[] RightChannelBuffer { get; }
+
+        public int NumberOfElements { get; private set; }
 
         unsafe public AudioFrame(AVSampleFormat SampleFormat, int SamplesPerChannel, AV_CH_LAYOUT ChannelLayout, int SampleRate)
         {
@@ -59,6 +104,10 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Output frame buffer allocation failed: {result}");
             }
+
+            // Set up the output capture buffers for playback
+            LeftChannelBuffer = new float[outputFrame->linesize[0]];
+            RightChannelBuffer = new float[outputFrame->linesize[0]];
         }
 
         unsafe public bool ReadFrame(IntPtr FormatContext, IntPtr CodecContext)
@@ -98,8 +147,27 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Resampling audio frame failed: {result}");
             }
-            while(f->nb_samples > 0)
+
+            // Copy the data into the managed buffers
+            NumberOfElements = 0;
+            Marshal.Copy((IntPtr)f->data0, LeftChannelBuffer, NumberOfElements, f->nb_samples);
+            Marshal.Copy((IntPtr)f->data1, RightChannelBuffer, NumberOfElements, f->nb_samples);
+            NumberOfElements += f->nb_samples;
+
+            // Get the next round of data, if there is one
+            result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
+            if (result != AVERROR.AVERROR_SUCCESS)
             {
+                throw new Exception($"Resampling audio frame failed: {result}");
+            }
+            while (f->nb_samples > 0)
+            {
+                // Copy the new data into the buffer as well
+                Marshal.Copy((IntPtr)f->data0, LeftChannelBuffer, NumberOfElements, f->nb_samples);
+                Marshal.Copy((IntPtr)f->data1, RightChannelBuffer, NumberOfElements, f->nb_samples);
+                NumberOfElements += f->nb_samples;
+
+                // Keep the cycle going until we've exhausted the swrcontext buffer
                 result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
                 if (result != AVERROR.AVERROR_SUCCESS)
                 {
@@ -151,5 +219,6 @@ namespace DiscordJukebox
         }
 
         #endregion
+    }*/
     }
 }

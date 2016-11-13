@@ -16,6 +16,8 @@ namespace DiscordJukebox
 
         private Task PlayTask;
 
+        private LocalSoundPlayer LocalPlayer;
+
         public bool PlayToSpeakers { get; set; }
 
         public bool StreamToDiscord { get; set; }
@@ -46,12 +48,14 @@ namespace DiscordJukebox
             StreamLock = new object();
             StopLock = new object();
             Streams = new List<AudioStream>();
+            LocalPlayer = new LocalSoundPlayer();
         }
 
         public void Start()
         {
             IsStopping = false;
             PlayTask = Task.Run((Action)Run);
+            LocalPlayer.Start();
         }
 
         public void AddStream(AudioStream Stream)
@@ -69,6 +73,7 @@ namespace DiscordJukebox
             {
                 PlayTask.Wait(2000);
             }
+            LocalPlayer.Pause();
         }
 
         private void Run()
@@ -82,11 +87,14 @@ namespace DiscordJukebox
                     {
                         AudioFrame frame = stream.GetNextFrame();
                         frames++;
+
                         if(frame == null)
                         {
                             System.Diagnostics.Debug.WriteLine($"Finished decoding, read {frames} frames.");
                             return;
                         }
+
+                        LocalPlayer.AddFrame(frame);
                     }
                 }
             }
