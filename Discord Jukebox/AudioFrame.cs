@@ -16,26 +16,19 @@ namespace DiscordJukebox
 
         unsafe public AudioFrame(AVSampleFormat SampleFormat, int SamplesPerChannel, AV_CH_LAYOUT ChannelLayout, int SampleRate)
         {
-            // Set up the packet
+            // Set up the packet - no need for doing the buffers, because they get reset
+            // on each new av_read_frame() call
+            AVERROR result;
             PacketPtr = AVCodecInterop.av_packet_alloc();
-            AVERROR result = AVCodecInterop.av_new_packet(PacketPtr, AVCodecInterop.AVCODEC_MAX_AUDIO_FRAME_SIZE + AVCodecInterop.AV_INPUT_BUFFER_PADDING_SIZE);
-            if(result != AVERROR.AVERROR_SUCCESS)
-            {
-                throw new Exception($"Packet allocation failed: {result}");
-            }
 
-            // Set up the input frame and its buffers
+            // Set up the input frame (not the buffers, since they get reset every time we
+            // read a new frame from the input file)
             InputFramePtr = AVUtilInterop.av_frame_alloc();
             AVFrame* inputFrame =(AVFrame*)InputFramePtr.ToPointer();
             inputFrame->format = SampleFormat;
             inputFrame->nb_samples = SamplesPerChannel;
             inputFrame->channel_layout = ChannelLayout;
             inputFrame->sample_rate = SampleRate;
-            //result = AVUtilInterop.av_frame_get_buffer(InputFramePtr, 0);
-            if(result != AVERROR.AVERROR_SUCCESS)
-            {
-                throw new Exception($"Input frame buffer allocation failed: {result}");
-            }
 
             // Set up the output frame
             OutputFramePtr = AVUtilInterop.av_frame_alloc();
@@ -57,7 +50,7 @@ namespace DiscordJukebox
                 throw new Exception($"Resampling context initialization failed: {result}");
             }
 
-            // Set up the buffers for the output frame
+            // Set up the buffers for the output frame, which are persistent
             long delay = SWResampleInterop.swr_get_delay(SwrContextPtr, 48000);
             int outSamples = (int)delay + (SamplesPerChannel * 48000 / SampleRate) + 3;
             outputFrame->nb_samples = outSamples;
@@ -74,6 +67,7 @@ namespace DiscordJukebox
             AVPacket* p = (AVPacket*)PacketPtr.ToPointer();
             AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
 
+            // Read the next packet from the file
             AVERROR result = AVFormatInterop.av_read_frame(FormatContext, PacketPtr);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
@@ -84,19 +78,21 @@ namespace DiscordJukebox
                 throw new Exception($"Error reading audio packet: {result}");
             }
 
+            // Send the packet over to the decoder
             result = AVCodecInterop.avcodec_send_packet(CodecContext, PacketPtr);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Error decoding audio packet: {result}");
             }
 
-
+            // Get the decoded raw data from the decoder
             result = AVCodecInterop.avcodec_receive_frame(CodecContext, InputFramePtr);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Error receiving decoded audio frame: {result}");
             }
 
+            // Resample it to the Discord requirements (48 kHz, 2 channel stereo)
             result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
@@ -111,14 +107,12 @@ namespace DiscordJukebox
                 }
             }
 
-            
-
-
-            //AVFrame frame = Marshal.PtrToStructure<AVFrame>(OutputFramePtr);
-            // This is cheating, but copying the entire AVFrame over is inefficient when we just care
-            // about the linesize.
-            IntPtr linesizePtr = OutputFramePtr + IntPtr.Size * 8;
-            //BufferLength = Marshal.ReadInt32(linesizePtr);
+            // Clean up the packet and input frame to make sure their buffers are released,
+            // since ffmpeg insists on reallocating them each time. Note that the output frame
+            // doesn't need to be unref'd, because it's only used by swresample which doesn't
+            // allocate a new buffer for the frame each time swr_convert_frame is called.
+            AVCodecInterop.av_packet_unref(PacketPtr);
+            AVUtilInterop.av_frame_unref(InputFramePtr);
 
             return false;
         }

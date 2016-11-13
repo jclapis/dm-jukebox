@@ -107,5 +107,12 @@ namespace DiscordJukebox.Interop
         /// <param name="val">The number of audio channels</param>
         [DllImport(AvUtilDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_frame_set_channels(IntPtr frame, int val);
+
+        /// <summary>
+        /// Unreference all the buffers referenced by frame and reset the frame fields.
+        /// </summary>
+        /// <param name="frame">(AVFrame) The frame</param>
+        [DllImport(AvUtilDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void av_frame_unref(IntPtr frame);
     }
 }

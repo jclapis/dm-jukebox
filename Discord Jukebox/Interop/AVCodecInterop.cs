@@ -142,5 +142,15 @@ namespace DiscordJukebox.Interop
 
         [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_init_packet(IntPtr pkt);
+
+        /// <summary>
+        /// Wipe the packet.
+        ///
+        /// Unreference the buffer referenced by the packet and reset the
+        /// remaining packet fields to their default values.
+        /// </summary>
+        /// <param name="pkt">The packet to be unreferenced.</param>
+        [DllImport(AVCodecDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void av_packet_unref(IntPtr pkt);
     }
 }
