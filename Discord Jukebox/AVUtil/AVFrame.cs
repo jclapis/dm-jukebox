@@ -29,7 +29,7 @@ namespace DiscordJukebox.Interop
     /// sizeof(AVFrame) is not a part of the public ABI, so new fields may be added
     /// to the end with a minor bump.
     /// Similarly fields that are marked as to be only accessed by
-    /// av_opt_ptr() can be reordered.This allows 2 forks to add fields
+    /// av_opt_ptr() can be reordered. This allows 2 forks to add fields
     /// without breaking compatibility with each other.
     ///
     /// Fields can be accessed through AVOptions, the name string used, matches the
@@ -37,7 +37,7 @@ namespace DiscordJukebox.Interop
     /// for AVFrame can be obtained from avcodec_get_frame_class()
     /// </summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal struct AVFrame
+    unsafe internal struct AVFrame
     {
         /// <summary>
         /// pointer to the picture/channel planes.
@@ -51,8 +51,19 @@ namespace DiscordJukebox.Interop
         /// NOTE: Except for hwaccel formats, pointers not needed by the format
         /// MUST be set to NULL.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-        public IntPtr[] data;
+        /// <remarks>
+        /// This is supposed to be a fixed size array with 8 elements, but C# doesn't
+        /// support fixed buffers of pointer types, so we have to split it up into
+        /// individual fields.
+        /// </remarks>
+        public byte* data0;
+        public byte* data1;
+        public byte* data2;
+        public byte* data3;
+        public byte* data4;
+        public byte* data5;
+        public byte* data6;
+        public byte* data7;
 
         /// <summary>
         /// For video, size in bytes of each picture line.
@@ -69,8 +80,7 @@ namespace DiscordJukebox.Interop
         /// The linesize may be larger than the size of usable data -- there
         /// may be extra padding present for performance reasons.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-        public int[] linesize;
+        public fixed int linesize[8];
 
         /// <summary>
         /// pointers to the data planes/channels.
@@ -86,7 +96,7 @@ namespace DiscordJukebox.Interop
         /// but for planar audio with more channels that can fit in data,
         /// extended_data must be used in order to access all channels.
         /// </summary>
-        public IntPtr extended_data;
+        public byte** extended_data;
 
         /// <summary>
         /// width of the video frame
@@ -160,13 +170,12 @@ namespace DiscordJukebox.Interop
         /// <summary>
         /// for some private data of the user
         /// </summary>
-        public IntPtr opaque;
+        public void* opaque;
 
         /// <summary>
         /// unused
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-        public ulong[] error;
+        public fixed ulong error[8];
 
         /// <summary>
         /// When decoding, this signals how much the picture must be delayed.
@@ -222,8 +231,21 @@ namespace DiscordJukebox.Interop
         /// this array.Then the extra AVBufferRef pointers are stored in the
         /// extended_buf array.
         /// </summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-        public IntPtr[] buf;
+        /// <remarks>
+        /// This is supposed to be a fixed size array with 8 elements, but C# doesn't
+        /// support fixed buffers of pointer types, so we have to split it up into
+        /// individual fields.
+        /// Also, this should be an AVBufferRef* instead of a void* but I don't need
+        /// to use that type, so I haven't implemented it.
+        /// </remarks>
+        public void* buf0;
+        public void* buf1;
+        public void* buf2;
+        public void* buf3;
+        public void* buf4;
+        public void* buf5;
+        public void* buf6;
+        public void* buf7;
 
         /// <summary>
         /// For planar audio which requires more than AV_NUM_DATA_POINTERS
@@ -235,16 +257,16 @@ namespace DiscordJukebox.Interop
         /// which cannot fit into AVFrame.buf.
         ///
         /// This array is always allocated using av_malloc() by whoever constructs
-        /// the frame.It is freed in av_frame_unref().
+        /// the frame. It is freed in av_frame_unref().
         /// </summary>
-        public IntPtr extended_buf;
+        public void** extended_buf;
 
         /// <summary>
         /// Number of elements in extended_buf.
         /// </summary>
         public int nb_extended_buf;
 
-        public IntPtr side_data;
+        public void** side_data;
 
         public int nb_side_data;
 
@@ -253,120 +275,7 @@ namespace DiscordJukebox.Interop
         /// </summary>
         public int flags;
 
-        /// <summary>
-        /// MPEG vs JPEG YUV range.
-        /// It must be accessed using av_frame_get_color_range() and
-        /// av_frame_set_color_range().
-        /// - encoding: Set by user
-        /// - decoding: Set by libavcodec
-        /// </summary>
-        public AVColorRange color_range;
-
-        public AVColorPrimaries color_primaries;
-
-        public AVColorTransferCharacteristic color_trc;
-
-        /// <summary>
-        /// YUV colorspace type.
-        /// It must be accessed using av_frame_get_colorspace() and
-        /// av_frame_set_colorspace().
-        /// - encoding: Set by user
-        /// - decoding: Set by libavcodec
-        /// </summary>
-        public AVColorSpace colorspace;
-
-        public AVChromaLocation chroma_location;
-        
-        /// <summary>
-        /// frame timestamp estimated using various heuristics, in stream time base
-        /// Code outside libavutil should access this field using:
-        /// av_frame_get_best_effort_timestamp(frame)
-        /// - encoding: unused
-        /// - decoding: set by libavcodec, read by user.
-        /// </summary>
-        public long best_effort_timestamp;
-
-        /// <summary>
-        /// reordered pos from the last AVPacket that has been input into the decoder
-        /// Code outside libavutil should access this field using:
-        /// av_frame_get_pkt_pos(frame)
-        /// - encoding: unused
-        /// - decoding: Read by user.
-        /// </summary>
-        public long pkt_pos;
-
-        /// <summary>
-        /// duration of the corresponding packet, expressed in
-        /// AVStream->time_base units, 0 if unknown.
-        /// Code outside libavutil should access this field using:
-        /// av_frame_get_pkt_duration(frame)
-        /// - encoding: unused
-        /// - decoding: Read by user.
-        /// </summary>
-        public long pkt_duration;
-
-        /// <summary>
-        /// metadata.
-        /// Code outside libavutil should access this field using:
-        /// av_frame_get_metadata(frame)
-        /// - encoding: Set by user.
-        /// - decoding: Set by libavcodec.
-        /// </summary>
-        public IntPtr metadata;
-
-        /// <summary>
-        /// decode error flags of the frame, set to a combination of
-        /// FF_DECODE_ERROR_xxx flags if the decoder produced a frame, but there
-        /// were errors during the decoding.
-        /// Code outside libavutil should access this field using:
-        /// av_frame_get_decode_error_flags(frame)
-        /// - encoding: unused
-        /// - decoding: set by libavcodec, read by user.
-        /// </summary>
-        public int decode_error_flags;
-
-        /// <summary>
-        /// number of audio channels, only used for audio.
-        /// Code outside libavutil should access this field using:
-        /// av_frame_get_channels(frame)
-        /// - encoding: unused
-        /// - decoding: Read by user.
-        /// </summary>
-        public int channels;
-
-        /// <summary>
-        /// size of the corresponding packet containing the compressed
-        /// frame. It must be accessed using av_frame_get_pkt_size() and
-        /// av_frame_set_pkt_size().
-        /// It is set to a negative value if unknown.
-        /// - encoding: unused
-        /// - decoding: set by libavcodec, read by user.
-        /// </summary>
-        public int pkt_size;
-
-        /// <summary>
-        /// QP table
-        /// Not to be accessed directly from outside libavutil
-        /// </summary>
-        public IntPtr qscale_table;
-
-        /// <summary>
-        /// QP store stride
-        /// Not to be accessed directly from outside libavutil
-        /// </summary>
-        public int qstride;
-
-        public int qscale_type;
-
-        /// <summary>
-        /// Not to be accessed directly from outside libavutil
-        /// </summary>
-        public IntPtr qp_table_buf;
-
-        /// <summary>
-        /// For hwaccel-format frames, this should be a reference to the
-        /// AVHWFramesContext describing the frame.
-        /// </summary>
-        public IntPtr hw_frames_ctx;
+        // The rest of the fields are supposed to be hidden from external
+        // users, so I haven't included them here.
     }
 }

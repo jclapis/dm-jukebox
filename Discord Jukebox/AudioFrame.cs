@@ -40,7 +40,6 @@ namespace DiscordJukebox
             // Set up the output frame and its buffers
             OutputFramePtr = AVUtilInterop.av_frame_alloc();
             AVFrame outputFrame = Marshal.PtrToStructure<AVFrame>(OutputFramePtr);
-            outputFrame.channels = 2;
             outputFrame.channel_layout = AV_CH_LAYOUT.AV_CH_LAYOUT_STEREO;
             outputFrame.sample_rate = 48000;
             outputFrame.format = AVSampleFormat.AV_SAMPLE_FMT_FLTP;
@@ -85,6 +84,7 @@ namespace DiscordJukebox
                 throw new Exception($"Resampling audio frame failed: {result}");
             }
 
+            AVFrame frame = Marshal.PtrToStructure<AVFrame>(OutputFramePtr);
             // This is cheating, but copying the entire AVFrame over is inefficient when we just care
             // about the linesize.
             IntPtr linesizePtr = OutputFramePtr + IntPtr.Size * 8;

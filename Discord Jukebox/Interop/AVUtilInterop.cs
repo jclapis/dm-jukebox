@@ -91,5 +91,21 @@ namespace DiscordJukebox.Interop
         /// <returns>0 on success, a negative AVERROR on error.</returns>
         [DllImport(AvUtilDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern AVERROR av_frame_get_buffer(IntPtr frame, int align);
+
+        /// <summary>
+        /// Gets the number of audio channels in an AVFrame.
+        /// </summary>
+        /// <param name="frame">(AVFrame) The frame</param>
+        /// <returns>The number of audio channels in the frame</returns>
+        [DllImport(AvUtilDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int av_frame_get_channels(IntPtr frame);
+
+        /// <summary>
+        /// Sets the number of audio channels for an AVFrame.
+        /// </summary>
+        /// <param name="frame">(AVFrame) The frame</param>
+        /// <param name="val">The number of audio channels</param>
+        [DllImport(AvUtilDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void av_frame_set_channels(IntPtr frame, int val);
     }
 }

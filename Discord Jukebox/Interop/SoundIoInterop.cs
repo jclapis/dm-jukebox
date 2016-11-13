@@ -18,7 +18,7 @@ using System.Runtime.InteropServices;
 
 namespace DiscordJukebox.Interop
 {
-    internal static class LibSoundIoInterop
+    internal static class SoundIoInterop
     {
         private const string SoundIoDll = "soundio.dll";
         

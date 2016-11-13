@@ -102,8 +102,14 @@ namespace DiscordJukebox
 
         }
 
-        private void Test()
+        private void PlayAudioToLocalSound()
         {
+
+        }
+
+        private void SetupLocalSound()
+        {
+
         }
 
     }

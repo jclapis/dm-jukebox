@@ -78,6 +78,7 @@
     </ApplicationDefinition>
     <Compile Include="AVUtil\AVERROR.cs" />
     <Compile Include="Interop\SWResampleInterop.cs" />
+    <Compile Include="LocalSoundPlayer.cs" />
     <Compile Include="SoundIo\SoundIo.cs" />
     <Compile Include="SoundIo\SoundIoBackend.cs" />
     <Compile Include="SoundIo\SoundIoChannelArea.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="SoundIo\SoundIoFormat.cs" />
     <Compile Include="SoundIo\SoundIoOutStream.cs" />
     <Compile Include="SoundIo\SoundIoSampleRateRange.cs" />
+    <Compile Include="test.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -139,7 +141,7 @@
     <Compile Include="AVUtil\AVPixelFormat.cs" />
     <Compile Include="Interop\AVUtilInterop.cs" />
     <Compile Include="Interop\Kernel32Interop.cs" />
-    <Compile Include="Interop\LibSoundIoInterop.cs" />
+    <Compile Include="Interop\SoundIoInterop.cs" />
     <Compile Include="Interop\MsvcrtInterop.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
