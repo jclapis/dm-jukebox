@@ -69,7 +69,7 @@ namespace DiscordJukebox.Interop
         /// For video, size in bytes of each picture line.
         /// For audio, size in bytes of each plane.
         ///
-        /// For audio, only linesize[0] may be set.For planar audio, each channel
+        /// For audio, only linesize[0] may be set. For planar audio, each channel
         /// plane must be the same size.
         ///
         /// For video the linesizes should be multiples of the CPUs alignment

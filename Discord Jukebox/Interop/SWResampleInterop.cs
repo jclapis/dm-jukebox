@@ -87,5 +87,36 @@ namespace DiscordJukebox.Interop
         /// <returns>0 on success, AVERROR on failure or nonmatching configuration.</returns>
         [DllImport(SwResampleDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern AVERROR swr_convert_frame(IntPtr swr, IntPtr output, IntPtr input);
+
+        /// <summary>
+        /// Gets the delay the next input sample will experience relative to the next output sample.
+        ///
+        /// Swresample can buffer data if more input has been provided than available
+        /// output space, also converting between sample rates needs a delay.
+        /// This function returns the sum of all such delays.
+        /// The exact delay is not necessarily an integer value in either input or
+        /// output sample rate. Especially when downsampling by a large value, the
+        /// output sample rate may be a poor choice to represent the delay, similarly
+        /// for upsampling and the input sample rate.
+        /// </summary>
+        /// <param name="s">(SwrContext) swr context</param>
+        /// <param name="base">timebase in which the returned delay will be:
+        /// if it's set to 1 the returned delay is in seconds
+        /// if it's set to 1000 the returned delay is in milliseconds
+        /// if it's set to the input sample rate then the returned delay is in input samples
+        /// if it's set to the output sample rate then the returned delay is in output samples
+        /// if it's the least common multiple of in_sample_rate and out_sample_rate then an
+        /// exact rounding-free delay will be returned</param>
+        /// <returns>the delay in 1 / base units</returns>
+        [DllImport(SwResampleDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern long swr_get_delay(IntPtr s, long @base);
+
+        /// <summary>
+        /// Initialize context after user parameters have been set.
+        /// </summary>
+        /// <param name="s">(SwrContext) Swr context to initialize</param>
+        /// <returns>AVERROR error code in case of failure.</returns>
+        [DllImport(SwResampleDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR swr_init(IntPtr s);
     }
 }

@@ -32,14 +32,17 @@ namespace DiscordJukebox.Interop
     /// @see av_packet_unref
     /// </summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal struct AVPacket
+    unsafe internal struct AVPacket
     {
         /// <summary>
         /// A reference to the reference-counted buffer where the packet data is
         /// stored.
         /// May be NULL, then the packet data is not reference-counted.
         /// </summary>
-        public IntPtr buf;
+        /// <remarks>
+        /// This is an AVBufferRef*. That struct isn't implemented here.
+        /// </remarks>
+        public void* buf;
 
         /// <summary>
         /// Presentation timestamp in AVStream->time_base units; the time at which
@@ -59,7 +62,7 @@ namespace DiscordJukebox.Interop
         /// </summary>
         public long dts;
 
-        public IntPtr data;
+        public byte* data;
 
         public int size;
 
@@ -74,7 +77,10 @@ namespace DiscordJukebox.Interop
         /// Additional packet data that can be provided by the container.
         /// Packet can contain several types of side information.
         /// </summary>
-        public IntPtr side_data;
+        /// <remarks>
+        /// This is an AVPacketSideData*. That struct isn't implemented here.
+        /// </remarks>
+        public void* side_data;
 
         public int side_data_elems;
 

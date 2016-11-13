@@ -81,7 +81,7 @@ namespace DiscordJukebox
             }
 
             // Create the audio frame for getting decoded data
-            Frame = new AudioFrame(CodecContext.sample_fmt, CodecContext.frame_size, CodecContext.channel_layout);
+            Frame = new AudioFrame(CodecContext.sample_fmt, CodecContext.frame_size, CodecContext.channel_layout, CodecContext.sample_rate);
 
             CodecName = codec.long_name;
             NumberOfChannels = CodecContext.channels;
