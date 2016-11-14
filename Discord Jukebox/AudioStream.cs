@@ -221,8 +221,8 @@ namespace DiscordJukebox
 
             float[] leftChannelData = new float[currentIndex];
             float[] rightChannelData = new float[currentIndex];
-            Buffer.BlockCopy(LeftChannelBuffer, 0, leftChannelData, 0, leftChannelData.Length);
-            Buffer.BlockCopy(RightChannelBuffer, 0, rightChannelData, 0, rightChannelData.Length);
+            Buffer.BlockCopy(LeftChannelBuffer, 0, leftChannelData, 0, leftChannelData.Length * sizeof(float));
+            Buffer.BlockCopy(RightChannelBuffer, 0, rightChannelData, 0, rightChannelData.Length * sizeof(float));
 
             AudioFrame frame = new AudioFrame(leftChannelData, rightChannelData);
             return frame;
