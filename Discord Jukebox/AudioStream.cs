@@ -40,6 +40,8 @@ namespace DiscordJukebox
 
         unsafe public AudioStream(string FilePath)
         {
+            Volume = 1;
+
             // Create the FormatContext
             FormatContextPtr = AVFormatInterop.avformat_alloc_context();
             IntPtr options = IntPtr.Zero;
@@ -149,9 +151,9 @@ namespace DiscordJukebox
 
         unsafe public AudioFrame GetNextFrame()
         {
-            AVFrame* i = (AVFrame*)InputFramePtr.ToPointer();
-            AVPacket* p = (AVPacket*)PacketPtr.ToPointer();
             AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
+            float* leftChannel = (float*)f->data0;
+            float* rightChannel = (float*)f->data1;
 
             // Read the next packet from the file
             AVERROR result = AVFormatInterop.av_read_frame(FormatContextPtr, PacketPtr);
@@ -179,29 +181,22 @@ namespace DiscordJukebox
             }
 
             // Resample it to the Discord requirements (48 kHz, 2 channel stereo)
-            result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
-            if (result != AVERROR.AVERROR_SUCCESS)
-            {
-                throw new Exception($"Resampling audio frame failed: {result}");
-            }
-
-            // Copy the data into the managed buffers
             int currentIndex = 0;
-            Marshal.Copy((IntPtr)f->data0, LeftChannelBuffer, currentIndex, f->nb_samples);
-            Marshal.Copy((IntPtr)f->data1, RightChannelBuffer, currentIndex, f->nb_samples);
-            currentIndex += f->nb_samples;
-
-            // Get the next round of data, if there is one
-            result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
+            result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Resampling audio frame failed: {result}");
             }
             while (f->nb_samples > 0)
             {
-                // Copy the new data into the buffer as well
-                Marshal.Copy((IntPtr)f->data0, LeftChannelBuffer, currentIndex, f->nb_samples);
-                Marshal.Copy((IntPtr)f->data1, RightChannelBuffer, currentIndex, f->nb_samples);
+                // Copy the new data into the managed buffers
+                for(int i = 0; i < f->nb_samples; i++)
+                {
+                    LeftChannelBuffer[currentIndex + i] = leftChannel[i] * Volume;
+                    RightChannelBuffer[currentIndex + i] = rightChannel[i] * Volume;
+                }
+                //Marshal.Copy((IntPtr)f->data0, LeftChannelBuffer, currentIndex, f->nb_samples);
+                //Marshal.Copy((IntPtr)f->data1, RightChannelBuffer, currentIndex, f->nb_samples);
                 currentIndex += f->nb_samples;
 
                 // Keep the cycle going until we've exhausted the swrcontext buffer
@@ -226,11 +221,6 @@ namespace DiscordJukebox
 
             AudioFrame frame = new AudioFrame(leftChannelData, rightChannelData);
             return frame;
-        }
-
-        private unsafe void SetVolume()
-        {
-
         }
 
         #region IDisposable Support

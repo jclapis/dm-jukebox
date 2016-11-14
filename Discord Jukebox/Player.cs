@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiscordJukebox
@@ -79,22 +80,26 @@ namespace DiscordJukebox
         private void Run()
         {
             int frames = 0;
+            int samplesRead = 0;
             while (!IsStopping)
             {
                 lock(StreamLock)
                 {
-                    foreach(AudioStream stream in Streams)
+                    AudioFrame frame = Streams[0].GetNextFrame();
+                    if (frame == null)
                     {
-                        AudioFrame frame = stream.GetNextFrame();
-                        frames++;
+                        System.Diagnostics.Debug.WriteLine($"Finished decoding, read {frames} frames.");
+                        return;
+                    }
+                    
+                    samplesRead += frame.LeftChannel.Length;
+                    LocalPlayer.AddFrame(frame);
+                    frames++;
 
-                        if(frame == null)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Finished decoding, read {frames} frames.");
-                            return;
-                        }
-
-                        LocalPlayer.AddFrame(frame);
+                    if(samplesRead > 48000)
+                    {
+                        Thread.Sleep(1000);
+                        samplesRead = 0;
                     }
                 }
             }

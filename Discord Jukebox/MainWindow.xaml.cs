@@ -17,6 +17,8 @@ namespace DiscordJukebox
 
         private readonly Player Player;
 
+        private AudioStream Stream;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -52,19 +54,19 @@ namespace DiscordJukebox
                 string filename = dialog.FileName;
                 try
                 {
-                    AudioStream stream = new AudioStream(filename);
+                    Stream = new AudioStream(filename);
                     using (StringWriter writer = new StringWriter())
                     {
                         writer.WriteLine($"Loaded file {Path.GetFileName(filename)}");
-                        writer.WriteLine($"Codec: {stream.CodecName}");
-                        writer.WriteLine($"Bitrate: {stream.Bitrate}");
-                        writer.WriteLine($"Duration: {stream.Duration}");
-                        writer.WriteLine($"Channels: {stream.NumberOfChannels}");
-                        writer.WriteLine($"Samples per Frame: {stream.SamplesPerFrame}");
+                        writer.WriteLine($"Codec: {Stream.CodecName}");
+                        writer.WriteLine($"Bitrate: {Stream.Bitrate}");
+                        writer.WriteLine($"Duration: {Stream.Duration}");
+                        writer.WriteLine($"Channels: {Stream.NumberOfChannels}");
+                        writer.WriteLine($"Samples per Frame: {Stream.SamplesPerFrame}");
                         writer.WriteLine();
                         StuffBox.Text += writer.ToString();
                     }
-                    Player.AddStream(stream);
+                    Player.AddStream(Stream);
                 }
                 catch(Exception ex)
                 {
@@ -85,5 +87,12 @@ namespace DiscordJukebox
             System.Diagnostics.Debug.WriteLine("Stopped playing");
         }
 
+        private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if(VolumeSlider != null && Stream != null)
+            {
+                Stream.Volume = (float)VolumeSlider.Value;
+            }
+        }
     }
 }

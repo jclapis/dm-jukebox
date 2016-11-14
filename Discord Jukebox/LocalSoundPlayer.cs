@@ -66,6 +66,8 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Local sound output does not have two channels. Expected stereo, but it's {stream.layout.name}.");
             }
+            stream.software_latency = 0.1;
+            Marshal.StructureToPtr(stream, SoundIoOutStreamPtr, false);
         }
 
         public void Start()
