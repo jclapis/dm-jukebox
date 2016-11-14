@@ -20,9 +20,11 @@ namespace DiscordJukebox
 
         private readonly AVCodecContext CodecContext;
 
-        private readonly float[] LeftChannelBuffer;
+        public float[] LeftChannelBuffer { get; }
 
-        private readonly float[] RightChannelBuffer;
+        public float[] RightChannelBuffer { get; }
+
+        public int BufferSize { get; private set; }
 
         public float Volume { get; set; }
 
@@ -149,11 +151,9 @@ namespace DiscordJukebox
             Duration = TimeSpan.FromSeconds(durationInSeconds);
         }
 
-        unsafe public AudioFrame GetNextFrame()
+        unsafe public bool GetNextFrame()
         {
-            AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
-            float* leftChannel = (float*)f->data0;
-            float* rightChannel = (float*)f->data1;
+            BufferSize = 0;
 
             // Read the next packet from the file
             AVERROR result = AVFormatInterop.av_read_frame(FormatContextPtr, PacketPtr);
@@ -161,7 +161,7 @@ namespace DiscordJukebox
             {
                 if (result == AVERROR.AVERROR_EOF)
                 {
-                    return null;
+                    return false;
                 }
                 throw new Exception($"Error reading audio packet: {result}");
             }
@@ -181,23 +181,24 @@ namespace DiscordJukebox
             }
 
             // Resample it to the Discord requirements (48 kHz, 2 channel stereo)
-            int currentIndex = 0;
             result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Resampling audio frame failed: {result}");
             }
+
+            // Copy the new data into the managed buffers
+            AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
+            float* leftChannel = (float*)f->data0;
+            float* rightChannel = (float*)f->data1;
             while (f->nb_samples > 0)
             {
-                // Copy the new data into the managed buffers
                 for(int i = 0; i < f->nb_samples; i++)
                 {
-                    LeftChannelBuffer[currentIndex + i] = leftChannel[i] * Volume;
-                    RightChannelBuffer[currentIndex + i] = rightChannel[i] * Volume;
+                    LeftChannelBuffer[BufferSize + i] = leftChannel[i] * Volume;
+                    RightChannelBuffer[BufferSize + i] = rightChannel[i] * Volume;
                 }
-                //Marshal.Copy((IntPtr)f->data0, LeftChannelBuffer, currentIndex, f->nb_samples);
-                //Marshal.Copy((IntPtr)f->data1, RightChannelBuffer, currentIndex, f->nb_samples);
-                currentIndex += f->nb_samples;
+                BufferSize += f->nb_samples;
 
                 // Keep the cycle going until we've exhausted the swrcontext buffer
                 result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
@@ -214,13 +215,7 @@ namespace DiscordJukebox
             AVCodecInterop.av_packet_unref(PacketPtr);
             AVUtilInterop.av_frame_unref(InputFramePtr);
 
-            float[] leftChannelData = new float[currentIndex];
-            float[] rightChannelData = new float[currentIndex];
-            Buffer.BlockCopy(LeftChannelBuffer, 0, leftChannelData, 0, leftChannelData.Length * sizeof(float));
-            Buffer.BlockCopy(RightChannelBuffer, 0, rightChannelData, 0, rightChannelData.Length * sizeof(float));
-
-            AudioFrame frame = new AudioFrame(leftChannelData, rightChannelData);
-            return frame;
+            return true;
         }
 
         #region IDisposable Support

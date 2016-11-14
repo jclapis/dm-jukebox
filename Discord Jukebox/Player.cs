@@ -85,22 +85,23 @@ namespace DiscordJukebox
             {
                 lock(StreamLock)
                 {
-                    AudioFrame frame = Streams[0].GetNextFrame();
-                    if (frame == null)
+                    bool frameReceived = Streams[0].GetNextFrame();
+                    if (!frameReceived)
                     {
                         System.Diagnostics.Debug.WriteLine($"Finished decoding, read {frames} frames.");
                         return;
                     }
                     
-                    samplesRead += frame.LeftChannel.Length;
-                    LocalPlayer.AddFrame(frame);
+                    samplesRead += Streams[0].BufferSize;
+                    System.Diagnostics.Debug.WriteLine($"Decoded {Streams[0].BufferSize} samples, writing to local player.");
+                    LocalPlayer.WriteData(Streams[0]);
                     frames++;
 
-                    if(samplesRead > 48000)
+                    /*if(samplesRead > 4800)
                     {
-                        Thread.Sleep(1000);
+                        Thread.Sleep(100);
                         samplesRead = 0;
-                    }
+                    }*/
                 }
             }
         }

@@ -27,11 +27,14 @@ namespace DiscordJukebox
 
         private bool Started;
 
-        private Queue<AudioFrame> FrameQueue;
+        private readonly CircularBuffer LeftBuffer;
+
+        private readonly CircularBuffer RightBuffer;
 
         public LocalSoundPlayer()
         {
-            FrameQueue = new Queue<AudioFrame>();
+            LeftBuffer = new CircularBuffer();
+            RightBuffer = new CircularBuffer();
             WriteSoundDelegate = WriteSound;
             HandleUnderflowDelegate = HandleUnderflow;
 
@@ -100,36 +103,28 @@ namespace DiscordJukebox
 
         unsafe private void WriteSound(IntPtr StreamPtr, int MinFrameCount, int MaxFrameCount)
         {
-            System.Diagnostics.Debug.WriteLine($"current queue size: {FrameQueue.Count}, min = {MinFrameCount}, max = {MaxFrameCount}");
+            System.Diagnostics.Debug.WriteLine($"current delta: {LeftBuffer.ReadWriteDelta}, min = {MinFrameCount}, max = {MaxFrameCount}");
             IntPtr soundAreas = IntPtr.Zero;
-            int framesLeft = MaxFrameCount;
             SoundIoOutStream stream = Marshal.PtrToStructure<SoundIoOutStream>(StreamPtr);
 
-            int frameCount = framesLeft;
+            int frameCount = MaxFrameCount;
             SoundIoError result = SoundIoInterop.soundio_outstream_begin_write(StreamPtr, ref soundAreas, ref frameCount);
             if (result != SoundIoError.SoundIoErrorNone)
             {
                 throw new Exception($"Writing to the local sound driver failed on begin: {result}");
             }
-
-            int totalCount = 0;
-
-            while (framesLeft > 0)
+            
+            float[] leftChannel = LeftBuffer.Read(MaxFrameCount);
+            float[] rightChannel = RightBuffer.Read(MaxFrameCount);
+            SoundIoChannelArea* areas = (SoundIoChannelArea*)soundAreas.ToPointer();
+            float* leftChannelArea = areas[0].ptr;
+            float* rightChannelArea = areas[1].ptr;
+            int stepSize = areas[0].step / sizeof(float);
+            for(int currentFrame = 0; currentFrame < MaxFrameCount; currentFrame++)
             {
-                AudioFrame frame = GetNextFrame();
-                frameCount = Math.Min(framesLeft, frame.LeftChannel.Length);
-                SoundIoChannelArea* areas = (SoundIoChannelArea*)soundAreas.ToPointer();
-                float* leftChannelArea = areas[0].ptr;
-                float* rightChannelArea = areas[1].ptr;
-                int stepSize = areas[0].step / sizeof(float);
-                for(int currentFrame = 0; currentFrame < frameCount; currentFrame++)
-                {
-                    int areaIndex = stepSize * (currentFrame + totalCount);
-                    leftChannelArea[areaIndex] = frame.LeftChannel[currentFrame];
-                    rightChannelArea[areaIndex] = frame.RightChannel[currentFrame];
-                }
-                totalCount += frameCount;
-                framesLeft -= frameCount;
+                int areaIndex = stepSize * currentFrame;
+                leftChannelArea[areaIndex] = leftChannel[currentFrame];
+                rightChannelArea[areaIndex] = rightChannel[currentFrame];
             }
 
             result = SoundIoInterop.soundio_outstream_end_write(StreamPtr);
@@ -137,7 +132,7 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Writing to the local sound driver failed on end: {result}");
             }
-            System.Diagnostics.Debug.WriteLine($"finished writing {MaxFrameCount} frames. current queue size: {FrameQueue.Count}");
+            System.Diagnostics.Debug.WriteLine($"finished writing {MaxFrameCount} frames. current delta: {LeftBuffer.ReadWriteDelta}");
         }
 
         private void HandleUnderflow(IntPtr StreamPtr)
@@ -145,20 +140,16 @@ namespace DiscordJukebox
             System.Diagnostics.Debug.WriteLine("Underflow detected.");
         }
 
-        public void AddFrame(AudioFrame Frame)
+        public void WriteData(AudioStream Stream)
         {
-            FrameQueue.Enqueue(Frame);
-        }
-
-        private AudioFrame GetNextFrame()
-        {
-            while (FrameQueue.Count == 0)
+            if(!LeftBuffer.Write(Stream.LeftChannelBuffer, Stream.BufferSize))
             {
-                System.Diagnostics.Debug.WriteLine($"no frame ready yet, waiting...");
-                Thread.Sleep(100);
+                System.Diagnostics.Debug.WriteLine($"Left Buffer is full, can't write data!");
             }
-
-            return FrameQueue.Dequeue();
+            if (!RightBuffer.Write(Stream.RightChannelBuffer, Stream.BufferSize))
+            {
+                System.Diagnostics.Debug.WriteLine($"Right Buffer is full, can't write data!");
+            }
         }
 
         #region IDisposable Support
