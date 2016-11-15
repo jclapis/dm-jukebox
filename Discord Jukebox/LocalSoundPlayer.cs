@@ -1,11 +1,6 @@
 ﻿using DiscordJukebox.Interop;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DiscordJukebox
 {
@@ -27,18 +22,21 @@ namespace DiscordJukebox
 
         private bool Started;
 
-        private readonly CircularBuffer LeftBuffer;
+        private readonly CircularBuffer Buffer;
 
-        private readonly CircularBuffer RightBuffer;
+        private readonly int LeftChannelId;
 
-        private int LeftChannelId;
+        private readonly int RightChannelId;
 
-        private int RightChannelId;
+        private readonly float[] LeftChannelData;
+
+        private readonly float[] RightChannelData;
 
         public LocalSoundPlayer()
         {
-            LeftBuffer = new CircularBuffer();
-            RightBuffer = new CircularBuffer();
+            Buffer = new CircularBuffer();
+            LeftChannelData = new float[CircularBuffer.BufferSize];
+            RightChannelData = new float[CircularBuffer.BufferSize];
             WriteSoundDelegate = WriteSound;
             HandleUnderflowDelegate = HandleUnderflow;
             
@@ -109,7 +107,6 @@ namespace DiscordJukebox
 
         unsafe private void WriteSound(IntPtr StreamPtr, int MinFrameCount, int MaxFrameCount)
         {
-            //System.Diagnostics.Debug.WriteLine($"current delta: {LeftBuffer.ReadWriteDelta}, min = {MinFrameCount}, max = {MaxFrameCount}");
             IntPtr soundAreas = IntPtr.Zero;
             SoundIoOutStream stream = Marshal.PtrToStructure<SoundIoOutStream>(StreamPtr);
 
@@ -120,8 +117,7 @@ namespace DiscordJukebox
                 throw new Exception($"Writing to the local sound driver failed on begin: {result}");
             }
             
-            float[] leftChannel = LeftBuffer.Read(MaxFrameCount);
-            float[] rightChannel = RightBuffer.Read(MaxFrameCount);
+            Buffer.Read(LeftChannelData, RightChannelData, MaxFrameCount);
             SoundIoChannelArea* areas = (SoundIoChannelArea*)soundAreas.ToPointer();
             float* leftChannelArea = areas[0].ptr;
             float* rightChannelArea = areas[1].ptr;
@@ -129,8 +125,8 @@ namespace DiscordJukebox
             for(int currentFrame = 0; currentFrame < MaxFrameCount; currentFrame++)
             {
                 int areaIndex = stepSize * currentFrame;
-                leftChannelArea[areaIndex] = leftChannel[currentFrame];
-                rightChannelArea[areaIndex] = rightChannel[currentFrame];
+                leftChannelArea[areaIndex] = LeftChannelData[currentFrame];
+                rightChannelArea[areaIndex] = RightChannelData[currentFrame];
             }
 
             result = SoundIoInterop.soundio_outstream_end_write(StreamPtr);
@@ -138,7 +134,6 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Writing to the local sound driver failed on end: {result}");
             }
-            //System.Diagnostics.Debug.WriteLine($"finished writing {MaxFrameCount} frames. current delta: {LeftBuffer.ReadWriteDelta}");
         }
 
         private void HandleUnderflow(IntPtr StreamPtr)
@@ -148,14 +143,7 @@ namespace DiscordJukebox
 
         public void WriteData(AudioStream Stream)
         {
-            if(!LeftBuffer.Write(Stream.LeftChannelBuffer, Stream.BufferSize))
-            {
-                System.Diagnostics.Debug.WriteLine($"Left Buffer is full, can't write data!");
-            }
-            if (!RightBuffer.Write(Stream.RightChannelBuffer, Stream.BufferSize))
-            {
-                System.Diagnostics.Debug.WriteLine($"Right Buffer is full, can't write data!");
-            }
+            Buffer.Write(Stream.LeftChannelBuffer, Stream.RightChannelBuffer, Stream.BufferSize);
         }
 
         #region IDisposable Support

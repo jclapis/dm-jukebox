@@ -9,7 +9,11 @@ namespace DiscordJukebox
 {
     internal class CircularBuffer
     {
-        private readonly float[] InternalBuffer;
+        public const int BufferSize = 4800;
+
+        private readonly float[] LeftBuffer;
+
+        private readonly float[] RightBuffer;
 
         private readonly object Lock;
 
@@ -25,18 +29,19 @@ namespace DiscordJukebox
 
         public CircularBuffer()
         {
-            InternalBuffer = new float[4800];
+            LeftBuffer = new float[BufferSize];
+            RightBuffer = new float[BufferSize];
             Lock = new object();
             ReadNotifier = new AutoResetEvent(false);
             WriteNotifier = new AutoResetEvent(false);
         }
 
-        public bool Write(float[] Data, int Size)
+        public void Write(float[] LeftChannelData, float[] RightChannelData, int Size)
         {
             bool isNotReady;
             lock (Lock)
             {
-                isNotReady = ReadWriteDelta + Size > InternalBuffer.Length;
+                isNotReady = ReadWriteDelta + Size > BufferSize;
             }
             while (isNotReady)
             {
@@ -44,21 +49,24 @@ namespace DiscordJukebox
                 WriteNotifier.WaitOne();
                 lock (Lock)
                 {
-                    isNotReady = ReadWriteDelta + Size > InternalBuffer.Length;
+                    isNotReady = ReadWriteDelta + Size > BufferSize;
                 }
             }
 
-            int headroom = InternalBuffer.Length - CurrentWritePosition;
+            int headroom = BufferSize - CurrentWritePosition;
             if (headroom >= Size)
             {
-                Buffer.BlockCopy(Data, 0, InternalBuffer, CurrentWritePosition * sizeof(float), Size * sizeof(float));
+                Buffer.BlockCopy(LeftChannelData, 0, LeftBuffer, CurrentWritePosition * sizeof(float), Size * sizeof(float));
+                Buffer.BlockCopy(RightChannelData, 0, RightBuffer, CurrentWritePosition * sizeof(float), Size * sizeof(float));
                 CurrentWritePosition += Size;
             }
             else
             {
                 int overflow = Size - headroom;
-                Buffer.BlockCopy(Data, 0, InternalBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
-                Buffer.BlockCopy(Data, headroom * sizeof(float), InternalBuffer, 0, overflow * sizeof(float));
+                Buffer.BlockCopy(LeftChannelData, 0, LeftBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
+                Buffer.BlockCopy(LeftChannelData, headroom * sizeof(float), LeftBuffer, 0, overflow * sizeof(float));
+                Buffer.BlockCopy(RightChannelData, 0, RightBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
+                Buffer.BlockCopy(RightChannelData, headroom * sizeof(float), RightBuffer, 0, overflow * sizeof(float));
                 CurrentWritePosition = overflow;
             }
 
@@ -67,10 +75,9 @@ namespace DiscordJukebox
                 ReadWriteDelta += Size;
             }
             ReadNotifier.Set();
-            return true;
         }
 
-        public float[] Read(int Size)
+        public void Read(float[] LeftChannel, float[] RightChannel, int Size)
         {
             bool isNotReady;
             lock (Lock)
@@ -86,19 +93,21 @@ namespace DiscordJukebox
                     isNotReady = Size > ReadWriteDelta;
                 }
             }
-
-            float[] outBuffer = new float[Size];
-            int headroom = InternalBuffer.Length - CurrentReadPosition;
+            
+            int headroom = BufferSize - CurrentReadPosition;
             if(headroom >= Size)
             {
-                Buffer.BlockCopy(InternalBuffer, CurrentReadPosition * sizeof(float), outBuffer, 0, Size * sizeof(float));
+                Buffer.BlockCopy(LeftBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, Size * sizeof(float));
+                Buffer.BlockCopy(RightBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, Size * sizeof(float));
                 CurrentReadPosition += Size;
             }
             else
             {
                 int overflow = Size - headroom;
-                Buffer.BlockCopy(InternalBuffer, CurrentReadPosition * sizeof(float), outBuffer, 0, headroom * sizeof(float));
-                Buffer.BlockCopy(InternalBuffer, 0, outBuffer, headroom * sizeof(float), overflow * sizeof(float));
+                Buffer.BlockCopy(LeftBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, headroom * sizeof(float));
+                Buffer.BlockCopy(LeftBuffer, 0, LeftChannel, headroom * sizeof(float), overflow * sizeof(float));
+                Buffer.BlockCopy(RightBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, headroom * sizeof(float));
+                Buffer.BlockCopy(RightBuffer, 0, RightChannel, headroom * sizeof(float), overflow * sizeof(float));
                 CurrentReadPosition = overflow;
             }
 
@@ -107,7 +116,6 @@ namespace DiscordJukebox
                 ReadWriteDelta -= Size;
             }
             WriteNotifier.Set();
-            return outBuffer;
 
         }
 
