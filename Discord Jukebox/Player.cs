@@ -93,7 +93,7 @@ namespace DiscordJukebox
                     }
                     
                     samplesRead += Streams[0].BufferSize;
-                    System.Diagnostics.Debug.WriteLine($"Decoded {Streams[0].BufferSize} samples, writing to local player.");
+                    //System.Diagnostics.Debug.WriteLine($"Decoded {Streams[0].BufferSize} samples, writing to local player.");
                     LocalPlayer.WriteData(Streams[0]);
                     frames++;
 

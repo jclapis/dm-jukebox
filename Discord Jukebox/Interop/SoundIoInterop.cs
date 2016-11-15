@@ -66,5 +66,17 @@ namespace DiscordJukebox.Interop
 
         [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern SoundIoError soundio_outstream_pause(IntPtr outstream, bool pause);
+
+        [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern IntPtr soundio_channel_layout_get_builtin(SoundIoChannelLayoutId index);
+
+        [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern bool soundio_device_supports_layout(IntPtr device, IntPtr layout);
+
+        [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int soundio_channel_layout_find_channel(IntPtr layout, SoundIoChannelId channel);
+
+        [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern IntPtr soundio_channel_layout_get_default(int channel_count);
     }
 }

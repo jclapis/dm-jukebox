@@ -31,13 +31,17 @@ namespace DiscordJukebox
 
         private readonly CircularBuffer RightBuffer;
 
+        private int LeftChannelId;
+
+        private int RightChannelId;
+
         public LocalSoundPlayer()
         {
             LeftBuffer = new CircularBuffer();
             RightBuffer = new CircularBuffer();
             WriteSoundDelegate = WriteSound;
             HandleUnderflowDelegate = HandleUnderflow;
-
+            
             SoundIoPtr = SoundIoInterop.soundio_create();
             SoundIoError result = SoundIoInterop.soundio_connect(SoundIoPtr);
             if (result != SoundIoError.SoundIoErrorNone)
@@ -48,7 +52,16 @@ namespace DiscordJukebox
             SoundIoInterop.soundio_flush_events(SoundIoPtr);
             int defaultDeviceIndex = SoundIoInterop.soundio_default_output_device_index(SoundIoPtr);
             SoundIoDevicePtr = SoundIoInterop.soundio_get_output_device(SoundIoPtr, defaultDeviceIndex);
-
+            SoundIoDevice device = Marshal.PtrToStructure<SoundIoDevice>(SoundIoDevicePtr);
+            IntPtr defaultLayout = device.layouts;
+            LeftChannelId = SoundIoInterop.soundio_channel_layout_find_channel(defaultLayout, SoundIoChannelId.SoundIoChannelIdFrontLeft);
+            RightChannelId = SoundIoInterop.soundio_channel_layout_find_channel(defaultLayout, SoundIoChannelId.SoundIoChannelIdFrontRight);
+            if(LeftChannelId == -1 || RightChannelId == -1)
+            {
+                SoundIoChannelLayout layout = Marshal.PtrToStructure<SoundIoChannelLayout>(defaultLayout);
+                throw new Exception($"Local sound device {device.name} doesn't support stereo playback, couldn't find the front left or front right channels. Layout was {layout.name}.");
+            }
+            
             SoundIoOutStreamPtr = SoundIoInterop.soundio_outstream_create(SoundIoDevicePtr);
             SoundIoOutStream stream = Marshal.PtrToStructure<SoundIoOutStream>(SoundIoOutStreamPtr);
             stream.write_callback = WriteSoundDelegate;
@@ -64,13 +77,6 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Opening the local sound stream failed: {result}");
             }
-            stream = Marshal.PtrToStructure<SoundIoOutStream>(SoundIoOutStreamPtr);
-            if(stream.layout.channel_count != 2)
-            {
-                throw new Exception($"Local sound output does not have two channels. Expected stereo, but it's {stream.layout.name}.");
-            }
-            stream.software_latency = 0.1;
-            Marshal.StructureToPtr(stream, SoundIoOutStreamPtr, false);
         }
 
         public void Start()
@@ -103,7 +109,7 @@ namespace DiscordJukebox
 
         unsafe private void WriteSound(IntPtr StreamPtr, int MinFrameCount, int MaxFrameCount)
         {
-            System.Diagnostics.Debug.WriteLine($"current delta: {LeftBuffer.ReadWriteDelta}, min = {MinFrameCount}, max = {MaxFrameCount}");
+            //System.Diagnostics.Debug.WriteLine($"current delta: {LeftBuffer.ReadWriteDelta}, min = {MinFrameCount}, max = {MaxFrameCount}");
             IntPtr soundAreas = IntPtr.Zero;
             SoundIoOutStream stream = Marshal.PtrToStructure<SoundIoOutStream>(StreamPtr);
 
@@ -132,7 +138,7 @@ namespace DiscordJukebox
             {
                 throw new Exception($"Writing to the local sound driver failed on end: {result}");
             }
-            System.Diagnostics.Debug.WriteLine($"finished writing {MaxFrameCount} frames. current delta: {LeftBuffer.ReadWriteDelta}");
+            //System.Diagnostics.Debug.WriteLine($"finished writing {MaxFrameCount} frames. current delta: {LeftBuffer.ReadWriteDelta}");
         }
 
         private void HandleUnderflow(IntPtr StreamPtr)

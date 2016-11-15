@@ -85,6 +85,7 @@
     <Compile Include="SoundIo\SoundIoChannelArea.cs" />
     <Compile Include="SoundIo\SoundIoChannelId.cs" />
     <Compile Include="SoundIo\SoundIoChannelLayout.cs" />
+    <Compile Include="SoundIo\SoundIoChannelLayoutId.cs" />
     <Compile Include="SoundIo\SoundIoDevice.cs" />
     <Compile Include="SoundIo\SoundIoDeviceAim.cs" />
     <Compile Include="SoundIo\SoundIoError.cs" />
