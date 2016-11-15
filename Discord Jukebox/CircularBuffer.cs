@@ -45,7 +45,6 @@ namespace DiscordJukebox
             }
             while (isNotReady)
             {
-                //System.Diagnostics.Debug.WriteLine("Writing has to pause, too much stuff");
                 WriteNotifier.WaitOne();
                 lock (Lock)
                 {
@@ -86,7 +85,6 @@ namespace DiscordJukebox
             }
             while (isNotReady)
             {
-                //System.Diagnostics.Debug.WriteLine("Reading has to pause, not enough stuff yet");
                 ReadNotifier.WaitOne();
                 lock (Lock)
                 {

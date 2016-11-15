@@ -119,9 +119,9 @@ namespace DiscordJukebox
             
             Buffer.Read(LeftChannelData, RightChannelData, MaxFrameCount);
             SoundIoChannelArea* areas = (SoundIoChannelArea*)soundAreas.ToPointer();
-            float* leftChannelArea = areas[0].ptr;
-            float* rightChannelArea = areas[1].ptr;
-            int stepSize = areas[0].step / sizeof(float);
+            float* leftChannelArea = areas[LeftChannelId].ptr;
+            float* rightChannelArea = areas[RightChannelId].ptr;
+            int stepSize = areas[LeftChannelId].step / sizeof(float);
             for(int currentFrame = 0; currentFrame < MaxFrameCount; currentFrame++)
             {
                 int areaIndex = stepSize * currentFrame;
