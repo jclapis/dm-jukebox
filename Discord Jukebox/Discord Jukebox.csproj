@@ -78,6 +78,7 @@
     </ApplicationDefinition>
     <Compile Include="AVUtil\AVERROR.cs" />
     <Compile Include="CircularBuffer.cs" />
+    <Compile Include="ThreadSafeCircularBuffer.cs" />
     <Compile Include="Interop\SWResampleInterop.cs" />
     <Compile Include="LocalSoundPlayer.cs" />
     <Compile Include="SoundIo\SoundIo.cs" />

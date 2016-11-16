@@ -22,7 +22,7 @@ namespace DiscordJukebox
 
         private bool Started;
 
-        private readonly CircularBuffer Buffer;
+        private readonly ThreadSafeCircularBuffer Buffer;
 
         private readonly int LeftChannelId;
 
@@ -34,9 +34,9 @@ namespace DiscordJukebox
 
         public LocalSoundPlayer()
         {
-            Buffer = new CircularBuffer();
-            LeftChannelData = new float[CircularBuffer.BufferSize];
-            RightChannelData = new float[CircularBuffer.BufferSize];
+            Buffer = new ThreadSafeCircularBuffer();
+            LeftChannelData = new float[ThreadSafeCircularBuffer.BufferSize];
+            RightChannelData = new float[ThreadSafeCircularBuffer.BufferSize];
             WriteSoundDelegate = WriteSound;
             HandleUnderflowDelegate = HandleUnderflow;
             

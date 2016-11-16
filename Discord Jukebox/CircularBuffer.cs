@@ -1,120 +1,81 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace DiscordJukebox
 {
     internal class CircularBuffer
     {
-        public const int BufferSize = 4800;
+        private readonly float[] LeftChannelBuffer;
 
-        private readonly float[] LeftBuffer;
-
-        private readonly float[] RightBuffer;
-
-        private readonly object Lock;
+        private readonly float[] RightChannelBuffer;
 
         private int CurrentWritePosition;
 
         private int CurrentReadPosition;
 
-        public int ReadWriteDelta { get; private set; }
+        private readonly int BufferSize;
 
-        private readonly AutoResetEvent ReadNotifier;
+        public int AvailableData { get; private set; }
 
-        private readonly AutoResetEvent WriteNotifier;
-
-        public CircularBuffer()
+        public CircularBuffer(int BufferSize)
         {
-            LeftBuffer = new float[BufferSize];
-            RightBuffer = new float[BufferSize];
-            Lock = new object();
-            ReadNotifier = new AutoResetEvent(false);
-            WriteNotifier = new AutoResetEvent(false);
+            this.BufferSize = BufferSize;
+            LeftChannelBuffer = new float[BufferSize];
+            RightChannelBuffer = new float[BufferSize];
         }
 
-        public void Write(float[] LeftChannelData, float[] RightChannelData, int Size)
+        public void Write(IntPtr LeftChannelData, IntPtr RightChannelData, int NumberOfSamples)
         {
-            bool isNotReady;
-            lock (Lock)
+            if(AvailableData + NumberOfSamples > BufferSize)
             {
-                isNotReady = ReadWriteDelta + Size > BufferSize;
-            }
-            while (isNotReady)
-            {
-                WriteNotifier.WaitOne();
-                lock (Lock)
-                {
-                    isNotReady = ReadWriteDelta + Size > BufferSize;
-                }
+                throw new Exception("Circular buffer overflow, this should never happen but it did. Disaster.");
             }
 
             int headroom = BufferSize - CurrentWritePosition;
-            if (headroom >= Size)
+            if (headroom >= NumberOfSamples)
             {
-                Buffer.BlockCopy(LeftChannelData, 0, LeftBuffer, CurrentWritePosition * sizeof(float), Size * sizeof(float));
-                Buffer.BlockCopy(RightChannelData, 0, RightBuffer, CurrentWritePosition * sizeof(float), Size * sizeof(float));
-                CurrentWritePosition += Size;
+                Marshal.Copy(LeftChannelData, LeftChannelBuffer, CurrentWritePosition, NumberOfSamples);
+                Marshal.Copy(RightChannelData, RightChannelBuffer, CurrentWritePosition, NumberOfSamples);
+                CurrentWritePosition += NumberOfSamples;
             }
             else
             {
-                int overflow = Size - headroom;
-                Buffer.BlockCopy(LeftChannelData, 0, LeftBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
-                Buffer.BlockCopy(LeftChannelData, headroom * sizeof(float), LeftBuffer, 0, overflow * sizeof(float));
-                Buffer.BlockCopy(RightChannelData, 0, RightBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
-                Buffer.BlockCopy(RightChannelData, headroom * sizeof(float), RightBuffer, 0, overflow * sizeof(float));
+                int overflow = NumberOfSamples - headroom;
+                Marshal.Copy(LeftChannelData, LeftChannelBuffer, CurrentWritePosition, headroom);
+                Marshal.Copy(LeftChannelData + headroom * sizeof(float), LeftChannelBuffer, 0, overflow);
+                Marshal.Copy(RightChannelData, RightChannelBuffer, CurrentWritePosition, headroom);
+                Marshal.Copy(RightChannelData + headroom * sizeof(float), RightChannelBuffer, 0, overflow);
                 CurrentWritePosition = overflow;
             }
 
-            lock(Lock)
-            {
-                ReadWriteDelta += Size;
-            }
-            ReadNotifier.Set();
+            AvailableData += NumberOfSamples;
         }
 
         public void Read(float[] LeftChannel, float[] RightChannel, int Size)
         {
-            bool isNotReady;
-            lock (Lock)
+            if(Size > AvailableData)
             {
-                isNotReady = Size > ReadWriteDelta;
-            }
-            while (isNotReady)
-            {
-                ReadNotifier.WaitOne();
-                lock (Lock)
-                {
-                    isNotReady = Size > ReadWriteDelta;
-                }
+                throw new Exception("Circular buffer underflow, this should never happen but it did. Disaster.");
             }
             
             int headroom = BufferSize - CurrentReadPosition;
-            if(headroom >= Size)
+            if (headroom >= Size)
             {
-                Buffer.BlockCopy(LeftBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, Size * sizeof(float));
-                Buffer.BlockCopy(RightBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, Size * sizeof(float));
+                Buffer.BlockCopy(LeftChannelBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, Size * sizeof(float));
+                Buffer.BlockCopy(RightChannelBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, Size * sizeof(float));
                 CurrentReadPosition += Size;
             }
             else
             {
                 int overflow = Size - headroom;
-                Buffer.BlockCopy(LeftBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, headroom * sizeof(float));
-                Buffer.BlockCopy(LeftBuffer, 0, LeftChannel, headroom * sizeof(float), overflow * sizeof(float));
-                Buffer.BlockCopy(RightBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, headroom * sizeof(float));
-                Buffer.BlockCopy(RightBuffer, 0, RightChannel, headroom * sizeof(float), overflow * sizeof(float));
+                Buffer.BlockCopy(LeftChannelBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, headroom * sizeof(float));
+                Buffer.BlockCopy(LeftChannelBuffer, 0, LeftChannel, headroom * sizeof(float), overflow * sizeof(float));
+                Buffer.BlockCopy(RightChannelBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, headroom * sizeof(float));
+                Buffer.BlockCopy(RightChannelBuffer, 0, RightChannel, headroom * sizeof(float), overflow * sizeof(float));
                 CurrentReadPosition = overflow;
             }
 
-            lock(Lock)
-            {
-                ReadWriteDelta -= Size;
-            }
-            WriteNotifier.Set();
-
+            AvailableData -= Size;
         }
 
     }
