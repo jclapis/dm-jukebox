@@ -141,9 +141,9 @@ namespace DiscordJukebox
             System.Diagnostics.Debug.WriteLine("Underflow detected.");
         }
 
-        public void WriteData(float[] LeftMuxBuffer, float[] RightMuxBuffer, int NumberOfSamples)
+        public void WriteData(float[] LeftMergeBuffer, float[] RightMergeBuffer, int NumberOfSamples)
         {
-            Buffer.Write(LeftMuxBuffer, RightMuxBuffer, NumberOfSamples);
+            Buffer.Write(LeftMergeBuffer, RightMergeBuffer, NumberOfSamples);
         }
 
         #region IDisposable Support

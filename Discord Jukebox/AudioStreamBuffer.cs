@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace DiscordJukebox
 {
-    internal class CircularBuffer
+    internal class AudioStreamBuffer
     {
         private readonly float[] InternalLeftChannelBuffer;
 
@@ -18,14 +18,14 @@ namespace DiscordJukebox
 
         public int AvailableData { get; private set; }
 
-        public CircularBuffer(int BufferSize)
+        public AudioStreamBuffer(int BufferSize)
         {
             this.BufferSize = BufferSize;
             InternalLeftChannelBuffer = new float[BufferSize];
             InternalRightChannelBuffer = new float[BufferSize];
         }
 
-        public void Write(IntPtr IncomingLeftChannelData, IntPtr IncomingRightChannelData, int NumberOfSamplesToWrite)
+        public void AddIncomingData(IntPtr IncomingLeftChannelData, IntPtr IncomingRightChannelData, int NumberOfSamplesToWrite)
         {
             if (AvailableData + NumberOfSamplesToWrite > BufferSize)
             {
@@ -52,7 +52,7 @@ namespace DiscordJukebox
             AvailableData += NumberOfSamplesToWrite;
         }
 
-        public void MuxDataIntoMuxBuffers(float[] LeftChannelMuxBuffer, float[] RightChannelMuxBuffer, int NumberOfBytesToRead, float Volume, bool OverwriteExistingData)
+        public void WriteDataIntoMergeBuffers(float[] LeftChannelMergeBuffer, float[] RightChannelMergeBuffer, int NumberOfBytesToRead, float Volume, bool OverwriteExistingData)
         {
             if (NumberOfBytesToRead > AvailableData)
             {
@@ -67,11 +67,11 @@ namespace DiscordJukebox
                 {
                     // If this is the first stream, then whatever is in the buffer is considered old and gets overwritten.
                     // If it isn't the first stream, then the new value gets added to the old value.
-                    newLeftValue += LeftChannelMuxBuffer[i];
-                    newRightValue += RightChannelMuxBuffer[i];
+                    newLeftValue += LeftChannelMergeBuffer[i];
+                    newRightValue += RightChannelMergeBuffer[i];
                 }
-                LeftChannelMuxBuffer[i] = Clamp(newLeftValue);
-                RightChannelMuxBuffer[i] = Clamp(newRightValue);
+                LeftChannelMergeBuffer[i] = Clamp(newLeftValue);
+                RightChannelMergeBuffer[i] = Clamp(newRightValue);
 
                 // Reset the current read position once we hit the end of the buffer.
                 CurrentReadPosition++;

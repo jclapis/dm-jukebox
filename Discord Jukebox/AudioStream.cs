@@ -16,15 +16,15 @@ namespace DiscordJukebox
 
         private IntPtr SwrContextPtr;
 
-        private readonly IntPtr LeftResampledBuffer;
+        private readonly IntPtr LeftResampledDataPtr;
 
-        private readonly IntPtr RightResampledBuffer;
+        private readonly IntPtr RightResampledDataPtr;
 
         private readonly AVStream Stream;
 
         private readonly AVCodecContext CodecContext;
 
-        private CircularBuffer Buffer;
+        private AudioStreamBuffer Buffer;
 
         public int AvailableData
         {
@@ -146,9 +146,9 @@ namespace DiscordJukebox
             }
 
             // Set up the output capture buffers for playback
-            Buffer = new CircularBuffer(outputFrame->linesize[0] / sizeof(float) * 2);
-            LeftResampledBuffer = (IntPtr)outputFrame->data0;
-            RightResampledBuffer = (IntPtr)outputFrame->data1;
+            Buffer = new AudioStreamBuffer(outputFrame->linesize[0] / sizeof(float) * 2);
+            LeftResampledDataPtr = (IntPtr)outputFrame->data0;
+            RightResampledDataPtr = (IntPtr)outputFrame->data1;
 
             CodecName = codec.long_name;
             NumberOfChannels = CodecContext.channels;
@@ -208,7 +208,7 @@ namespace DiscordJukebox
             AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
             while (f->nb_samples > 0)
             {
-                Buffer.Write(LeftResampledBuffer, RightResampledBuffer, f->nb_samples);
+                Buffer.AddIncomingData(LeftResampledDataPtr, RightResampledDataPtr, f->nb_samples);
 
                 // Keep the cycle going until we've exhausted the swrcontext buffer
                 result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
@@ -228,9 +228,9 @@ namespace DiscordJukebox
             return true;
         }
 
-        public void MuxDataIntoMuxBuffers(float[] LeftChannelMuxBuffer, float[] RightChannelMuxBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)
+        public void WriteDataIntoMergeBuffers(float[] LeftChannelMergeBuffer, float[] RightChannelMergeBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)
         {
-            Buffer.MuxDataIntoMuxBuffers(LeftChannelMuxBuffer, RightChannelMuxBuffer, NumberOfBytesToRead, Volume, OverwriteExistingData);
+            Buffer.WriteDataIntoMergeBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, NumberOfBytesToRead, Volume, OverwriteExistingData);
         }
 
         #region IDisposable Support

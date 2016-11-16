@@ -23,11 +23,11 @@ namespace DiscordJukebox
 
         public bool StreamToDiscord { get; set; }
 
-        private const int MuxBufferLength = 480;
+        private const int MergeBufferLength = 480;
 
-        private readonly float[] LeftChannelMuxBuffer;
+        private readonly float[] LeftChannelMergeBuffer;
 
-        private readonly float[] RightChannelMuxBuffer;
+        private readonly float[] RightChannelMergeBuffer;
 
 
         private bool IsStopping
@@ -55,8 +55,8 @@ namespace DiscordJukebox
             StopLock = new object();
             Streams = new List<AudioStream>();
             LocalPlayer = new LocalSoundPlayer();
-            LeftChannelMuxBuffer = new float[MuxBufferLength];
-            RightChannelMuxBuffer = new float[MuxBufferLength];
+            LeftChannelMergeBuffer = new float[MergeBufferLength];
+            RightChannelMergeBuffer = new float[MergeBufferLength];
         }
 
         public void Start()
@@ -101,14 +101,14 @@ namespace DiscordJukebox
                         int availableData = stream.AvailableData;
 
                         // Read new frames until we have enough data to work with.
-                        while (availableData < MuxBufferLength)
+                        while (availableData < MergeBufferLength)
                         {
                             // Not enough data left, we have to decode a new frame from the stream.
                             bool success = stream.GetNextFrame();
                             if(!success)
                             {
                                 // We hit the end of the file, handle the leftovers and then remove the stream.
-                                stream.MuxDataIntoMuxBuffers(LeftChannelMuxBuffer, RightChannelMuxBuffer, availableData, isFirstStream);
+                                stream.WriteDataIntoMergeBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, availableData, isFirstStream);
                                 maxSamplesReceived = Math.Max(maxSamplesReceived, availableData);
                                 Streams.RemoveAt(i);
                                 streamEnded = true;
@@ -118,8 +118,8 @@ namespace DiscordJukebox
                                 // previous loop doesn't leak into this one.
                                 if(isFirstStream)
                                 {
-                                    Array.Clear(LeftChannelMuxBuffer, availableData, MuxBufferLength - availableData);
-                                    Array.Clear(RightChannelMuxBuffer, availableData, MuxBufferLength - availableData);
+                                    Array.Clear(LeftChannelMergeBuffer, availableData, MergeBufferLength - availableData);
+                                    Array.Clear(RightChannelMergeBuffer, availableData, MergeBufferLength - availableData);
                                 }
                                 break;
                             }
@@ -132,14 +132,14 @@ namespace DiscordJukebox
                             continue;
                         }
 
-                        // Otherwise, mux the new data into the buffers!
-                        stream.MuxDataIntoMuxBuffers(LeftChannelMuxBuffer, RightChannelMuxBuffer, MuxBufferLength, isFirstStream);
-                        maxSamplesReceived = Math.Max(maxSamplesReceived, MuxBufferLength);
+                        // Otherwise, merge the new data into the buffers!
+                        stream.WriteDataIntoMergeBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, MergeBufferLength, isFirstStream);
+                        maxSamplesReceived = Math.Max(maxSamplesReceived, MergeBufferLength);
                     }
 
-                    // Now the mux buffers have the aggregated sound data from all of the streams, with volume control already done,
+                    // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
                     // so all that's left to do is send the data off to the output.
-                    LocalPlayer.WriteData(LeftChannelMuxBuffer, RightChannelMuxBuffer, maxSamplesReceived);
+                    LocalPlayer.WriteData(LeftChannelMergeBuffer, RightChannelMergeBuffer, maxSamplesReceived);
 
                     // Clean up if playback is done.
                     if(Streams.Count == 0)
