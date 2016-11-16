@@ -16,6 +16,10 @@ namespace DiscordJukebox
 
         private IntPtr SwrContextPtr;
 
+        private readonly IntPtr LeftResampledBuffer;
+
+        private readonly IntPtr RightResampledBuffer;
+
         private readonly AVStream Stream;
 
         private readonly AVCodecContext CodecContext;
@@ -140,7 +144,9 @@ namespace DiscordJukebox
             // Set up the output capture buffers for playback
             LeftChannelBuffer = new float[outputFrame->linesize[0]];
             RightChannelBuffer = new float[outputFrame->linesize[0]];
-            
+            LeftResampledBuffer = (IntPtr)outputFrame->data0;
+            RightResampledBuffer = (IntPtr)outputFrame->data1;
+
             CodecName = codec.long_name;
             NumberOfChannels = CodecContext.channels;
             Bitrate = CodecContext.bit_rate;
@@ -155,32 +161,42 @@ namespace DiscordJukebox
         {
             BufferSize = 0;
 
-            // Read the next packet from the file
-            AVERROR result = AVFormatInterop.av_read_frame(FormatContextPtr, PacketPtr);
-            if (result != AVERROR.AVERROR_SUCCESS)
-            {
-                if (result == AVERROR.AVERROR_EOF)
-                {
-                    return false;
-                }
-                throw new Exception($"Error reading audio packet: {result}");
-            }
-
-            // Send the packet over to the decoder
-            result = AVCodecInterop.avcodec_send_packet(Stream.codec, PacketPtr);
-            if (result != AVERROR.AVERROR_SUCCESS)
-            {
-                throw new Exception($"Error decoding audio packet: {result}");
-            }
-
-            // Get the decoded raw data from the decoder
-            result = AVCodecInterop.avcodec_receive_frame(Stream.codec, InputFramePtr);
-            if (result != AVERROR.AVERROR_SUCCESS)
+            AVERROR result = AVCodecInterop.avcodec_receive_frame(Stream.codec, InputFramePtr);
+            if(result != AVERROR.AVERROR_SUCCESS && result != AVERROR.AVERROR_EAGAIN)
             {
                 throw new Exception($"Error receiving decoded audio frame: {result}");
             }
 
-            // Resample it to the Discord requirements (48 kHz, 2 channel stereo)
+            // This happens when the ffmpeg's buffer is dry and it needs a new packet.
+            if(result == AVERROR.AVERROR_EAGAIN)
+            {
+                // Read the next packet from the file
+                result = AVFormatInterop.av_read_frame(FormatContextPtr, PacketPtr);
+                if (result != AVERROR.AVERROR_SUCCESS)
+                {
+                    if (result == AVERROR.AVERROR_EOF)
+                    {
+                        return false;
+                    }
+                    throw new Exception($"Error reading audio packet: {result}");
+                }
+
+                // Send the packet over to the decoder
+                result = AVCodecInterop.avcodec_send_packet(Stream.codec, PacketPtr);
+                if (result != AVERROR.AVERROR_SUCCESS)
+                {
+                    throw new Exception($"Error decoding audio packet: {result}");
+                }
+
+                // Get the decoded raw data from the decoder.
+                result = AVCodecInterop.avcodec_receive_frame(Stream.codec, InputFramePtr);
+                if (result != AVERROR.AVERROR_SUCCESS)
+                {
+                    throw new Exception($"Error receiving decoded audio frame: {result}");
+                }
+            }
+            
+            // Resample the frame to the Discord requirements (48 kHz, 2 channel stereo)
             result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
@@ -189,15 +205,10 @@ namespace DiscordJukebox
 
             // Copy the new data into the managed buffers
             AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
-            float* leftChannel = (float*)f->data0;
-            float* rightChannel = (float*)f->data1;
             while (f->nb_samples > 0)
             {
-                for(int i = 0; i < f->nb_samples; i++)
-                {
-                    LeftChannelBuffer[BufferSize + i] = leftChannel[i] * Volume;
-                    RightChannelBuffer[BufferSize + i] = rightChannel[i] * Volume;
-                }
+                Marshal.Copy(LeftResampledBuffer, LeftChannelBuffer, BufferSize, f->nb_samples);
+                Marshal.Copy(RightResampledBuffer, RightChannelBuffer, BufferSize, f->nb_samples);
                 BufferSize += f->nb_samples;
 
                 // Keep the cycle going until we've exhausted the swrcontext buffer
@@ -208,12 +219,12 @@ namespace DiscordJukebox
                 }
             }
 
-            // Clean up the packet and input frame to make sure their buffers are released,
-            // since ffmpeg insists on reallocating them each time. Note that the output frame
-            // doesn't need to be unref'd, because it's only used by swresample which doesn't
-            // allocate a new buffer for the frame each time swr_convert_frame is called.
-            AVCodecInterop.av_packet_unref(PacketPtr);
+            // Clean up the packet and input frames to make sure their buffers are released,
+            // since ffmpeg insists on reallocating them each time. Note that the output
+            // frame doesn't need to be unref'd, because it's only used by swresample which
+            // doesn't allocate a new buffer for the frame each time swr_convert_frame is called.
             AVUtilInterop.av_frame_unref(InputFramePtr);
+            AVCodecInterop.av_packet_unref(PacketPtr);
 
             return true;
         }
