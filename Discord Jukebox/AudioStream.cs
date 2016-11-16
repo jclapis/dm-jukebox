@@ -24,11 +24,15 @@ namespace DiscordJukebox
 
         private readonly AVCodecContext CodecContext;
 
-        public float[] LeftChannelBuffer { get; }
+        private CircularBuffer Buffer;
 
-        public float[] RightChannelBuffer { get; }
-
-        public int BufferSize { get; private set; }
+        public int AvailableData
+        {
+            get
+            {
+                return Buffer.AvailableData;
+            }
+        }
 
         public float Volume { get; set; }
 
@@ -142,8 +146,7 @@ namespace DiscordJukebox
             }
 
             // Set up the output capture buffers for playback
-            LeftChannelBuffer = new float[outputFrame->linesize[0]];
-            RightChannelBuffer = new float[outputFrame->linesize[0]];
+            Buffer = new CircularBuffer(outputFrame->linesize[0] / sizeof(float) * 2);
             LeftResampledBuffer = (IntPtr)outputFrame->data0;
             RightResampledBuffer = (IntPtr)outputFrame->data1;
 
@@ -159,8 +162,6 @@ namespace DiscordJukebox
 
         unsafe public bool GetNextFrame()
         {
-            BufferSize = 0;
-
             AVERROR result = AVCodecInterop.avcodec_receive_frame(Stream.codec, InputFramePtr);
             if(result != AVERROR.AVERROR_SUCCESS && result != AVERROR.AVERROR_EAGAIN)
             {
@@ -207,9 +208,7 @@ namespace DiscordJukebox
             AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
             while (f->nb_samples > 0)
             {
-                Marshal.Copy(LeftResampledBuffer, LeftChannelBuffer, BufferSize, f->nb_samples);
-                Marshal.Copy(RightResampledBuffer, RightChannelBuffer, BufferSize, f->nb_samples);
-                BufferSize += f->nb_samples;
+                Buffer.Write(LeftResampledBuffer, RightResampledBuffer, f->nb_samples);
 
                 // Keep the cycle going until we've exhausted the swrcontext buffer
                 result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
@@ -227,6 +226,11 @@ namespace DiscordJukebox
             AVCodecInterop.av_packet_unref(PacketPtr);
 
             return true;
+        }
+
+        public void MuxDataIntoMuxBuffers(float[] LeftChannelMuxBuffer, float[] RightChannelMuxBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)
+        {
+            Buffer.MuxDataIntoMuxBuffers(LeftChannelMuxBuffer, RightChannelMuxBuffer, NumberOfBytesToRead, Volume, OverwriteExistingData);
         }
 
         #region IDisposable Support

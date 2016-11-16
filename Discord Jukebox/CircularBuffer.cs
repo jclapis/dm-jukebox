@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace DiscordJukebox
 {
     internal class CircularBuffer
     {
-        private readonly float[] LeftChannelBuffer;
+        private readonly float[] InternalLeftChannelBuffer;
 
-        private readonly float[] RightChannelBuffer;
+        private readonly float[] InternalRightChannelBuffer;
 
         private int CurrentWritePosition;
 
@@ -20,62 +21,81 @@ namespace DiscordJukebox
         public CircularBuffer(int BufferSize)
         {
             this.BufferSize = BufferSize;
-            LeftChannelBuffer = new float[BufferSize];
-            RightChannelBuffer = new float[BufferSize];
+            InternalLeftChannelBuffer = new float[BufferSize];
+            InternalRightChannelBuffer = new float[BufferSize];
         }
 
-        public void Write(IntPtr LeftChannelData, IntPtr RightChannelData, int NumberOfSamples)
+        public void Write(IntPtr IncomingLeftChannelData, IntPtr IncomingRightChannelData, int NumberOfSamplesToWrite)
         {
-            if(AvailableData + NumberOfSamples > BufferSize)
+            if (AvailableData + NumberOfSamplesToWrite > BufferSize)
             {
                 throw new Exception("Circular buffer overflow, this should never happen but it did. Disaster.");
             }
 
             int headroom = BufferSize - CurrentWritePosition;
-            if (headroom >= NumberOfSamples)
+            if (headroom >= NumberOfSamplesToWrite)
             {
-                Marshal.Copy(LeftChannelData, LeftChannelBuffer, CurrentWritePosition, NumberOfSamples);
-                Marshal.Copy(RightChannelData, RightChannelBuffer, CurrentWritePosition, NumberOfSamples);
-                CurrentWritePosition += NumberOfSamples;
+                Marshal.Copy(IncomingLeftChannelData, InternalLeftChannelBuffer, CurrentWritePosition, NumberOfSamplesToWrite);
+                Marshal.Copy(IncomingRightChannelData, InternalRightChannelBuffer, CurrentWritePosition, NumberOfSamplesToWrite);
+                CurrentWritePosition += NumberOfSamplesToWrite;
             }
             else
             {
-                int overflow = NumberOfSamples - headroom;
-                Marshal.Copy(LeftChannelData, LeftChannelBuffer, CurrentWritePosition, headroom);
-                Marshal.Copy(LeftChannelData + headroom * sizeof(float), LeftChannelBuffer, 0, overflow);
-                Marshal.Copy(RightChannelData, RightChannelBuffer, CurrentWritePosition, headroom);
-                Marshal.Copy(RightChannelData + headroom * sizeof(float), RightChannelBuffer, 0, overflow);
+                int overflow = NumberOfSamplesToWrite - headroom;
+                Marshal.Copy(IncomingLeftChannelData, InternalLeftChannelBuffer, CurrentWritePosition, headroom);
+                Marshal.Copy(IncomingLeftChannelData + headroom * sizeof(float), InternalLeftChannelBuffer, 0, overflow);
+                Marshal.Copy(IncomingRightChannelData, InternalRightChannelBuffer, CurrentWritePosition, headroom);
+                Marshal.Copy(IncomingRightChannelData + headroom * sizeof(float), InternalRightChannelBuffer, 0, overflow);
                 CurrentWritePosition = overflow;
             }
 
-            AvailableData += NumberOfSamples;
+            AvailableData += NumberOfSamplesToWrite;
         }
 
-        public void Read(float[] LeftChannel, float[] RightChannel, int Size)
+        public void MuxDataIntoMuxBuffers(float[] LeftChannelMuxBuffer, float[] RightChannelMuxBuffer, int NumberOfBytesToRead, float Volume, bool OverwriteExistingData)
         {
-            if(Size > AvailableData)
+            if (NumberOfBytesToRead > AvailableData)
             {
                 throw new Exception("Circular buffer underflow, this should never happen but it did. Disaster.");
             }
-            
-            int headroom = BufferSize - CurrentReadPosition;
-            if (headroom >= Size)
+
+            for (int i = 0; i < NumberOfBytesToRead; i++)
             {
-                Buffer.BlockCopy(LeftChannelBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, Size * sizeof(float));
-                Buffer.BlockCopy(RightChannelBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, Size * sizeof(float));
-                CurrentReadPosition += Size;
-            }
-            else
-            {
-                int overflow = Size - headroom;
-                Buffer.BlockCopy(LeftChannelBuffer, CurrentReadPosition * sizeof(float), LeftChannel, 0, headroom * sizeof(float));
-                Buffer.BlockCopy(LeftChannelBuffer, 0, LeftChannel, headroom * sizeof(float), overflow * sizeof(float));
-                Buffer.BlockCopy(RightChannelBuffer, CurrentReadPosition * sizeof(float), RightChannel, 0, headroom * sizeof(float));
-                Buffer.BlockCopy(RightChannelBuffer, 0, RightChannel, headroom * sizeof(float), overflow * sizeof(float));
-                CurrentReadPosition = overflow;
+                float newLeftValue = InternalLeftChannelBuffer[CurrentReadPosition] * Volume;
+                float newRightValue = InternalRightChannelBuffer[CurrentReadPosition] * Volume;
+                if (!OverwriteExistingData)
+                {
+                    // If this is the first stream, then whatever is in the buffer is considered old and gets overwritten.
+                    // If it isn't the first stream, then the new value gets added to the old value.
+                    newLeftValue += LeftChannelMuxBuffer[i];
+                    newRightValue += RightChannelMuxBuffer[i];
+                }
+                LeftChannelMuxBuffer[i] = Clamp(newLeftValue);
+                RightChannelMuxBuffer[i] = Clamp(newRightValue);
+
+                // Reset the current read position once we hit the end of the buffer.
+                CurrentReadPosition++;
+                if (CurrentReadPosition == BufferSize)
+                {
+                    CurrentReadPosition = 0;
+                }
             }
 
-            AvailableData -= Size;
+            AvailableData -= NumberOfBytesToRead;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float Clamp(float Value)
+        {
+            if(Value < -1.0f)
+            {
+                return -1.0f;
+            }
+            if(Value > 1.0f)
+            {
+                return 1.0f;
+            }
+            return Value;
         }
 
     }
