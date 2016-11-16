@@ -1,0 +1,15 @@
+﻿The following libraries were compiled from source during development:
+---------------------------------------------------------------------
+
+libopus was compiled from the 1.1.3 tag.
+	I didn't modify it at all, it's vanilla v1.1.3. It's compiled directly from the solution provided in the repository.
+
+libsoundio was compiled from the master branch, commit afe6024 as of 10/31/2016. It doesn't have a strict version number, but it came after 1.1.0.
+	This library did have one small modification - in wasapi.c, line 1270, I changed the buffer reference time from 4.0 seconds to 0.05 seconds.
+	The rationale was that WASAPI requires you to fill the buffer you request from it, or it breaks. If I left it at 4.0 seconds, then there would
+	basically be a 4 second delay between any changes you make (volume tweaks, playing new tracks) and what you hear. Truncating that to 0.05 seconds
+	makes the delay imperceptible.
+
+ffmpeg was compiled from the release/3.2 branch, commit 7568b0f as of 11/6/2016. It's just v3.2 with a few fixes. It was compiled as a shared LGPL library.
+	I didn't modify it at all. I compiled it on Windows using MSVC 2015.3 and MinGW, using the following config:
+	> ./configure --enable-asm --enable-yasm --arch=x86_64 --enable-shared --toolchain=msvc
