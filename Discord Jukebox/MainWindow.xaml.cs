@@ -1,4 +1,4 @@
-﻿using DiscordJukebox.Interop;
+﻿using DMJukebox.Interop;
 using Microsoft.Win32;
 using System;
 using System.ComponentModel;
@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 
-namespace DiscordJukebox
+namespace DMJukebox
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -70,7 +70,7 @@ namespace DiscordJukebox
                 }
                 catch(Exception ex)
                 {
-                    StuffBox.Text += $"Error opening file: {ex.GetType().Name} - {ex.Message}{Environment.NewLine}{ex.StackTrace}";
+                    StuffBox.Text += $"Error opening file: {ex.GetDetails()}";
                 }
             }
         }

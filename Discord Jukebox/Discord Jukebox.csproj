@@ -9,11 +9,12 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DiscordJukebox</RootNamespace>
     <AssemblyName>Discord Jukebox</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -56,6 +57,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DMJukebox.Core">
+      <HintPath>..\DMJukebox.Core\bin\x64\Debug\netstandard1.4\DMJukebox.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -76,24 +80,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AVUtil\AVERROR.cs" />
-    <Compile Include="AudioStreamBuffer.cs" />
-    <Compile Include="ThreadSafeCircularBuffer.cs" />
-    <Compile Include="Interop\SWResampleInterop.cs" />
-    <Compile Include="LocalSoundPlayer.cs" />
-    <Compile Include="SoundIo\SoundIo.cs" />
-    <Compile Include="SoundIo\SoundIoBackend.cs" />
-    <Compile Include="SoundIo\SoundIoChannelArea.cs" />
-    <Compile Include="SoundIo\SoundIoChannelId.cs" />
-    <Compile Include="SoundIo\SoundIoChannelLayout.cs" />
-    <Compile Include="SoundIo\SoundIoChannelLayoutId.cs" />
-    <Compile Include="SoundIo\SoundIoDevice.cs" />
-    <Compile Include="SoundIo\SoundIoDeviceAim.cs" />
-    <Compile Include="SoundIo\SoundIoError.cs" />
-    <Compile Include="SoundIo\SoundIoFormat.cs" />
-    <Compile Include="SoundIo\SoundIoOutStream.cs" />
-    <Compile Include="SoundIo\SoundIoSampleRateRange.cs" />
-    <Compile Include="test.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -102,57 +88,12 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="AudioFrame.cs" />
-    <Compile Include="AudioStream.cs" />
-    <Compile Include="AVCodec\AVCodec.cs" />
-    <Compile Include="AVCodec\AVCodecContext.cs" />
-    <Compile Include="AVCodec\AVCodecID.cs" />
-    <Compile Include="AVCodec\AVFieldOrder.cs" />
-    <Compile Include="AVCodec\FF_MB_DECISION.cs" />
-    <Compile Include="AVCodec\SLICE_FLAG.cs" />
-    <Compile Include="AVUtil\AVChromaLocation.cs" />
-    <Compile Include="AVUtil\AVColorPrimaries.cs" />
-    <Compile Include="AVUtil\AVColorRange.cs" />
-    <Compile Include="AVUtil\AVColorSpace.cs" />
-    <Compile Include="AVUtil\AVColorTransferCharacteristic.cs" />
-    <Compile Include="AVUtil\AVFrame.cs" />
-    <Compile Include="AVUtil\AVPictureType.cs" />
-    <Compile Include="AVUtil\AVSampleFormat.cs" />
-    <Compile Include="AVUtil\AV_CH.cs" />
-    <Compile Include="AVUtil\AV_CH_LAYOUT.cs" />
-    <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
-    <Compile Include="Interop\AVCodecInterop.cs" />
-    <Compile Include="AVCodec\AVDiscard.cs" />
-    <Compile Include="AVCodec\AVPacket.cs" />
-    <Compile Include="AVCodec\AV_CODEC_FLAG.cs" />
-    <Compile Include="AVCodec\AV_CODEC_FLAG2.cs" />
-    <Compile Include="AVCodec\AV_PKT_FLAG.cs" />
-    <Compile Include="AVFormat\AVDurationEstimationMethod.cs" />
-    <Compile Include="AVFormat\AVFMT_AVOID_NEG_TS.cs" />
-    <Compile Include="AVFormat\AVFormatContext.cs" />
-    <Compile Include="AVFormat\AvFormatFlags.cs" />
-    <Compile Include="Interop\AVFormatInterop.cs" />
-    <Compile Include="AVFormat\AVFrac.cs" />
-    <Compile Include="AVFormat\AVIOInterruptCB.cs" />
-    <Compile Include="AVFormat\AVRational.cs" />
-    <Compile Include="AVFormat\AVStream.cs" />
-    <Compile Include="AVFormat\AVSTREAM_EVENT_FLAG.cs" />
-    <Compile Include="AVFormat\AV_DISPOSITION.cs" />
-    <Compile Include="AVUtil\AVClass.cs" />
-    <Compile Include="AVUtil\AVClassCategory.cs" />
-    <Compile Include="AVUtil\AVMediaType.cs" />
-    <Compile Include="AVUtil\AVPixelFormat.cs" />
-    <Compile Include="Interop\AVUtilInterop.cs" />
-    <Compile Include="Interop\Kernel32Interop.cs" />
-    <Compile Include="Interop\SoundIoInterop.cs" />
-    <Compile Include="Interop\MsvcrtInterop.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -180,34 +121,30 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="SWResample\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\lib\avcodec-57.dll">
+    <None Include="..\lib\avcodec-57.dll">
       <Link>avcodec-57.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\lib\avformat-57.dll">
+    </None>
+    <None Include="..\lib\avformat-57.dll">
       <Link>avformat-57.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\lib\avutil-55.dll">
+    </None>
+    <None Include="..\lib\avutil-55.dll">
       <Link>avutil-55.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\lib\opus.dll">
+    </None>
+    <None Include="..\lib\opus.dll">
       <Link>opus.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\lib\soundio.dll">
+    </None>
+    <None Include="..\lib\soundio.dll">
       <Link>soundio.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\lib\swresample-2.dll">
+    </None>
+    <None Include="..\lib\swresample-2.dll">
       <Link>swresample-2.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Resource Include="Dependency Compilation Notes.txt" />
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
