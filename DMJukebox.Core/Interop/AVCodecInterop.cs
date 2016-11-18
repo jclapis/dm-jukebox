@@ -1,9 +1,11 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a utility class that holds the P/Invoke wrappers for libavcodec.
+    /// </summary>
     internal static class AVCodecInterop
     {
         /// <summary>
@@ -21,9 +23,9 @@ namespace DMJukebox.Interop
         /// </summary>
         private const string MacAVCodecLibrary = "avcodec-57.dylib";
 
-        public const int AV_INPUT_BUFFER_PADDING_SIZE = 32;
-
-        public const int AVCODEC_MAX_AUDIO_FRAME_SIZE = 192000;
+        // These regions contain the DllImport function definitions for each OS. Since we can't really set
+        // the path of DllImport dynamically (and loading them dynamically using LoadLibrary / dlopen is complicated
+        // to manage cross-platform), we have to pre-define them based on the names of the libraries above.
 
         #region Windows Functions
 
@@ -147,6 +149,10 @@ namespace DMJukebox.Interop
         private static av_init_packet_delegate av_init_packet_impl;
         private static av_packet_unref_delegate av_packet_unref_impl;
 
+        /// <summary>
+        /// The static constructor figures out which library to use for P/Invoke based
+        /// on the current OS platform.
+        /// </summary>
         static AVCodecInterop()
         {
             NativePathFinder.AddNativeLibraryPathToEnvironmentVariable();

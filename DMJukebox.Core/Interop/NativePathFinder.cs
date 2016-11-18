@@ -4,13 +4,25 @@ using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a utility class that figures out what the path for the native libraries is and
+    /// adds it to the PATH environment variable during startup.
+    /// </summary>
     internal static class NativePathFinder
     {
+        /// <summary>
+        /// This is just a flag that gets set to true after the first time
+        /// <see cref="AddNativeLibraryPathToEnvironmentVariable"/> is called,
+        /// so it only runs once.
+        /// </summary>
         private static bool PathFound;
 
+        /// <summary>
+        /// Determines the path of the native library dependencies based on the current process
+        /// architecture and adds it to the PATH environment variable.
+        /// </summary>
         public static void AddNativeLibraryPathToEnvironmentVariable()
         {
-            System.Diagnostics.Debug.WriteLine($"ARCH = {RuntimeInformation.ProcessArchitecture}");
             if(PathFound)
             {
                 return;
@@ -42,8 +54,6 @@ namespace DMJukebox.Interop
             string path = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
             path += $"{Path.PathSeparator}{libraryPath}";
             Environment.SetEnvironmentVariable("PATH", path);
-
-            System.Diagnostics.Debug.WriteLine($"PATH = {path}");
 
             PathFound = true;
         }
