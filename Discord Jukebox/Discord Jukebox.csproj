@@ -25,6 +25,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -57,8 +58,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DMJukebox.Core">
-      <HintPath>..\DMJukebox.Core\bin\x64\Debug\netstandard1.4\DMJukebox.Core.dll</HintPath>
+    <Reference Include="DMJukebox.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\DMJukebox.Core\bin\Debug\netstandard1.4\DMJukebox.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -122,27 +124,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\lib\avcodec-57.dll">
-      <Link>avcodec-57.dll</Link>
+      <Link>lib\x64\avcodec-57.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\lib\avformat-57.dll">
-      <Link>avformat-57.dll</Link>
+      <Link>lib\x64\avformat-57.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\lib\avutil-55.dll">
-      <Link>avutil-55.dll</Link>
+      <Link>lib\x64\avutil-55.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\lib\opus.dll">
-      <Link>opus.dll</Link>
+      <Link>lib\x64\opus.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\lib\soundio.dll">
-      <Link>soundio.dll</Link>
+      <Link>lib\x64\soundio.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\lib\swresample-2.dll">
-      <Link>swresample-2.dll</Link>
+      <Link>lib\x64\swresample-2.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

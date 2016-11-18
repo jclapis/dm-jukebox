@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
@@ -148,6 +149,8 @@ namespace DMJukebox.Interop
 
         static AVCodecInterop()
         {
+            NativePathFinder.AddNativeLibraryPathToEnvironmentVariable();
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 avcodec_find_decoder_impl = avcodec_find_decoder_windows;

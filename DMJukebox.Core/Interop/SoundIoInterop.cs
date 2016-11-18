@@ -78,5 +78,10 @@ namespace DMJukebox.Interop
 
         [DllImport(SoundIoDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr soundio_channel_layout_get_default(int channel_count);
+
+        static SoundIoInterop()
+        {
+            NativePathFinder.AddNativeLibraryPathToEnvironmentVariable();
+        }
     }
 }
