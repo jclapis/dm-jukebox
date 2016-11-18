@@ -1,4 +1,19 @@
-﻿using System;
+﻿/* 
+ * This file contains C# wrappers for some of the functions exported by libavformat.
+ * 
+ * The documentation and comments have been largely copied from those headers and
+ * are not my own work - they are the work of the contributors to ffmpeg.
+ * Credit goes to them. I may have modified them in places where it made sense
+ * to help document the C# bindings.
+ * 
+ * For more information, please see the documentation at
+ * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
+ * https://github.com/FFmpeg/FFmpeg.
+ * 
+ * Copyright (c) 2016 Joe Clapis.
+ */
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
