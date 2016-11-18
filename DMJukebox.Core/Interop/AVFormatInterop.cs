@@ -50,7 +50,7 @@ namespace DMJukebox.Interop
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_alloc_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr avformat_alloc_context_windows();
 
-        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_free_context_windows), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_free_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void avformat_free_context_windows(IntPtr s);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_open_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -78,7 +78,7 @@ namespace DMJukebox.Interop
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_alloc_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr avformat_alloc_context_linux();
 
-        [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_free_context_linux), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_free_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void avformat_free_context_linux(IntPtr s);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_open_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -106,7 +106,7 @@ namespace DMJukebox.Interop
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_alloc_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern IntPtr avformat_alloc_context_osx();
 
-        [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_free_context_osx), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_free_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void avformat_free_context_osx(IntPtr s);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_open_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]

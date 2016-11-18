@@ -257,7 +257,7 @@ namespace DMJukebox.Interop
         /// <returns>0 on success, a negative AVERROR on error.</returns>
         public static AVERROR av_frame_get_buffer(IntPtr frame, int align)
         {
-            return av_frame_get_buffer(frame, align);
+            return av_frame_get_buffer_impl(frame, align);
         }
 
         /// <summary>
