@@ -22,7 +22,7 @@ namespace DMJukebox
 
         private bool Started;
 
-        private readonly ThreadSafeCircularBuffer Buffer;
+        private readonly LocalPlaybackBuffer Buffer;
 
         private readonly int LeftChannelId;
 
@@ -34,9 +34,9 @@ namespace DMJukebox
 
         public LocalSoundPlayer()
         {
-            Buffer = new ThreadSafeCircularBuffer();
-            LeftChannelData = new float[ThreadSafeCircularBuffer.BufferSize];
-            RightChannelData = new float[ThreadSafeCircularBuffer.BufferSize];
+            Buffer = new LocalPlaybackBuffer();
+            LeftChannelData = new float[LocalPlaybackBuffer.BufferSize];
+            RightChannelData = new float[LocalPlaybackBuffer.BufferSize];
             WriteSoundDelegate = WriteSound;
             HandleUnderflowDelegate = HandleUnderflow;
             
@@ -108,8 +108,6 @@ namespace DMJukebox
         unsafe private void WriteSound(IntPtr StreamPtr, int MinFrameCount, int MaxFrameCount)
         {
             IntPtr soundAreas = IntPtr.Zero;
-            SoundIoOutStream stream = Marshal.PtrToStructure<SoundIoOutStream>(StreamPtr);
-
             int frameCount = MaxFrameCount;
             SoundIoError result = SoundIoInterop.soundio_outstream_begin_write(StreamPtr, ref soundAreas, ref frameCount);
             if (result != SoundIoError.SoundIoErrorNone)
@@ -117,17 +115,11 @@ namespace DMJukebox
                 throw new Exception($"Writing to the local sound driver failed on begin: {result}");
             }
             
-            Buffer.Read(LeftChannelData, RightChannelData, MaxFrameCount);
             SoundIoChannelArea* areas = (SoundIoChannelArea*)soundAreas.ToPointer();
             float* leftChannelArea = areas[LeftChannelId].ptr;
             float* rightChannelArea = areas[RightChannelId].ptr;
             int stepSize = areas[LeftChannelId].step / sizeof(float);
-            for(int currentFrame = 0; currentFrame < MaxFrameCount; currentFrame++)
-            {
-                int areaIndex = stepSize * currentFrame;
-                leftChannelArea[areaIndex] = LeftChannelData[currentFrame];
-                rightChannelArea[areaIndex] = RightChannelData[currentFrame];
-            }
+            Buffer.WritePlaybackDataToSoundAreas(leftChannelArea, rightChannelArea, frameCount, stepSize);
 
             result = SoundIoInterop.soundio_outstream_end_write(StreamPtr);
             if (result != SoundIoError.SoundIoErrorNone)
@@ -143,7 +135,7 @@ namespace DMJukebox
 
         public void WriteData(float[] LeftMergeBuffer, float[] RightMergeBuffer, int NumberOfSamples)
         {
-            Buffer.Write(LeftMergeBuffer, RightMergeBuffer, NumberOfSamples);
+            Buffer.AddPlaybackData(LeftMergeBuffer, RightMergeBuffer, NumberOfSamples);
         }
 
         public void ResetBuffer()

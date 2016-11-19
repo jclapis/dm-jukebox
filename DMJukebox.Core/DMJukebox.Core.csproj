@@ -103,11 +103,8 @@
     <Compile Include="SoundIo\SoundIoFormat.cs" />
     <Compile Include="SoundIo\SoundIoOutStream.cs" />
     <Compile Include="SoundIo\SoundIoSampleRateRange.cs" />
-    <Compile Include="ThreadSafeCircularBuffer.cs" />
+    <Compile Include="LocalPlaybackBuffer.cs" />
     <Compile Include="Utility.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Dependency Compilation Notes.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
