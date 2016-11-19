@@ -28,15 +28,9 @@ namespace DMJukebox
 
         private readonly int RightChannelId;
 
-        private readonly float[] LeftChannelData;
-
-        private readonly float[] RightChannelData;
-
         public LocalSoundPlayer()
         {
             Buffer = new LocalPlaybackBuffer();
-            LeftChannelData = new float[LocalPlaybackBuffer.BufferSize];
-            RightChannelData = new float[LocalPlaybackBuffer.BufferSize];
             WriteSoundDelegate = WriteSound;
             HandleUnderflowDelegate = HandleUnderflow;
             
