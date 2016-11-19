@@ -71,6 +71,12 @@ namespace DMJukebox.Interop
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_packet_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_packet_unref_windows(IntPtr pkt);
 
+        [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void avcodec_flush_buffers_windows(IntPtr avctx);
+
+        [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int av_get_exact_bits_per_sample_windows(AVCodecID codec_id);
+
         #endregion
 
         #region Linux Functions
@@ -101,6 +107,12 @@ namespace DMJukebox.Interop
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_packet_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_packet_unref_linux(IntPtr pkt);
+
+        [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void avcodec_flush_buffers_linux(IntPtr avctx);
+
+        [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int av_get_exact_bits_per_sample_linux(AVCodecID codec_id);
 
         #endregion
 
@@ -133,6 +145,12 @@ namespace DMJukebox.Interop
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_packet_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_packet_unref_osx(IntPtr pkt);
 
+        [DllImport(MacAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern void avcodec_flush_buffers_osx(IntPtr avctx);
+
+        [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int av_get_exact_bits_per_sample_osx(AVCodecID codec_id);
+
         #endregion
 
         #region Delegates and Platform-Dependent Loading
@@ -148,6 +166,8 @@ namespace DMJukebox.Interop
         private delegate AVERROR av_new_packet_delegate(IntPtr pkt, int size);
         private delegate void av_init_packet_delegate(IntPtr pkt);
         private delegate void av_packet_unref_delegate(IntPtr pkt);
+        private delegate void avcodec_flush_buffers_delegate(IntPtr avctx);
+        private delegate int av_get_exact_bits_per_sample_delegate(AVCodecID codec_id);
 
         // These fields represent function pointers towards each of the extern functions. They get set
         // to the proper platform-specific functions by the static constructor. For example, if this is
@@ -163,6 +183,8 @@ namespace DMJukebox.Interop
         private static av_new_packet_delegate av_new_packet_func;
         private static av_init_packet_delegate av_init_packet_impl;
         private static av_packet_unref_delegate av_packet_unref_impl;
+        private static avcodec_flush_buffers_delegate avcodec_flush_buffers_impl;
+        private static av_get_exact_bits_per_sample_delegate av_get_exact_bits_per_sample_impl;
 
         /// <summary>
         /// The static constructor figures out which library to use for P/Invoke based
@@ -183,6 +205,8 @@ namespace DMJukebox.Interop
                 av_new_packet_func = av_new_packet_windows;
                 av_init_packet_impl = av_init_packet_windows;
                 av_packet_unref_impl = av_packet_unref_windows;
+                avcodec_flush_buffers_impl = avcodec_flush_buffers_windows;
+                av_get_exact_bits_per_sample_impl = av_get_exact_bits_per_sample_windows;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
@@ -195,6 +219,8 @@ namespace DMJukebox.Interop
                 av_new_packet_func = av_new_packet_linux;
                 av_init_packet_impl = av_init_packet_linux;
                 av_packet_unref_impl = av_packet_unref_linux;
+                avcodec_flush_buffers_impl = avcodec_flush_buffers_linux;
+                av_get_exact_bits_per_sample_impl = av_get_exact_bits_per_sample_linux;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -207,6 +233,8 @@ namespace DMJukebox.Interop
                 av_new_packet_func = av_new_packet_osx;
                 av_init_packet_impl = av_init_packet_osx;
                 av_packet_unref_impl = av_packet_unref_osx;
+                avcodec_flush_buffers_impl = avcodec_flush_buffers_osx;
+                av_get_exact_bits_per_sample_impl = av_get_exact_bits_per_sample_osx;
             }
             else
             {
@@ -372,18 +400,34 @@ namespace DMJukebox.Interop
         /// Unreference the buffer referenced by the packet and reset the
         /// remaining packet fields to their default values.
         /// </summary>
-        /// <param name="pkt">The packet to be unreferenced.</param>
+        /// <param name="pkt">(AVPacket) The packet to be unreferenced.</param>
         public static void av_packet_unref(IntPtr pkt)
         {
             av_packet_unref_impl(pkt);
         }
 
+        /// <summary>
+        /// Reset the internal decoder state / flush internal buffers. Should be called
+        /// e.g. when seeking or when switching to a different stream.
+        /// </summary>
+        /// <param name="avctx">(AVCodecContext)</param>
+        public static void avcodec_flush_buffers(IntPtr avctx)
+        {
+            avcodec_flush_buffers_impl(avctx);
+        }
+
+        /// <summary>
+        /// Return codec bits per sample.
+        /// Only return non-zero if the bits per sample is exactly correct, not an
+        /// approximation.
+        /// </summary>
+        /// <param name="codec_id">the codec</param>
+        /// <returns>Number of bits per sample or zero if unknown for the given codec.</returns>
+        public static int av_get_exact_bits_per_sample(AVCodecID codec_id)
+        {
+            return av_get_exact_bits_per_sample_impl(codec_id);
+        }
+
         #endregion
-
-        [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avcodec_flush_buffers(IntPtr avctx);
-
-        [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int av_get_exact_bits_per_sample(AVCodecID codec_id);
     }
 }

@@ -68,6 +68,12 @@ namespace DMJukebox.Interop
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern AVERROR av_read_frame_windows(IntPtr s, IntPtr pkt);
 
+        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR av_seek_frame_windows(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+
+        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR avformat_seek_file_windows(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
+
         #endregion
 
         #region Linux Functions
@@ -95,6 +101,12 @@ namespace DMJukebox.Interop
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern AVERROR av_read_frame_linux(IntPtr s, IntPtr pkt);
+
+        [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR av_seek_frame_linux(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+
+        [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR avformat_seek_file_linux(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
 
         #endregion
 
@@ -124,6 +136,12 @@ namespace DMJukebox.Interop
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern AVERROR av_read_frame_osx(IntPtr s, IntPtr pkt);
 
+        [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR av_seek_frame_osx(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+
+        [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR avformat_seek_file_osx(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
+
         #endregion
 
         #region Delegates and Platform-Dependent Loading
@@ -138,6 +156,8 @@ namespace DMJukebox.Interop
         private delegate AVERROR avformat_find_stream_info_delegate(IntPtr ic, ref IntPtr options);
         private delegate void av_dump_format_delegate(IntPtr ic, int index, string url, int is_output);
         private delegate AVERROR av_read_frame_delegate(IntPtr s, IntPtr pkt);
+        private delegate AVERROR av_seek_frame_delegate(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+        private delegate AVERROR avformat_seek_file_delegate(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
 
         // These fields represent function pointers towards each of the extern functions. They get set
         // to the proper platform-specific functions by the static constructor. For example, if this is
@@ -152,6 +172,8 @@ namespace DMJukebox.Interop
         private static avformat_find_stream_info_delegate avformat_find_stream_info_impl;
         private static av_dump_format_delegate av_dump_format_impl;
         private static av_read_frame_delegate av_read_frame_impl;
+        private static av_seek_frame_delegate av_seek_frame_impl;
+        private static avformat_seek_file_delegate avformat_seek_file_impl;
 
         /// <summary>
         /// The static constructor figures out which library to use for P/Invoke based
@@ -171,6 +193,8 @@ namespace DMJukebox.Interop
                 avformat_find_stream_info_impl = avformat_find_stream_info_windows;
                 av_dump_format_impl = av_dump_format_windows;
                 av_read_frame_impl = av_read_frame_windows;
+                av_seek_frame_impl = av_seek_frame_windows;
+                avformat_seek_file_impl = avformat_seek_file_windows;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
@@ -182,6 +206,8 @@ namespace DMJukebox.Interop
                 avformat_find_stream_info_impl = avformat_find_stream_info_linux;
                 av_dump_format_impl = av_dump_format_linux;
                 av_read_frame_impl = av_read_frame_linux;
+                av_seek_frame_impl = av_seek_frame_linux;
+                avformat_seek_file_impl = avformat_seek_file_linux;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -193,6 +219,8 @@ namespace DMJukebox.Interop
                 avformat_find_stream_info_impl = avformat_find_stream_info_osx;
                 av_dump_format_impl = av_dump_format_osx;
                 av_read_frame_impl = av_read_frame_osx;
+                av_seek_frame_impl = av_seek_frame_osx;
+                avformat_seek_file_impl = avformat_seek_file_osx;
             }
             else
             {
@@ -313,12 +341,51 @@ namespace DMJukebox.Interop
             return av_read_frame_impl(s, pkt);
         }
 
+        /// <summary>
+        /// Seek to the keyframe at timestamp.
+        /// 'timestamp' in 'stream_index'.
+        /// </summary>
+        /// <param name="s">(AVFormatContext) media file handle</param>
+        /// <param name="stream_index">If stream_index is (-1), a default
+        /// stream is selected, and timestamp is automatically converted
+        /// from AV_TIME_BASE units to the stream specific time_base.</param>
+        /// <param name="timestamp">Timestamp in AVStream.time_base units
+        /// or, if no stream is specified, in AV_TIME_BASE units.</param>
+        /// <param name="flags">flags which select direction and seeking mode</param>
+        /// <returns>&gt;= 0 on success</returns>
+        public static AVERROR av_seek_frame(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags)
+        {
+            return av_seek_frame_impl(s, stream_index, timestamp, flags);
+        }
+
+        /// <summary>
+        /// Seek to timestamp ts.
+        /// Seeking will be done so that the point from which all active streams
+        /// can be presented successfully will be closest to ts and within min/max_ts.
+        /// Active streams are all streams that have AVStream.discard &lt; AVDISCARD_ALL.
+        ///
+        /// If flags contain AVSEEK_FLAG_BYTE, then all timestamps are in bytes and
+        /// are the file position (this may not be supported by all demuxers).
+        /// If flags contain AVSEEK_FLAG_FRAME, then all timestamps are in frames
+        /// in the stream with stream_index (this may not be supported by all demuxers).
+        /// Otherwise all timestamps are in units of the stream selected by stream_index
+        /// or if stream_index is -1, in AV_TIME_BASE units.
+        /// If flags contain AVSEEK_FLAG_ANY, then non-keyframes are treated as
+        /// keyframes (this may not be supported by all demuxers).
+        /// If flags contain AVSEEK_FLAG_BACKWARD, it is ignored.
+        /// </summary>
+        /// <param name="s">(AVFormatContext) media file handle</param>
+        /// <param name="stream_index">index of the stream which is used as time base reference</param>
+        /// <param name="min_ts">smallest acceptable timestamp</param>
+        /// <param name="ts">target timestamp</param>
+        /// <param name="max_ts">largest acceptable timestamp</param>
+        /// <param name="flags">flags</param>
+        /// <returns>&gt;=0 on success, error code otherwise</returns>
+        public static AVERROR avformat_seek_file(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags)
+        {
+            return avformat_seek_file_impl(s, stream_index, min_ts, ts, max_ts, flags);
+        }
+
         #endregion
-
-        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_seek_frame(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
-
-        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_seek_file(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
     }
 }
