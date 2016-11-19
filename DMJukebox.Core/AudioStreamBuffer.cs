@@ -84,6 +84,15 @@ namespace DMJukebox
             AvailableData -= NumberOfBytesToRead;
         }
 
+        public void Reset()
+        {
+            Array.Clear(InternalLeftChannelBuffer, 0, BufferSize);
+            Array.Clear(InternalRightChannelBuffer, 0, BufferSize);
+            CurrentReadPosition = 0;
+            CurrentWritePosition = 0;
+            AvailableData = 0;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float Clamp(float Value)
         {

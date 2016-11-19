@@ -150,7 +150,7 @@ namespace DMJukebox
             // Set up the buffers for the output frame, which are persistent
             long delay = SWResampleInterop.swr_get_delay(SwrContextPtr, 48000);
             int outSamples = (int)delay + (CodecContext.frame_size * 48000 / CodecContext.sample_rate) + 3;
-            outputFrame->nb_samples = outSamples;
+            outputFrame->nb_samples = Math.Max(outSamples, 4800);
             result = AVUtilInterop.av_frame_get_buffer(OutputFramePtr, 0);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
@@ -159,7 +159,7 @@ namespace DMJukebox
 
             // Set up the output capture buffers for playback
             int bufferSize = outputFrame->linesize[0] / sizeof(float) * 2;
-            bufferSize = Math.Max(bufferSize, Player.MergeBufferLength * 2);
+            bufferSize = Math.Max(bufferSize, 48000);
             Buffer = new AudioStreamBuffer(bufferSize);
             LeftResampledDataPtr = (IntPtr)outputFrame->data0;
             RightResampledDataPtr = (IntPtr)outputFrame->data1;
@@ -178,6 +178,7 @@ namespace DMJukebox
         {
             AVFrame* i = (AVFrame*)InputFramePtr.ToPointer();
             AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
+            AVPacket* p = (AVPacket*)PacketPtr.ToPointer();
 
             AVERROR result = AVCodecInterop.avcodec_receive_frame(Stream.codec, InputFramePtr);
             if(result != AVERROR.AVERROR_SUCCESS && result != AVERROR.AVERROR_EAGAIN)
@@ -200,7 +201,7 @@ namespace DMJukebox
                             return false;
                         }
                         result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0,
-                            AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG.AVSEEK_FLAG_FRAME | AVSEEK_FLAG.AVSEEK_FLAG_ANY);
+                            AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD);
                         if (result != AVERROR.AVERROR_SUCCESS)
                         {
                             throw new Exception($"Error resetting stream to the beginning: {result}");
@@ -278,6 +279,8 @@ namespace DMJukebox
             {
                 throw new Exception($"Error resetting stream to the beginning: {result}");
             }
+            Buffer.Reset();
+            AVCodecInterop.avcodec_flush_buffers(Stream.codec);
         }
 
         internal void WriteDataIntoMergeBuffers(float[] LeftChannelMergeBuffer, float[] RightChannelMergeBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)

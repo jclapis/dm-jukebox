@@ -146,6 +146,11 @@ namespace DMJukebox
             Buffer.Write(LeftMergeBuffer, RightMergeBuffer, NumberOfSamples);
         }
 
+        public void ResetBuffer()
+        {
+            Buffer.Reset();
+        }
+
         #region IDisposable Support
 
         private bool disposedValue = false;

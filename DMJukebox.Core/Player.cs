@@ -85,7 +85,14 @@ namespace DMJukebox
             {
                 PlayTask.Wait(2000);
             }
+            foreach (AudioStream stream in Streams)
+            {
+                stream.Stop();
+            }
+            Array.Clear(LeftChannelMergeBuffer, 0, MergeBufferLength);
+            Array.Clear(RightChannelMergeBuffer, 0, MergeBufferLength);
             LocalPlayer.Pause();
+            LocalPlayer.ResetBuffer();
         }
 
         public AudioStream AddTrack(string Filename)

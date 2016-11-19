@@ -117,5 +117,14 @@ namespace DMJukebox
 
         }
 
+        public void Reset()
+        {
+            Array.Clear(LeftChannelBuffer, 0, BufferSize);
+            Array.Clear(RightChannelBuffer, 0, BufferSize);
+            CurrentReadPosition = 0;
+            CurrentWritePosition = 0;
+            AvailableData = 0;
+        }
+
     }
 }

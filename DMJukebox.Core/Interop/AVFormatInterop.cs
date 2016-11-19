@@ -315,7 +315,10 @@ namespace DMJukebox.Interop
 
         #endregion
 
-        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_register_all), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern AVERROR av_seek_frame(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+
+        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR avformat_seek_file(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
     }
 }
