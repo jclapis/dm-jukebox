@@ -92,7 +92,7 @@ namespace DMJukebox
                     break;
                 }
             }
-            if(!foundStream)
+            if (!foundStream)
             {
                 throw new Exception("No audio streams detected in the file.");
             }
@@ -110,7 +110,7 @@ namespace DMJukebox
             {
                 throw new Exception($"Error loading audio codec: opening codec failed with {result}.");
             }
-            
+
             // Set up the packet - no need for doing the buffers, because they get reset
             // on each new av_read_frame() call
             PacketPtr = AVCodecInterop.av_packet_alloc();
@@ -123,23 +123,27 @@ namespace DMJukebox
             inputFrame->nb_samples = CodecContext.frame_size;
             inputFrame->channel_layout = CodecContext.channel_layout;
             inputFrame->sample_rate = CodecContext.sample_rate;
-            if(CodecContext.frame_size == 0)
+            if (CodecContext.frame_size == 0)
             {
                 // This handles WAV files that don't really have frames. FFmpeg sets the packet buffer to
-                // this size arbitrarily.
+                // this size arbitrarily but doesn't tell us what it is ahead of time, so we have to do the math.
+                // This comes from wavdec.c and pcmdec.c in libavformat if you're curious.
                 int packetSize = Math.Max(WavSize, CodecContext.block_align);
                 int bytesPerSample = AVCodecInterop.av_get_exact_bits_per_sample(CodecContext.codec_id) / 8;
-                packetSize /= (CodecContext.channels * bytesPerSample);
-                inputFrame->nb_samples = packetSize;
+                int samplesPerPacket = packetSize / (CodecContext.channels * bytesPerSample);
+                inputFrame->nb_samples = samplesPerPacket;
             }
-            if(CodecContext.channel_layout == 0)
+            if (CodecContext.channel_layout == 0)
             {
-                // This handles PCM data that doesn't have any channel layout info.
+                // This handles PCM / WAV files, which don't come with any channel layout info.
                 ChannelLayout = AVUtilInterop.av_get_default_channel_layout(CodecContext.channels);
                 inputFrame->channel_layout = ChannelLayout;
             }
 
-            // Set up the output frame
+            // Set up the output frame, which conforms to Discord requirements (48 kHz, stereo).
+            // The format can be anything that Opus handles really, but I believe planar float
+            // is the fastest since it'll just wind up converting to it anyway so we may as well
+            // have swresample do it here for us.
             OutputFramePtr = AVUtilInterop.av_frame_alloc();
             AVFrame* outputFrame = (AVFrame*)OutputFramePtr.ToPointer();
             outputFrame->channel_layout = AV_CH_LAYOUT.AV_CH_LAYOUT_STEREO;
@@ -168,18 +172,23 @@ namespace DMJukebox
             {
                 throw new Exception($"Output frame buffer allocation failed: {result}");
             }
-
-            // Set up the output capture buffers for playback.
-            int bufferSize = outputFrame->linesize[0] / sizeof(float) * 2;
-            Buffer = new AudioStreamBuffer(bufferSize);
             LeftResampledDataPtr = (IntPtr)outputFrame->data0;
             RightResampledDataPtr = (IntPtr)outputFrame->data1;
 
+            // Set up the output capture buffers for playback. At minimum, they basically have to be able to
+            // store two frames at once (because we might read a partial frame during the playback loop,
+            // leaving some of that frame left over but not enough to continue playback so we have to read
+            // another frame). Techincally I suppose the minimum buffer size is
+            // linesize / 4 * 2 - Player.MergeBufferLength, but it's simpler just to make it two frames big.
+            int bufferSize = outputFrame->linesize[0] / sizeof(float) * 2;
+            Buffer = new AudioStreamBuffer(bufferSize);
+
+            // Last but not least, set up the metadata fields just for some extra info.
+            // TODO: am I going to keep this around? Probably not.
             CodecName = codec.long_name;
             NumberOfChannels = CodecContext.channels;
             Bitrate = CodecContext.bit_rate;
             SamplesPerFrame = CodecContext.frame_size;
-
             double timeBaseInSeconds = Stream.time_base.num / (double)Stream.time_base.den;
             double durationInSeconds = Stream.duration * timeBaseInSeconds;
             Duration = TimeSpan.FromSeconds(durationInSeconds);
@@ -187,32 +196,37 @@ namespace DMJukebox
 
         unsafe internal bool GetNextFrame()
         {
-            AVFrame* i = (AVFrame*)InputFramePtr.ToPointer();
-            AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
-            AVPacket* p = (AVPacket*)PacketPtr.ToPointer();
+            // Get pointers for the in and out frames. I don't think this adds enough overhead
+            // to each GetNextFrame() call to merit storing them as class variables, because
+            // that would require making the whole class unsafe. Maybe I'm wrong about that.
+            AVFrame* inputFrame = (AVFrame*)InputFramePtr.ToPointer();
+            AVFrame* outputFrame = (AVFrame*)OutputFramePtr.ToPointer();
 
+            // Try to get the next available frame from the decoder if one is ready.
             AVERROR result = AVCodecInterop.avcodec_receive_frame(Stream.codec, InputFramePtr);
-            if(result != AVERROR.AVERROR_SUCCESS && result != AVERROR.AVERROR_EAGAIN)
+            if (result != AVERROR.AVERROR_SUCCESS && result != AVERROR.AVERROR_EAGAIN)
             {
                 throw new Exception($"Error receiving decoded audio frame: {result}");
             }
 
-            // This happens when the ffmpeg's buffer is dry and it needs a new packet.
-            if(result == AVERROR.AVERROR_EAGAIN)
+            // This happens when the decoder's buffer is dry and it needs a new packet.
+            if (result == AVERROR.AVERROR_EAGAIN)
             {
                 // Read the next packet from the file
                 result = AVFormatInterop.av_read_frame(FormatContextPtr, PacketPtr);
                 if (result != AVERROR.AVERROR_SUCCESS)
                 {
+                    // This happens when we're at the end of the file. 
                     if (result == AVERROR.AVERROR_EOF)
                     {
-                        // Check to see if looping is enabled - if it is, reset.
-                        if(!Loop)
+                        // If this file isn't looping, just return to signal that the file's done.
+                        if (!Loop)
                         {
                             return false;
                         }
-                        result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0,
-                            AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD);
+
+                        // If this file is looping, start it over from the top.
+                        result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0, AVSEEK_FLAG.AVSEEK_FLAG_BYTE);
                         if (result != AVERROR.AVERROR_SUCCESS)
                         {
                             throw new Exception($"Error resetting stream to the beginning: {result}");
@@ -235,11 +249,14 @@ namespace DMJukebox
                 {
                     throw new Exception($"Error receiving decoded audio frame: {result}");
                 }
-             }
-            
-            if(i->channel_layout == 0)
+            }
+
+            // WAV files don't have their layout set, so if this is a WAV file then we have to
+            // explicitly set it for every single frame since the input frame is always regenerated.
+            // Otherwise the SwrContext will freak out because it thinks the input format changed.
+            if (inputFrame->channel_layout == 0)
             {
-                i->channel_layout = ChannelLayout;
+                inputFrame->channel_layout = ChannelLayout;
             }
 
             // Resample the frame to the Discord requirements (48 kHz, 2 channel stereo)
@@ -250,9 +267,9 @@ namespace DMJukebox
             }
 
             // Copy the new data into the managed buffers
-            while (f->nb_samples > 0)
+            while (outputFrame->nb_samples > 0)
             {
-                Buffer.AddIncomingData(LeftResampledDataPtr, RightResampledDataPtr, f->nb_samples);
+                Buffer.AddIncomingData(LeftResampledDataPtr, RightResampledDataPtr, outputFrame->nb_samples);
 
                 // Keep the cycle going until we've exhausted the swrcontext buffer
                 result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
@@ -284,9 +301,8 @@ namespace DMJukebox
 
         public void Stop()
         {
-            AVERROR result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0,
-                AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG.AVSEEK_FLAG_FRAME | AVSEEK_FLAG.AVSEEK_FLAG_ANY);
-            if(result != AVERROR.AVERROR_SUCCESS)
+            AVERROR result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0, AVSEEK_FLAG.AVSEEK_FLAG_BYTE);
+            if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Error resetting stream to the beginning: {result}");
             }
