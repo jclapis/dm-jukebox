@@ -24,9 +24,9 @@ namespace DMJukebox
 
         private readonly AVStream Stream;
 
-        private readonly AVCodecContext CodecContext;
+        private readonly AV_CH_LAYOUT ChannelLayout;
 
-        private DecodedAudioBuffer Buffer;
+        private readonly DecodedAudioBuffer Buffer;
 
         private readonly object SyncLock;
 
@@ -54,8 +54,6 @@ namespace DMJukebox
 
         internal bool IsPlaying;
 
-        private readonly AV_CH_LAYOUT ChannelLayout;
-
         unsafe internal AudioTrack(string FilePath)
         {
             SyncLock = new object();
@@ -81,12 +79,13 @@ namespace DMJukebox
             // Find the first audio stream
             AVFormatContext formatContext = Marshal.PtrToStructure<AVFormatContext>(FormatContextPtr);
             bool foundStream = false;
+            AVCodecContext codecContext = new AVCodecContext();
             for (int i = 0; i < formatContext.nb_streams; i++)
             {
                 IntPtr streamPtr = Marshal.ReadIntPtr(formatContext.streams, IntPtr.Size * i);
                 Stream = Marshal.PtrToStructure<AVStream>(streamPtr);
-                CodecContext = Marshal.PtrToStructure<AVCodecContext>(Stream.codec);
-                if (CodecContext.codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO)
+                Marshal.PtrToStructure(Stream.codec, codecContext);
+                if (codecContext.codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO)
                 {
                     foundStream = true;
                     break;
@@ -98,10 +97,10 @@ namespace DMJukebox
             }
 
             // Prepare the decoder
-            IntPtr codecPtr = AVCodecInterop.avcodec_find_decoder(CodecContext.codec_id);
+            IntPtr codecPtr = AVCodecInterop.avcodec_find_decoder(codecContext.codec_id);
             if (codecPtr == IntPtr.Zero)
             {
-                throw new Exception($"Error loading audio codec: finding the decoder for codec ID {CodecContext.codec_id} failed.");
+                throw new Exception($"Error loading audio codec: finding the decoder for codec ID {codecContext.codec_id} failed.");
             }
             AVCodec codec = Marshal.PtrToStructure<AVCodec>(codecPtr);
             options = IntPtr.Zero;
@@ -119,24 +118,24 @@ namespace DMJukebox
             // read a new frame from the input file)
             InputFramePtr = AVUtilInterop.av_frame_alloc();
             AVFrame* inputFrame = (AVFrame*)InputFramePtr.ToPointer();
-            inputFrame->format = CodecContext.sample_fmt;
-            inputFrame->nb_samples = CodecContext.frame_size;
-            inputFrame->channel_layout = CodecContext.channel_layout;
-            inputFrame->sample_rate = CodecContext.sample_rate;
-            if (CodecContext.frame_size == 0)
+            inputFrame->format = codecContext.sample_fmt;
+            inputFrame->nb_samples = codecContext.frame_size;
+            inputFrame->channel_layout = codecContext.channel_layout;
+            inputFrame->sample_rate = codecContext.sample_rate;
+            if (codecContext.frame_size == 0)
             {
                 // This handles WAV files that don't really have frames. FFmpeg sets the packet buffer to
                 // this size arbitrarily but doesn't tell us what it is ahead of time, so we have to do the math.
                 // This comes from wavdec.c and pcmdec.c in libavformat if you're curious.
-                int packetSize = Math.Max(WavSize, CodecContext.block_align);
-                int bytesPerSample = AVCodecInterop.av_get_exact_bits_per_sample(CodecContext.codec_id) / 8;
-                int samplesPerPacket = packetSize / (CodecContext.channels * bytesPerSample);
+                int packetSize = Math.Max(WavSize, codecContext.block_align);
+                int bytesPerSample = AVCodecInterop.av_get_exact_bits_per_sample(codecContext.codec_id) / 8;
+                int samplesPerPacket = packetSize / (codecContext.channels * bytesPerSample);
                 inputFrame->nb_samples = samplesPerPacket;
             }
-            if (CodecContext.channel_layout == 0)
+            if (codecContext.channel_layout == 0)
             {
                 // This handles PCM / WAV files, which don't come with any channel layout info.
-                ChannelLayout = AVUtilInterop.av_get_default_channel_layout(CodecContext.channels);
+                ChannelLayout = AVUtilInterop.av_get_default_channel_layout(codecContext.channels);
                 inputFrame->channel_layout = ChannelLayout;
             }
 
@@ -186,9 +185,9 @@ namespace DMJukebox
             // Last but not least, set up the metadata fields just for some extra info.
             // TODO: am I going to keep this around? Probably not.
             CodecName = codec.long_name;
-            NumberOfChannels = CodecContext.channels;
-            Bitrate = CodecContext.bit_rate;
-            SamplesPerFrame = CodecContext.frame_size;
+            NumberOfChannels = codecContext.channels;
+            Bitrate = codecContext.bit_rate;
+            SamplesPerFrame = codecContext.frame_size;
             double timeBaseInSeconds = Stream.time_base.num / (double)Stream.time_base.den;
             double durationInSeconds = Stream.duration * timeBaseInSeconds;
             Duration = TimeSpan.FromSeconds(durationInSeconds);
