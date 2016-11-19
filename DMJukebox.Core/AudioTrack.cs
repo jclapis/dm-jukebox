@@ -79,12 +79,12 @@ namespace DMJukebox
             // Find the first audio stream
             AVFormatContext formatContext = Marshal.PtrToStructure<AVFormatContext>(FormatContextPtr);
             bool foundStream = false;
-            AVCodecContext codecContext = new AVCodecContext();
+            AVCodecContext codecContext = default(AVCodecContext);
             for (int i = 0; i < formatContext.nb_streams; i++)
             {
                 IntPtr streamPtr = Marshal.ReadIntPtr(formatContext.streams, IntPtr.Size * i);
                 Stream = Marshal.PtrToStructure<AVStream>(streamPtr);
-                Marshal.PtrToStructure(Stream.codec, codecContext);
+                codecContext = Marshal.PtrToStructure<AVCodecContext>(Stream.codec);
                 if (codecContext.codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO)
                 {
                     foundStream = true;
