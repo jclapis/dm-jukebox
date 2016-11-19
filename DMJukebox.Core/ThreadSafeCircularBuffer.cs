@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿/*
+ * Copyright (c) 2016 Joe Clapis.
+ */
+
+using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DMJukebox
 {

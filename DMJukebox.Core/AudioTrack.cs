@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace DMJukebox
 {
-    public class AudioStream : IDisposable
+    public class AudioTrack : IDisposable
     {
         private const int WavSize = 4096;
 
@@ -26,7 +26,7 @@ namespace DMJukebox
 
         private readonly AVCodecContext CodecContext;
 
-        private AudioStreamBuffer Buffer;
+        private DecodedAudioBuffer Buffer;
 
         private readonly object SyncLock;
 
@@ -56,7 +56,7 @@ namespace DMJukebox
 
         private readonly AV_CH_LAYOUT ChannelLayout;
 
-        unsafe internal AudioStream(string FilePath)
+        unsafe internal AudioTrack(string FilePath)
         {
             SyncLock = new object();
             Volume = 1;
@@ -181,7 +181,7 @@ namespace DMJukebox
             // another frame). Techincally I suppose the minimum buffer size is
             // linesize / 4 * 2 - Player.MergeBufferLength, but it's simpler just to make it two frames big.
             int bufferSize = outputFrame->linesize[0] / sizeof(float) * 2;
-            Buffer = new AudioStreamBuffer(bufferSize);
+            Buffer = new DecodedAudioBuffer(bufferSize);
 
             // Last but not least, set up the metadata fields just for some extra info.
             // TODO: am I going to keep this around? Probably not.
@@ -312,7 +312,7 @@ namespace DMJukebox
 
         internal void WriteDataIntoMergeBuffers(float[] LeftChannelMergeBuffer, float[] RightChannelMergeBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)
         {
-            Buffer.WriteDataIntoMergeBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, NumberOfBytesToRead, Volume, OverwriteExistingData);
+            Buffer.WriteDataIntoPlaybackBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, NumberOfBytesToRead, Volume, OverwriteExistingData);
         }
 
         #region IDisposable Support
@@ -338,7 +338,7 @@ namespace DMJukebox
             }
         }
 
-        ~AudioStream()
+        ~AudioTrack()
         {
             Dispose(false);
         }

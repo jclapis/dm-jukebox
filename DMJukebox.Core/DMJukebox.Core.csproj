@@ -40,9 +40,8 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioFrame.cs" />
-    <Compile Include="AudioStream.cs" />
-    <Compile Include="AudioStreamBuffer.cs" />
+    <Compile Include="AudioTrack.cs" />
+    <Compile Include="DecodedAudioBuffer.cs" />
     <Compile Include="AVCodec\AVCodec.cs" />
     <Compile Include="AVCodec\AVCodecContext.cs" />
     <Compile Include="AVCodec\AVCodecID.cs" />

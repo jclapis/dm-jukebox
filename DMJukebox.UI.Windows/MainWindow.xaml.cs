@@ -17,7 +17,7 @@ namespace DMJukebox
 
         private readonly Player Player;
 
-        private AudioStream Stream;
+        private AudioTrack Stream;
 
         public MainWindow()
         {

@@ -13,7 +13,7 @@ namespace DMJukebox
 
         private bool _IsStopping;
 
-        private readonly List<AudioStream> Streams;
+        private readonly List<AudioTrack> Streams;
 
         private Task PlayTask;
 
@@ -65,7 +65,7 @@ namespace DMJukebox
         {
             StreamLock = new object();
             StopLock = new object();
-            Streams = new List<AudioStream>();
+            Streams = new List<AudioTrack>();
             LocalPlayer = new LocalSoundPlayer();
             LeftChannelMergeBuffer = new float[MergeBufferLength];
             RightChannelMergeBuffer = new float[MergeBufferLength];
@@ -85,7 +85,7 @@ namespace DMJukebox
             {
                 PlayTask.Wait(2000);
             }
-            foreach (AudioStream stream in Streams)
+            foreach (AudioTrack stream in Streams)
             {
                 stream.Stop();
             }
@@ -95,11 +95,11 @@ namespace DMJukebox
             LocalPlayer.ResetBuffer();
         }
 
-        public AudioStream AddTrack(string Filename)
+        public AudioTrack AddTrack(string Filename)
         {
             lock(StreamLock)
             {
-                AudioStream stream = new AudioStream(Filename);
+                AudioTrack stream = new AudioTrack(Filename);
                 Streams.Add(stream);
                 return stream;
             }
@@ -116,7 +116,7 @@ namespace DMJukebox
                     {
                         // Start off by figuring out if there's enough data left in the stream's buffer to read right away,
                         // or if we have to process a new frame from it.
-                        AudioStream stream = Streams[i];
+                        AudioTrack stream = Streams[i];
                         bool streamEnded = false;
                         bool isFirstStream = i == 0;
                         int availableData = stream.AvailableData;
