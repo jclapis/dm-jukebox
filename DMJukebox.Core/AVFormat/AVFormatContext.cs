@@ -1,4 +1,20 @@
-﻿using System;
+﻿/* 
+ * This file contains a C# implementation of the AVFormatContext struct
+ * as defined in avformat.h of the libavformat project, for interop use.
+ * 
+ * The documentation and comments have been largely copied from those headers and
+ * are not my own work - they are the work of the contributors to ffmpeg.
+ * Credit goes to them. I may have modified them in places where it made sense
+ * to help document the C# bindings.
+ * 
+ * For more information, please see the documentation at
+ * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
+ * https://github.com/FFmpeg/FFmpeg.
+ * 
+ * Copyright (c) 2016 Joe Clapis.
+ */
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
@@ -161,7 +177,7 @@ namespace DMJukebox.Interop
         /// Flags modifying the (de)muxer behaviour. A combination of AVFMT_FLAG_*.
         /// Set by the user before avformat_open_input() / avformat_write_header().
         /// </summary>
-        public AvFormatFlags flags;
+        public AVFMT_FLAG flags;
 
         /// <summary>
         /// Maximum size of the data read from input for determining

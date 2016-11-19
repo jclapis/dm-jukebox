@@ -58,10 +58,10 @@
     <Compile Include="AVFormat\AVDurationEstimationMethod.cs" />
     <Compile Include="AVFormat\AVFMT_AVOID_NEG_TS.cs" />
     <Compile Include="AVFormat\AVFormatContext.cs" />
-    <Compile Include="AVFormat\AvFormatFlags.cs" />
+    <Compile Include="AVFormat\AVFMT_FLAG.cs" />
     <Compile Include="AVFormat\AVFrac.cs" />
     <Compile Include="AVFormat\AVIOInterruptCB.cs" />
-    <Compile Include="AVFormat\AVRational.cs" />
+    <Compile Include="AVUtil\AVRational.cs" />
     <Compile Include="AVFormat\AVSEEK_FLAG.cs" />
     <Compile Include="AVFormat\AVStream.cs" />
     <Compile Include="AVFormat\AVSTREAM_EVENT_FLAG.cs" />

@@ -1,7 +1,6 @@
 ﻿/* 
- * This file contains a C# implementation of the AVSTREAM_EVENT_FLAG enum
- * as defined in avformat.h of the libavformat project, for interop use.
- * It isn't technically an enum in ffmpeg, just a bunch of macros.
+ * This file contains a C# implementation of the AVRational struct
+ * as defined in rational.h of the libavutil project, for interop use.
  * 
  * The documentation and comments have been largely copied from those headers and
  * are not my own work - they are the work of the contributors to ffmpeg.
@@ -15,13 +14,24 @@
  * Copyright (c) 2016 Joe Clapis.
  */
 
+using System.Runtime.InteropServices;
+
 namespace DMJukebox.Interop
 {
-    internal enum AVSTREAM_EVENT_FLAG
+    /// <summary>
+    /// rational number numerator/denominator
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal struct AVRational
     {
         /// <summary>
-        /// The call resulted in updated metadata.
+        /// numerator
         /// </summary>
-        AVSTREAM_EVENT_FLAG_METADATA_UPDATED = 0x0001
+        public int num;
+
+        /// <summary>
+        /// denominator
+        /// </summary>
+        public int den;
     }
 }

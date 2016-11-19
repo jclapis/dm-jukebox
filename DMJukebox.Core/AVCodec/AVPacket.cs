@@ -1,4 +1,20 @@
-﻿using System;
+﻿/* 
+ * This file contains a C# implementation of the AVPacket struct
+ * as defined in avcodec.h of the libavcodec project, for interop use.
+ * 
+ * The documentation and comments have been largely copied from those headers and
+ * are not my own work - they are the work of the contributors to ffmpeg.
+ * Credit goes to them. I may have modified them in places where it made sense
+ * to help document the C# bindings.
+ * 
+ * For more information, please see the documentation at
+ * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
+ * https://github.com/FFmpeg/FFmpeg.
+ * 
+ * Copyright (c) 2016 Joe Clapis.
+ */
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
@@ -32,7 +48,7 @@ namespace DMJukebox.Interop
     /// @see av_packet_unref
     /// </summary>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    unsafe internal struct AVPacket
+    internal struct AVPacket
     {
         /// <summary>
         /// A reference to the reference-counted buffer where the packet data is
@@ -42,7 +58,7 @@ namespace DMJukebox.Interop
         /// <remarks>
         /// This is an AVBufferRef*. That struct isn't implemented here.
         /// </remarks>
-        public void* buf;
+        public IntPtr buf;
 
         /// <summary>
         /// Presentation timestamp in AVStream->time_base units; the time at which
@@ -62,7 +78,7 @@ namespace DMJukebox.Interop
         /// </summary>
         public long dts;
 
-        public byte* data;
+        public IntPtr data;
 
         public int size;
 
@@ -80,7 +96,7 @@ namespace DMJukebox.Interop
         /// <remarks>
         /// This is an AVPacketSideData*. That struct isn't implemented here.
         /// </remarks>
-        public void* side_data;
+        public IntPtr side_data;
 
         public int side_data_elems;
 
