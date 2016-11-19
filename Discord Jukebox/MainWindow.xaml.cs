@@ -13,7 +13,7 @@ namespace DMJukebox
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static LogCallback LoggerDelegate;
+        //private static LogCallback LoggerDelegate;
 
         private readonly Player Player;
 
@@ -22,14 +22,14 @@ namespace DMJukebox
         public MainWindow()
         {
             InitializeComponent();
-            LoggerDelegate = Logger;
-            Player = new Player();
+            //LoggerDelegate = Logger;
+            Player = Player.Create();
 
             //AVUtilInterop.av_log_set_callback(LoggerDelegate);
-            AVFormatInterop.av_register_all();
+            
         }
 
-        private void Logger(IntPtr avcl, int level, string fmt, IntPtr args)
+       /* private void Logger(IntPtr avcl, int level, string fmt, IntPtr args)
         {
             StringBuilder builder = new StringBuilder(MsvcrtInterop._vscprintf(fmt, args) + 1);
             MsvcrtInterop.vsprintf(builder, fmt, args);
@@ -38,7 +38,7 @@ namespace DMJukebox
             {
                 StuffBox.Text += $"[{level}] {builder.ToString()}";
             });
-        }
+        }*/
 
         protected override void OnClosing(CancelEventArgs e)
         {
@@ -54,7 +54,7 @@ namespace DMJukebox
                 string filename = dialog.FileName;
                 try
                 {
-                    Stream = new AudioStream(filename);
+                    Stream = Player.AddTrack(filename);
                     using (StringWriter writer = new StringWriter())
                     {
                         writer.WriteLine($"Loaded file {Path.GetFileName(filename)}");
@@ -66,7 +66,6 @@ namespace DMJukebox
                         writer.WriteLine();
                         StuffBox.Text += writer.ToString();
                     }
-                    Player.AddStream(Stream);
                 }
                 catch(Exception ex)
                 {
@@ -83,7 +82,7 @@ namespace DMJukebox
 
         private void StopButtonClick(object sender, RoutedEventArgs e)
         {
-            Player.Stop();
+            Player.StopAll();
             System.Diagnostics.Debug.WriteLine("Stopped playing");
         }
 
@@ -94,5 +93,21 @@ namespace DMJukebox
                 Stream.Volume = (float)VolumeSlider.Value;
             }
         }
+
+        private void LoopBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if(Stream != null)
+            {
+                if (LoopBox.IsChecked == true)
+                {
+                    Stream.Loop = true;
+                }
+                else
+                {
+                    Stream.Loop = false;
+                }
+            }
+        }
+
     }
 }

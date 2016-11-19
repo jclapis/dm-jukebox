@@ -16,7 +16,7 @@ namespace DMJukebox.Interop
     /// <summary>
     /// This utility class holds P/Invoke wrappers for Msvcrt functions.
     /// </summary>
-    public static class MsvcrtInterop
+    internal static class MsvcrtInterop
     {
         private const string MsvcrtDll = "Msvcrt.dll";
 

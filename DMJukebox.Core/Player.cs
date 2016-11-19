@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DMJukebox.Interop;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -22,12 +23,13 @@ namespace DMJukebox
 
         public bool StreamToDiscord { get; set; }
 
-        private const int MergeBufferLength = 480;
+        internal const int MergeBufferLength = 480;
 
         private readonly float[] LeftChannelMergeBuffer;
 
         private readonly float[] RightChannelMergeBuffer;
 
+        private static readonly Player Instance;
 
         private bool IsStopping
         {
@@ -48,7 +50,18 @@ namespace DMJukebox
             }
         }
 
-        public Player()
+        static Player()
+        {
+            AVFormatInterop.av_register_all();
+            Instance = new Player();
+        }
+
+        public static Player Create()
+        {
+            return Instance;
+        }
+
+        private Player()
         {
             StreamLock = new object();
             StopLock = new object();
@@ -65,15 +78,7 @@ namespace DMJukebox
             LocalPlayer.Start();
         }
 
-        public void AddStream(AudioStream Stream)
-        {
-            lock(StreamLock)
-            {
-                Streams.Add(Stream);
-            }
-        }
-
-        public void Stop()
+        public void StopAll()
         {
             IsStopping = true;
             if(PlayTask != null && PlayTask.Status == TaskStatus.Running)
@@ -81,6 +86,16 @@ namespace DMJukebox
                 PlayTask.Wait(2000);
             }
             LocalPlayer.Pause();
+        }
+
+        public AudioStream AddTrack(string Filename)
+        {
+            lock(StreamLock)
+            {
+                AudioStream stream = new AudioStream(Filename);
+                Streams.Add(stream);
+                return stream;
+            }
         }
 
         private void Run()

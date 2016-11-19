@@ -31,7 +31,7 @@ namespace DMJukebox.Interop
         /// Codec capabilities.
         /// see AV_CODEC_CAP_*
         /// </summary>
-        public int capabilities;
+        public AV_CODEC_CAP capabilities;
 
         /// <summary>
         /// array of supported framerates, or NULL if any, array is terminated by {0,0}

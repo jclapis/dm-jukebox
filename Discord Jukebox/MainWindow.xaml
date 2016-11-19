@@ -15,5 +15,6 @@
         <Button x:Name="StopButton" Content="Stop!" HorizontalAlignment="Left" Margin="10,83,0,0" VerticalAlignment="Top" Width="75" Click="StopButtonClick"/>
         <Label Content="Volume" HorizontalAlignment="Left" Margin="10,108,0,0" VerticalAlignment="Top"/>
         <Slider x:Name="VolumeSlider" TickPlacement="BottomRight" TickFrequency="0.05" Minimum="0" Maximum="1" Value="1" HorizontalAlignment="Left" Margin="10,139,0,0" VerticalAlignment="Top" Width="114" ValueChanged="VolumeSlider_ValueChanged"/>
+        <CheckBox x:Name="LoopBox" Content="Loop" HorizontalAlignment="Left" Margin="90,61,0,0" VerticalAlignment="Top" Checked="LoopBox_Checked"/>
     </Grid>
 </Window>

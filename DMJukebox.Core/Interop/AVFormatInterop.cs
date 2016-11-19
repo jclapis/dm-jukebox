@@ -21,7 +21,7 @@ namespace DMJukebox.Interop
     /// <summary>
     /// This is a utility class that holds the P/Invoke wrappers for libavformat.
     /// </summary>
-    public static class AVFormatInterop
+    internal static class AVFormatInterop
     {
         /// <summary>
         /// The DLL for Windows
@@ -314,5 +314,8 @@ namespace DMJukebox.Interop
         }
 
         #endregion
+
+        [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_register_all), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AVERROR av_seek_frame(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
     }
 }

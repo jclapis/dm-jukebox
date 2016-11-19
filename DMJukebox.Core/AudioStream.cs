@@ -26,6 +26,8 @@ namespace DMJukebox
 
         private AudioStreamBuffer Buffer;
 
+        private readonly object SyncLock;
+
         public int AvailableData
         {
             get
@@ -48,8 +50,13 @@ namespace DMJukebox
 
         public TimeSpan Duration { get; }
 
-        unsafe public AudioStream(string FilePath)
+        internal bool IsPlaying;
+
+        private readonly AV_CH_LAYOUT ChannelLayout;
+
+        unsafe internal AudioStream(string FilePath)
         {
+            SyncLock = new object();
             Volume = 1;
 
             // Create the FormatContext
@@ -114,6 +121,11 @@ namespace DMJukebox
             inputFrame->nb_samples = CodecContext.frame_size;
             inputFrame->channel_layout = CodecContext.channel_layout;
             inputFrame->sample_rate = CodecContext.sample_rate;
+            if(CodecContext.channel_layout == 0)
+            {
+                ChannelLayout = AVUtilInterop.av_get_default_channel_layout(CodecContext.channels);
+                inputFrame->channel_layout = ChannelLayout;
+            }
 
             // Set up the output frame
             OutputFramePtr = AVUtilInterop.av_frame_alloc();
@@ -146,7 +158,9 @@ namespace DMJukebox
             }
 
             // Set up the output capture buffers for playback
-            Buffer = new AudioStreamBuffer(outputFrame->linesize[0] / sizeof(float) * 2);
+            int bufferSize = outputFrame->linesize[0] / sizeof(float) * 2;
+            bufferSize = Math.Max(bufferSize, Player.MergeBufferLength * 2);
+            Buffer = new AudioStreamBuffer(bufferSize);
             LeftResampledDataPtr = (IntPtr)outputFrame->data0;
             RightResampledDataPtr = (IntPtr)outputFrame->data1;
 
@@ -160,8 +174,11 @@ namespace DMJukebox
             Duration = TimeSpan.FromSeconds(durationInSeconds);
         }
 
-        unsafe public bool GetNextFrame()
+        unsafe internal bool GetNextFrame()
         {
+            AVFrame* i = (AVFrame*)InputFramePtr.ToPointer();
+            AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
+
             AVERROR result = AVCodecInterop.avcodec_receive_frame(Stream.codec, InputFramePtr);
             if(result != AVERROR.AVERROR_SUCCESS && result != AVERROR.AVERROR_EAGAIN)
             {
@@ -177,7 +194,18 @@ namespace DMJukebox
                 {
                     if (result == AVERROR.AVERROR_EOF)
                     {
-                        return false;
+                        // Check to see if looping is enabled - if it is, reset.
+                        if(!Loop)
+                        {
+                            return false;
+                        }
+                        result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0,
+                            AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG.AVSEEK_FLAG_FRAME | AVSEEK_FLAG.AVSEEK_FLAG_ANY);
+                        if (result != AVERROR.AVERROR_SUCCESS)
+                        {
+                            throw new Exception($"Error resetting stream to the beginning: {result}");
+                        }
+                        return GetNextFrame();
                     }
                     throw new Exception($"Error reading audio packet: {result}");
                 }
@@ -197,6 +225,11 @@ namespace DMJukebox
                 }
             }
             
+            if(i->channel_layout == 0)
+            {
+                i->channel_layout = ChannelLayout;
+            }
+
             // Resample the frame to the Discord requirements (48 kHz, 2 channel stereo)
             result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, InputFramePtr);
             if (result != AVERROR.AVERROR_SUCCESS)
@@ -205,7 +238,6 @@ namespace DMJukebox
             }
 
             // Copy the new data into the managed buffers
-            AVFrame* f = (AVFrame*)OutputFramePtr.ToPointer();
             while (f->nb_samples > 0)
             {
                 Buffer.AddIncomingData(LeftResampledDataPtr, RightResampledDataPtr, f->nb_samples);
@@ -228,7 +260,27 @@ namespace DMJukebox
             return true;
         }
 
-        public void WriteDataIntoMergeBuffers(float[] LeftChannelMergeBuffer, float[] RightChannelMergeBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)
+        public void StartPlaying()
+        {
+
+        }
+
+        public void Pause()
+        {
+
+        }
+
+        public void Stop()
+        {
+            AVERROR result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0,
+                AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG.AVSEEK_FLAG_FRAME | AVSEEK_FLAG.AVSEEK_FLAG_ANY);
+            if(result != AVERROR.AVERROR_SUCCESS)
+            {
+                throw new Exception($"Error resetting stream to the beginning: {result}");
+            }
+        }
+
+        internal void WriteDataIntoMergeBuffers(float[] LeftChannelMergeBuffer, float[] RightChannelMergeBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)
         {
             Buffer.WriteDataIntoMergeBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, NumberOfBytesToRead, Volume, OverwriteExistingData);
         }

@@ -29,7 +29,7 @@ namespace DMJukebox.Interop
     /// subsequent arguments are converted to output.</param>
     /// <param name="args">(va_list) The arguments referenced by the format string.</param>
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate void LogCallback(IntPtr avcl, int level, string fmt, IntPtr args);
+    internal delegate void LogCallback(IntPtr avcl, int level, string fmt, IntPtr args);
 
     /// <summary>
     /// This is a utility class that holds the P/Invoke wrappers for libavutil.
@@ -78,6 +78,9 @@ namespace DMJukebox.Interop
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_frame_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_frame_unref_windows(IntPtr frame);
 
+        [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_get_default_channel_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AV_CH_LAYOUT av_get_default_channel_layout_windows(int nb_channels);
+
         #endregion
 
         #region Linux Functions
@@ -102,6 +105,9 @@ namespace DMJukebox.Interop
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_frame_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_frame_unref_linux(IntPtr frame);
+
+        [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_get_default_channel_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AV_CH_LAYOUT av_get_default_channel_layout_linux(int nb_channels);
 
         #endregion
 
@@ -128,6 +134,9 @@ namespace DMJukebox.Interop
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_frame_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void av_frame_unref_osx(IntPtr frame);
 
+        [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_get_default_channel_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern AV_CH_LAYOUT av_get_default_channel_layout_osx(int nb_channels);
+
         #endregion
 
         #region Delegates and Platform-Dependent Loading
@@ -141,6 +150,7 @@ namespace DMJukebox.Interop
         private delegate int av_frame_get_channels_delegate(IntPtr frame);
         private delegate void av_frame_set_channels_delegate(IntPtr frame, int val);
         private delegate void av_frame_unref_delegate(IntPtr frame);
+        private delegate AV_CH_LAYOUT av_get_default_channel_layout_delegate(int nb_channels);
 
         // These fields represent function pointers towards each of the extern functions. They get set
         // to the proper platform-specific functions by the static constructor. For example, if this is
@@ -154,6 +164,7 @@ namespace DMJukebox.Interop
         private static av_frame_get_channels_delegate av_frame_get_channels_impl;
         private static av_frame_set_channels_delegate av_frame_set_channels_impl;
         private static av_frame_unref_delegate av_frame_unref_impl;
+        private static av_get_default_channel_layout_delegate av_get_default_channel_layout_impl;
 
         /// <summary>
         /// The static constructor figures out which library to use for P/Invoke based
@@ -172,6 +183,7 @@ namespace DMJukebox.Interop
                 av_frame_get_channels_impl = av_frame_get_channels_windows;
                 av_frame_set_channels_impl = av_frame_set_channels_windows;
                 av_frame_unref_impl = av_frame_unref_windows;
+                av_get_default_channel_layout_impl = av_get_default_channel_layout_windows;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
@@ -182,6 +194,7 @@ namespace DMJukebox.Interop
                 av_frame_get_channels_impl = av_frame_get_channels_linux;
                 av_frame_set_channels_impl = av_frame_set_channels_linux;
                 av_frame_unref_impl = av_frame_unref_linux;
+                av_get_default_channel_layout_impl = av_get_default_channel_layout_linux;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -192,6 +205,7 @@ namespace DMJukebox.Interop
                 av_frame_get_channels_impl = av_frame_get_channels_osx;
                 av_frame_set_channels_impl = av_frame_set_channels_osx;
                 av_frame_unref_impl = av_frame_unref_osx;
+                av_get_default_channel_layout_impl = av_get_default_channel_layout_osx;
             }
             else
             {
@@ -287,6 +301,16 @@ namespace DMJukebox.Interop
         public static void av_frame_unref(IntPtr frame)
         {
             av_frame_unref_impl(frame);
+        }
+
+        /// <summary>
+        /// Return default channel layout for a given number of channels.
+        /// </summary>
+        /// <param name="nb_channels"></param>
+        /// <returns></returns>
+        public static AV_CH_LAYOUT av_get_default_channel_layout(int nb_channels)
+        {
+            return av_get_default_channel_layout_impl(nb_channels);
         }
 
         #endregion
