@@ -6,6 +6,8 @@ namespace DMJukebox
 {
     public class AudioStream : IDisposable
     {
+        private const int WavSize = 4096;
+
         private readonly IntPtr FormatContextPtr;
 
         private IntPtr PacketPtr;
@@ -28,7 +30,7 @@ namespace DMJukebox
 
         private readonly object SyncLock;
 
-        public int AvailableData
+        internal int AvailableData
         {
             get
             {
@@ -121,8 +123,18 @@ namespace DMJukebox
             inputFrame->nb_samples = CodecContext.frame_size;
             inputFrame->channel_layout = CodecContext.channel_layout;
             inputFrame->sample_rate = CodecContext.sample_rate;
+            if(CodecContext.frame_size == 0)
+            {
+                // This handles WAV files that don't really have frames. FFmpeg sets the packet buffer to
+                // this size arbitrarily.
+                int packetSize = Math.Max(WavSize, CodecContext.block_align);
+                int bytesPerSample = AVCodecInterop.av_get_exact_bits_per_sample(CodecContext.codec_id) / 8;
+                packetSize /= (CodecContext.channels * bytesPerSample);
+                inputFrame->nb_samples = packetSize;
+            }
             if(CodecContext.channel_layout == 0)
             {
+                // This handles PCM data that doesn't have any channel layout info.
                 ChannelLayout = AVUtilInterop.av_get_default_channel_layout(CodecContext.channels);
                 inputFrame->channel_layout = ChannelLayout;
             }
@@ -149,17 +161,16 @@ namespace DMJukebox
 
             // Set up the buffers for the output frame, which are persistent
             long delay = SWResampleInterop.swr_get_delay(SwrContextPtr, 48000);
-            int outSamples = (int)delay + (CodecContext.frame_size * 48000 / CodecContext.sample_rate) + 3;
-            outputFrame->nb_samples = Math.Max(outSamples, 4800);
+            int outSamples = (int)delay + (inputFrame->nb_samples * 48000 / inputFrame->sample_rate) + 3;
+            outputFrame->nb_samples = outSamples;
             result = AVUtilInterop.av_frame_get_buffer(OutputFramePtr, 0);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Output frame buffer allocation failed: {result}");
             }
 
-            // Set up the output capture buffers for playback
+            // Set up the output capture buffers for playback.
             int bufferSize = outputFrame->linesize[0] / sizeof(float) * 2;
-            bufferSize = Math.Max(bufferSize, 48000);
             Buffer = new AudioStreamBuffer(bufferSize);
             LeftResampledDataPtr = (IntPtr)outputFrame->data0;
             RightResampledDataPtr = (IntPtr)outputFrame->data1;
@@ -224,7 +235,7 @@ namespace DMJukebox
                 {
                     throw new Exception($"Error receiving decoded audio frame: {result}");
                 }
-            }
+             }
             
             if(i->channel_layout == 0)
             {

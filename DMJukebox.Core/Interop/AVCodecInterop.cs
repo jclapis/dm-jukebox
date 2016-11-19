@@ -382,5 +382,8 @@ namespace DMJukebox.Interop
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public static extern void avcodec_flush_buffers(IntPtr avctx);
+
+        [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        public static extern int av_get_exact_bits_per_sample(AVCodecID codec_id);
     }
 }
