@@ -1,36 +1,44 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace DMJukebox
 {
     /// <summary>
     /// Interaction logic for TrackControl.xaml
     /// </summary>
-    public partial class TrackControl : UserControl
+    internal partial class TrackControl : UserControl
     {
         private readonly Delegate HandleClickOutOfNameBoxDelegate;
 
-        public TrackControl()
+        private readonly AudioTrack Track;
+
+        private bool IsPlaying;
+
+        private readonly BitmapImage PlayIcon;
+
+        private readonly BitmapImage StopIcon;
+
+        private readonly MainWindow MainWindow;
+
+        public TrackControl(AudioTrack Track, MainWindow MainWindow)
         {
             InitializeComponent();
+            this.Track = Track;
+            NameLabelBlock.Text = Track.Name;
+            this.MainWindow = MainWindow;
             HandleClickOutOfNameBoxDelegate = new MouseButtonEventHandler(HandleClickOutOfNameBox);
+            Uri playIconUri = new Uri("pack://application:,,,/Resources/Play.png");
+            Uri stopIconUri = new Uri("pack://application:,,,/Resources/Stop.png");
+            PlayIcon = new BitmapImage(playIconUri);
+            StopIcon = new BitmapImage(stopIconUri);
         }
 
         private void EnableRename(object sender, MouseButtonEventArgs e)
         {
-            NameBox.Text = NameLabelText.Text;
+            NameBox.Text = NameLabelBlock.Text;
             NameLabel.Visibility = Visibility.Hidden;
             NameBox.Visibility = Visibility.Visible;
             NameBox.Focus();
@@ -47,7 +55,7 @@ namespace DMJukebox
                 return;
             }
 
-            NameLabelText.Text = newName;
+            NameLabelBlock.Text = newName;
             EndRename();
         }
 
@@ -81,6 +89,49 @@ namespace DMJukebox
         private void HandleClickOutOfNameBox(object Sender, MouseButtonEventArgs Args)
         {
             EndRename();
+        }
+
+        private void HandlePlayButtonClick(object sender, RoutedEventArgs e)
+        {
+            if(!IsPlaying)
+            {
+                PlayImage.Source = StopIcon;
+                Track.Play();
+                IsPlaying = true;
+            }
+            else
+            {
+                PlayImage.Source = PlayIcon;
+                Track.Stop();
+                IsPlaying = false;
+            }
+        }
+
+        private void HandleLoopBoxChecked(object sender, RoutedEventArgs e)
+        {
+            Track.Loop = true;
+        }
+
+        private void HandleLoopBoxUnchecked(object sender, RoutedEventArgs e)
+        {
+            Track.Loop = false;
+        }
+
+        private void HandleVolumeSliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if(Track == null)
+            {
+                return;
+            }
+
+            Track.Volume = (float)VolumeSlider.Value;
+        }
+
+        private void HandleInfoButtonClick(object sender, RoutedEventArgs e)
+        {
+            TrackInfoWindow infoWindow = new TrackInfoWindow(Track.Name, Track.Info);
+            infoWindow.Owner = MainWindow;
+            infoWindow.ShowDialog();
         }
 
     }

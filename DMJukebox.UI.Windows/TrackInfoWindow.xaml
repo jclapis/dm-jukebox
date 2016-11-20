@@ -1,0 +1,43 @@
+﻿<Window x:Class="DMJukebox.TrackInfoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DMJukebox"
+        x:ClassModifier="internal"
+        mc:Ignorable="d"
+        Icon="pack://application:,,,/Resources/Info.png"
+        WindowStartupLocation="CenterOwner"
+        Title="Info for" Height="240" Width="300">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <Label Grid.Column="0" Grid.Row="0" Content="Path:" HorizontalAlignment="Right"/>
+        <Label Grid.Column="0" Grid.Row="1" Content="Duration:" HorizontalAlignment="Right"/>
+        <Label Grid.Column="0" Grid.Row="2" Content="Codec:" HorizontalAlignment="Right"/>
+        <Label Grid.Column="0" Grid.Row="3" Content="Channels:" HorizontalAlignment="Right"/>
+        <Label Grid.Column="0" Grid.Row="4" Content="Bit Rate:" HorizontalAlignment="Right"/>
+        <Label Grid.Column="0" Grid.Row="5" Content="Sample Rate:" HorizontalAlignment="Right"/>
+
+        <Label Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left">
+            <TextBlock x:Name="PathBlock" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"/>
+        </Label>
+        <Label x:Name="DurationLabel" Grid.Column="1" Grid.Row="1" />
+        <Label x:Name="CodecLabel" Grid.Column="1" Grid.Row="2" />
+        <Label x:Name="ChannelsLabel" Grid.Column="1" Grid.Row="3" />
+        <Label x:Name="BitRateLabel" Grid.Column="1" Grid.Row="4" />
+        <Label x:Name="SampleRateLabel" Grid.Column="1" Grid.Row="5" />
+        
+    </Grid>
+</Window>

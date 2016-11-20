@@ -83,6 +83,9 @@
     <Compile Include="TrackControl.xaml.cs">
       <DependentUpon>TrackControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TrackInfoWindow.xaml.cs">
+      <DependentUpon>TrackInfoWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -96,6 +99,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="TrackControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="TrackInfoWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -166,7 +173,7 @@
     <Resource Include="Resources\Volume.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Play_Black.png" />
+    <Resource Include="Resources\Play.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Stop.png" />
