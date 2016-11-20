@@ -63,12 +63,12 @@ namespace DMJukebox
                         writer.WriteLine($"Channels: {info.NumberOfChannels}");
                         writer.WriteLine($"Sample rate: {info.SampleRate}");
                         writer.WriteLine();
-                        StuffBox.Text += writer.ToString();
+                        //StuffBox.Text += writer.ToString();
                     }
                 }
                 catch(Exception ex)
                 {
-                    StuffBox.Text += $"Error opening file: {ex.GetDetails()}";
+                    //StuffBox.Text += $"Error opening file: {ex.GetDetails()}";
                 }
             }
         }

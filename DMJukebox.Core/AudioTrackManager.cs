@@ -220,16 +220,20 @@ namespace DMJukebox
                 // Remove all of the tracks that ended during this iteration
                 if (endedTracks != null)
                 {
-                    foreach(AudioTrack track in endedTracks)
+                    lock (ActiveTrackLock)
                     {
-                        RemoveTrackFromPlaybackList(track);
+                        foreach (AudioTrack track in endedTracks)
+                        {
+                            ActiveTracks.Remove(track);
+                            track.Reset();
+                        }
+
+                        // Clean up if playback is done.
+                        if (ActiveTracks.Count == 0)
+                        {
+                            LocalPlayer.Stop();
+                        }
                     }
-                }
-                
-                // Clean up if playback is done.
-                if (ActiveTracks.Count == 0)
-                {
-                    LocalPlayer.Stop();
                 }
             }
         }

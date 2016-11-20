@@ -3,18 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DMJukebox"
+        xmlns:dm="clr-namespace:DMJukebox"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="600" Width="800">
+    <Window.Style>
+        <Style TargetType="{x:Type Window}">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+    </Window.Style>
     <Grid>
-        <Button x:Name="LoadButton" Content="Load 'em up, Dan" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="114" Click="LoadButton_Click"/>
-        <ScrollViewer HorizontalAlignment="Left" Height="257" Margin="276,10,0,0" VerticalAlignment="Top" Width="231">
-            <TextBox x:Name="StuffBox" TextWrapping="Wrap" />
-        </ScrollViewer>
-        <Button x:Name="PlayButton" Content="Play!" HorizontalAlignment="Left" Margin="10,58,0,0" VerticalAlignment="Top" Width="75" Click="PlayButtonClick"/>
-        <Button x:Name="StopButton" Content="Stop!" HorizontalAlignment="Left" Margin="10,83,0,0" VerticalAlignment="Top" Width="75" Click="StopButtonClick"/>
-        <Label Content="Volume" HorizontalAlignment="Left" Margin="10,108,0,0" VerticalAlignment="Top"/>
-        <Slider x:Name="VolumeSlider" TickPlacement="BottomRight" TickFrequency="0.05" Minimum="0" Maximum="1" Value="1" HorizontalAlignment="Left" Margin="10,139,0,0" VerticalAlignment="Top" Width="114" ValueChanged="VolumeSlider_ValueChanged"/>
-        <CheckBox x:Name="LoopBox" Content="Loop" HorizontalAlignment="Left" Margin="90,61,0,0" VerticalAlignment="Top" Click="LoopBox_Checked"/>
+        <Button x:Name="LoadButton" Content="Load 'em up, Dan" HorizontalAlignment="Left" Margin="637,406,0,0" VerticalAlignment="Top" Width="114" Click="LoadButton_Click"/>
+        <Button x:Name="PlayButton" Content="Play!" HorizontalAlignment="Left" Margin="637,454,0,0" VerticalAlignment="Top" Width="75" Click="PlayButtonClick"/>
+        <Button x:Name="StopButton" Content="Stop!" HorizontalAlignment="Left" Margin="637,479,0,0" VerticalAlignment="Top" Width="75" Click="StopButtonClick"/>
+        <Label Content="Volume" HorizontalAlignment="Left" Margin="637,504,0,0" VerticalAlignment="Top"/>
+        <Slider x:Name="VolumeSlider" TickPlacement="BottomRight" TickFrequency="0.05" Minimum="0" Maximum="1" Value="1" HorizontalAlignment="Left" Margin="637,535,0,0" VerticalAlignment="Top" Width="114" ValueChanged="VolumeSlider_ValueChanged"/>
+        <CheckBox x:Name="LoopBox" Content="Loop" HorizontalAlignment="Left" Margin="717,457,0,0" VerticalAlignment="Top" Click="LoopBox_Checked"/>
+        <GroupBox x:Name="groupBox" Header="Master Controls" HorizontalAlignment="Left" Height="144" Margin="182,10,0,0" VerticalAlignment="Top" Width="413"/>
+        <dm:TrackControl x:Name="Track1" Margin="10,159,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <dm:TrackControl x:Name="Track2" Margin="10,224,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
 </Window>
