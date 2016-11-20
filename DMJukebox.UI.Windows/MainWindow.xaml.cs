@@ -58,11 +58,12 @@ namespace DMJukebox
                     using (StringWriter writer = new StringWriter())
                     {
                         writer.WriteLine($"Loaded file {Path.GetFileName(filename)}");
-                        writer.WriteLine($"Codec: {Stream.CodecName}");
-                        writer.WriteLine($"Bitrate: {Stream.Bitrate}");
-                        writer.WriteLine($"Duration: {Stream.Duration}");
-                        writer.WriteLine($"Channels: {Stream.NumberOfChannels}");
-                        writer.WriteLine($"Samples per Frame: {Stream.SamplesPerFrame}");
+                        TrackInfo info = Stream.Info;
+                        writer.WriteLine($"Codec: {info.CodecName}");
+                        writer.WriteLine($"Bitrate: {info.Bitrate}");
+                        writer.WriteLine($"Duration: {info.Duration}");
+                        writer.WriteLine($"Channels: {info.NumberOfChannels}");
+                        writer.WriteLine($"Sample rate: {info.SampleRate}");
                         writer.WriteLine();
                         StuffBox.Text += writer.ToString();
                     }

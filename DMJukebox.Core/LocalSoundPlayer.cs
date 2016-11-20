@@ -32,7 +32,7 @@ namespace DMJukebox
         /// <summary>
         /// This is the SoundIoOutStream (the stream for writing data to the speakers).
         /// </summary>
-        private readonly IntPtr SoundIoOutStreamPtr;
+        private IntPtr SoundIoOutStreamPtr;
 
         /// <summary>
         /// This delegate gets passed to libsoundio as the callback for sending audio to the speakers.
@@ -99,8 +99,20 @@ namespace DMJukebox
                 SoundIoChannelLayout layout = Marshal.PtrToStructure<SoundIoChannelLayout>(defaultLayout);
                 throw new Exception($"Local sound device {device.name} doesn't support stereo playback, couldn't find the front left or front right channels. Layout was {layout.name}.");
             }
-            
-            // Create the output stream.
+        }
+
+        /// <summary>
+        /// Begins the playback thread that writes output audio to the speakers.
+        /// </summary>
+        public void Start()
+        {
+            if(IsPlaying)
+            {
+                return;
+            }
+
+            // Create the output stream. This has to be done every time the player starts playback
+            // because when it stops, we have to destroy the stream entirely.
             SoundIoOutStreamPtr = SoundIoInterop.soundio_outstream_create(SoundIoDevicePtr);
             SoundIoOutStream stream = Marshal.PtrToStructure<SoundIoOutStream>(SoundIoOutStreamPtr);
             stream.write_callback = WriteSoundDelegate;
@@ -111,20 +123,7 @@ namespace DMJukebox
             stream.format = SoundIoFormat.SoundIoFormatFloat32LE;
             Marshal.StructureToPtr(stream, SoundIoOutStreamPtr, false);
 
-            result = SoundIoInterop.soundio_outstream_open(SoundIoOutStreamPtr);
-            if (result != SoundIoError.SoundIoErrorNone)
-            {
-                throw new Exception($"Opening the local sound stream failed: {result}");
-            }
-        }
-
-        public void Start()
-        {
-            if(IsPlaying)
-            {
-                return;
-            }
-
+            // Open the stream and start playback.
             SoundIoError result = SoundIoInterop.soundio_outstream_open(SoundIoOutStreamPtr);
             if (result != SoundIoError.SoundIoErrorNone)
             {
@@ -135,55 +134,85 @@ namespace DMJukebox
             {
                 throw new Exception($"Starting local sound playback failed: {result}");
             }
+
             IsPlaying = true;
         }
 
+        /// <summary>
+        /// Stops the playback thread.
+        /// </summary>
         public void Stop()
         {
-            /*SoundIoError result = SoundIoInterop.soundio_outstream_pause(SoundIoOutStreamPtr, true);
-            if (result != SoundIoError.SoundIoErrorNone)
-            {
-                throw new Exception($"Pausing local sound playback failed: {result}");
-            }*/
+            // We have to destroy the output stream here because if we just pause, then there will be
+            // residual data left over which causes a really obnoxious "burp" of the previous few frames
+            // that were written. I couldn't get this to stop no matter how many buffer clears I put in
+            // or how many sync techniques I tried, so at the end of day it's easiest to just kill the
+            // entire output channel and start over from scratch when playback resumes.
             SoundIoInterop.soundio_outstream_destroy(SoundIoOutStreamPtr);
+            SoundIoOutStreamPtr = IntPtr.Zero;
+            Buffer.Reset();
+            IsPlaying = false;
         }
 
-        unsafe private void WriteSound(IntPtr StreamPtr, int MinFrameCount, int MaxFrameCount)
+        /// <summary>
+        /// This is the callback that writes sound data out to the speakers.
+        /// </summary>
+        /// <param name="OutStream">The output stream (this is just SoundIoOutStreamPtr).</param>
+        /// <param name="MinFrameCount">The smallest number of frames that can be written during this call</param>
+        /// <param name="MaxFrameCount">The largets number of frames that can be written during this call</param>
+        /// <remarks>
+        /// So for WASAPI, the system will break unless you actually write MaxFrameCount number of frames. Anything
+        /// less and it blows up. I figure since we're running a circular buffer behind the scenes and data comes
+        /// in way faster than it goes out anyway, let's just write the full number of frames no matter what
+        /// backend libsoundio winds up using.
+        /// </remarks>
+        unsafe private void WriteSound(IntPtr OutStream, int MinFrameCount, int MaxFrameCount)
         {
             IntPtr soundAreas = IntPtr.Zero;
             int frameCount = MaxFrameCount;
-            SoundIoError result = SoundIoInterop.soundio_outstream_begin_write(StreamPtr, ref soundAreas, ref frameCount);
+
+            // Start writing output to the speakers
+            SoundIoError result = SoundIoInterop.soundio_outstream_begin_write(OutStream, ref soundAreas, ref frameCount);
             if (result != SoundIoError.SoundIoErrorNone)
             {
                 throw new Exception($"Writing to the local sound driver failed on begin: {result}");
             }
             
+            // Write the max number of allowed frames. Note that WritePlaybackDataToSoundAreas() will block
+            // until there's enough data in the buffer to satisfy this entire write request.
             SoundIoChannelArea* areas = (SoundIoChannelArea*)soundAreas.ToPointer();
             float* leftChannelArea = areas[LeftChannelId].ptr;
             float* rightChannelArea = areas[RightChannelId].ptr;
             int stepSize = areas[LeftChannelId].step / sizeof(float);
             Buffer.WritePlaybackDataToSoundAreas(leftChannelArea, rightChannelArea, frameCount, stepSize);
 
-            result = SoundIoInterop.soundio_outstream_end_write(StreamPtr);
+            // Finish the write, and send the data out to the speakers.
+            result = SoundIoInterop.soundio_outstream_end_write(OutStream);
             if (result != SoundIoError.SoundIoErrorNone)
             {
                 throw new Exception($"Writing to the local sound driver failed on end: {result}");
             }
         }
 
+        /// <summary>
+        /// This gets called by libsoundio when the playback thread gets starved and there's not enough in the buffer
+        /// to keep it going smoothly. This is very rare, it only happens when something clogs the decoding thread.
+        /// </summary>
+        /// <param name="StreamPtr">The output stream that suffered from an underflow</param>
         private void HandleUnderflow(IntPtr StreamPtr)
         {
             System.Diagnostics.Debug.WriteLine("Underflow detected.");
         }
 
-        public void WriteData(float[] LeftMergeBuffer, float[] RightMergeBuffer, int NumberOfSamples)
+        /// <summary>
+        /// Adds samples of decoded, playback-ready data to this player so they can be sent out to the speakers.
+        /// </summary>
+        /// <param name="LeftChannelPlaybackData">The buffer with the left channel data to write</param>
+        /// <param name="RightChannelPlaybackData">The buffer with the right channel data to write</param>
+        /// <param name="NumberOfSamplesToWrite">The number of samples from each channel to add to the player</param>
+        public void AddPlaybackData(float[] LeftChannelPlaybackData, float[] RightChannelPlaybackData, int NumberOfSamplesToWrite)
         {
-            Buffer.AddPlaybackData(LeftMergeBuffer, RightMergeBuffer, NumberOfSamples);
-        }
-
-        public void ResetBuffer()
-        {
-            Buffer.Reset();
+            Buffer.AddPlaybackData(LeftChannelPlaybackData, RightChannelPlaybackData, NumberOfSamplesToWrite);
         }
 
         #region IDisposable Support
@@ -199,9 +228,18 @@ namespace DMJukebox
                     // TODO: dispose managed state (managed objects).
                 }
 
-                SoundIoInterop.soundio_outstream_destroy(SoundIoOutStreamPtr);
-                SoundIoInterop.soundio_device_unref(SoundIoDevicePtr);
-                SoundIoInterop.soundio_destroy(SoundIoPtr);
+                if(SoundIoOutStreamPtr != IntPtr.Zero)
+                {
+                    SoundIoInterop.soundio_outstream_destroy(SoundIoOutStreamPtr);
+                }
+                if(SoundIoDevicePtr != IntPtr.Zero)
+                {
+                    SoundIoInterop.soundio_device_unref(SoundIoDevicePtr);
+                }
+                if(SoundIoPtr != IntPtr.Zero)
+                {
+                    SoundIoInterop.soundio_destroy(SoundIoPtr);
+                }
 
                 disposedValue = true;
             }

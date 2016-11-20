@@ -160,7 +160,7 @@ namespace DMJukebox
 
                     // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
                     // so all that's left to do is send the data off to the output.
-                    LocalPlayer.WriteData(LeftChannelMergeBuffer, RightChannelMergeBuffer, maxSamplesReceived);
+                    LocalPlayer.AddPlaybackData(LeftChannelMergeBuffer, RightChannelMergeBuffer, maxSamplesReceived);
 
                     // Clean up if playback is done.
                     if(Streams.Count == 0)
