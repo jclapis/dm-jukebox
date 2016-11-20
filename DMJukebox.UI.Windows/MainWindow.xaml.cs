@@ -16,13 +16,19 @@ namespace DMJukebox
 
         private readonly AudioTrackManager Player;
 
-        private AudioTrack Stream;
-
         public MainWindow()
         {
             InitializeComponent();
             //LoggerDelegate = Logger;
-            Player = new AudioTrackManager();
+            try
+            {
+                Player = new AudioTrackManager();
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show($"Error during startup: {ex.GetDetails()}");
+                Application.Current.Shutdown();
+            }
 
             //AVUtilInterop.av_log_set_callback(LoggerDelegate);
             

@@ -20,9 +20,11 @@
             <MenuItem Header="_File" Height="26">
                 <MenuItem Header="Add _Track" Click="HandleAddTrackButton"/>
                 <MenuItem Header="Add _Playlist"/>
-                <MenuItem Header="E_xit"/>
+                <MenuItem Header="E_xit" Click="HandleExitButton"/>
             </MenuItem>
-            <MenuItem Header="_Help" Height="26"></MenuItem>
+            <MenuItem Header="_Help" Height="26">
+                <MenuItem Header="_About"/>
+            </MenuItem>
         </Menu>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

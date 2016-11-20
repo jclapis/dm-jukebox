@@ -330,7 +330,7 @@ namespace DMJukebox
                         }
 
                         // If this file is looping, start it over from the top.
-                        result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0, AVSEEK_FLAG.AVSEEK_FLAG_BYTE);
+                        result = AVFormatInterop.avformat_seek_file(FormatContextPtr, Stream.index, long.MinValue, Stream.start_time, long.MaxValue, AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD);
                         if (result != AVERROR.AVERROR_SUCCESS)
                         {
                             throw new Exception($"Error resetting stream to the beginning: {result}");

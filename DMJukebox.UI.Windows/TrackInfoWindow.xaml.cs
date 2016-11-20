@@ -22,7 +22,7 @@ namespace DMJukebox
             ChannelsLabel.Content = Info.NumberOfChannels;
 
             double bitrate = Info.Bitrate / 1024.0;
-            BitRateLabel.Content = $"{bitrate} kbps";
+            BitRateLabel.Content = $"{bitrate.ToString("N2")} kbps";
 
             SampleRateLabel.Content = $"{Info.SampleRate} Hz";
         }
