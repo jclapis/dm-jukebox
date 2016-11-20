@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:dm="clr-namespace:DMJukebox"
+        x:ClassModifier="internal"
         mc:Ignorable="d"
         Title="DM Jukebox" Height="600" Width="800" Icon="pack://application:,,,/Resources/Icon.ico">
     <Window.Style>
@@ -53,8 +54,17 @@
             </GroupBox>
 
             <GroupBox Grid.Column="1" Header="Tracks" Margin="5">
-                <Grid>
-                </Grid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid>
+                        <Expander Header="Uncategorized" BorderBrush="SlateGray" BorderThickness="1" Margin="10,10,10,0" Height="221" VerticalAlignment="Top">
+                            <WrapPanel Orientation="Horizontal" Background="#FFE5E5E5">
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                            </WrapPanel>
+                        </Expander>
+                    </Grid>
+                </ScrollViewer>
             </GroupBox>
         </Grid>
     </Grid>

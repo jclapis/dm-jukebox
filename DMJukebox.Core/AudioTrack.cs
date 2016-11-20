@@ -162,7 +162,7 @@ namespace DMJukebox
 
             this.Manager = Manager;
             this.Volume = Volume;
-            this.Name = Name ?? Path.GetFileName(FilePath);
+            this.Name = Name ?? Path.GetFileNameWithoutExtension(FilePath);
             this.Loop = Loop;
 
             // Create the FormatContext

@@ -23,6 +23,11 @@ namespace DMJukebox
 
         private readonly MainWindow MainWindow;
 
+        public TrackControl()
+        {
+            InitializeComponent();
+        }
+
         public TrackControl(AudioTrack Track, MainWindow MainWindow)
         {
             InitializeComponent();

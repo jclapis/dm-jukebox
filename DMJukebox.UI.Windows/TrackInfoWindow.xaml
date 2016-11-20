@@ -8,14 +8,14 @@
         mc:Ignorable="d"
         Icon="pack://application:,,,/Resources/Info.png"
         WindowStartupLocation="CenterOwner"
-        Title="Info for" Height="240" Width="300">
+        Title="Info for" SizeToContent="Height" Width="300">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -31,7 +31,7 @@
         <Label Grid.Column="0" Grid.Row="5" Content="Sample Rate:" HorizontalAlignment="Right"/>
 
         <Label Grid.Column="1" Grid.Row="0" HorizontalAlignment="Left">
-            <TextBlock x:Name="PathBlock" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"/>
+            <TextBlock x:Name="PathBlock" TextWrapping="Wrap" Height="Auto"/>
         </Label>
         <Label x:Name="DurationLabel" Grid.Column="1" Grid.Row="1" />
         <Label x:Name="CodecLabel" Grid.Column="1" Grid.Row="2" />

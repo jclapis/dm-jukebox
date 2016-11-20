@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System;
+using System.Text;
+using System.Windows;
 
 namespace DMJukebox
 {
@@ -13,10 +15,24 @@ namespace DMJukebox
             Title = $"Info for {TrackName}";
             PathBlock.Text = Info.Path;
 
-            int minutes = (int)Info.Duration.TotalMinutes;
-            double seconds = Info.Duration.TotalSeconds;
-            seconds -= minutes * 60;
-            DurationLabel.Content = $"{minutes}:{seconds.ToString("N2")}";
+            TimeSpan duration = Info.Duration;
+            StringBuilder builder = new StringBuilder();
+            if(duration.Hours > 0)
+            {
+                builder.Append($"{duration.Hours} Hours, ");
+                builder.Append($"{duration.Minutes} Minutes, ");
+                builder.Append($"{duration.Seconds} Seconds");
+            }
+            else if(duration.Minutes > 0)
+            {
+                builder.Append($"{duration.Minutes} Minutes, ");
+                builder.Append($"{duration.Seconds} Seconds");
+            }
+            else
+            {
+                builder.Append($"{duration.Seconds} Seconds");
+            }
+            DurationLabel.Content = builder.ToString();
 
             CodecLabel.Content = Info.CodecName;
             ChannelsLabel.Content = Info.NumberOfChannels;
