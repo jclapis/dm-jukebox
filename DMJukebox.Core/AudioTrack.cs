@@ -1,35 +1,93 @@
-﻿using DMJukebox.Interop;
+﻿/*
+ * Copyright (c) 2016 Joe Clapis.
+ */
+
+using DMJukebox.Interop;
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox
 {
+    /// <summary>
+    /// This class represents an audio track (a single file) loaded into the jukebox. This holds all of
+    /// the functionality for loading, reading, and decoding the file.
+    /// </summary>
+    /// <remarks>
+    /// So because I'm using FFmpeg as the decoder, I can technically handle files that have multiple
+    /// audio streams. I don't really know why this would ever come into play though, like would a DM
+    /// ever need to load a video with an english and a french soundtrack, and choose between them?
+    /// Who knows. Until I find a good reason to implement multi-stream selection, this is just going
+    /// to load the first one it finds.
+    /// </remarks>
     public class AudioTrack : IDisposable
     {
+        /// <summary>
+        /// This is a constant set within wavdec.c of libavformat that defines how big a WAV / PCM
+        /// packet is. Since raw streams like those don't come with frame info, the developers just
+        /// arbitrarily decided to make packets 4096 bytes large - this means the number of samples
+        /// per frame actually changes depending on the number of channels, bits per sample, etc.
+        /// </summary>
         private const int WavSize = 4096;
 
+        /// <summary>
+        /// This is the AVFormatContext for this file.
+        /// </summary>
         private readonly IntPtr FormatContextPtr;
 
+        /// <summary>
+        /// This is the AVPacket that holds encoded data read from the file.
+        /// </summary>
         private IntPtr PacketPtr;
 
+        /// <summary>
+        /// This is the AVFrame that gets read from the data in AVPacket. It holds raw decoded data.
+        /// This data doesn't get passed to the playback buffer, this is just an intermediate holder.
+        /// </summary>
         private IntPtr InputFramePtr;
 
+        /// <summary>
+        /// This is the AVFrame that gets converted data from the swresample context after it
+        /// converts the input frame into the Discord-friendly format. It holds the raw data that
+        /// will be sent to the playback buffers.
+        /// </summary>
         private IntPtr OutputFramePtr;
 
+        /// <summary>
+        /// This is the swresample context that converts data from whatever format it comes in
+        /// natively into the Discord format.
+        /// </summary>
         private IntPtr SwrContextPtr;
 
-        private readonly IntPtr LeftResampledDataPtr;
-
-        private readonly IntPtr RightResampledDataPtr;
-
+        /// <summary>
+        /// This is the AVStream describing the selected audio stream from the input file.
+        /// </summary>
         private readonly AVStream Stream;
 
+        /// <summary>
+        /// This is the channel layout that describes the input. Compressed audio comes with this
+        /// information built into the codec so this variable doesn't get used in those cases; this
+        /// only comes into play with raw (WAV / PCM) tracks that don't describe the format, because
+        /// the SwrContext needs to know what format the incoming data is in before it can convert
+        /// it to Discord format and we have to set it manually on each of those input frames.
+        /// </summary>
         private readonly AV_CH_LAYOUT ChannelLayout;
 
+        /// <summary>
+        /// This buffer holds the decoded and converted data from the file, ready for playback.
+        /// </summary>
         private readonly DecodedAudioBuffer Buffer;
+
+        /// <summary>
+        /// This is just a backing field for the Volume property.
+        /// </summary>
+        private float _Volume;
 
         private readonly object SyncLock;
 
+        /// <summary>
+        /// The amount of decoded data in the buffer that's ready for playback.
+        /// </summary>
         internal int AvailableData
         {
             get
@@ -38,26 +96,70 @@ namespace DMJukebox
             }
         }
 
-        public float Volume { get; set; }
+        /// <summary>
+        /// This flag is true if playback is currently enabled for the stream, or false if it's disabled.
+        /// </summary>
+        internal bool IsPlaying { get; private set; }
 
+        /// <summary>
+        /// This is the name of the track. It defaults to the file name, but you can set it to whatever
+        /// you want.
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// The volume of this track. You can set this to any value between
+        /// 0.0 (muted) and 1.0 (full volume).
+        /// </summary>
+        public float Volume
+        {
+            get
+            {
+                return _Volume;
+            }
+            set
+            {
+                // Clamp it so it's between 0.0 and 1.0
+                _Volume = Math.Min(1.0f, Math.Max(0.0f, value));
+            }
+        }
+
+        /// <summary>
+        /// This controls whether playback looping is enabled for this track. Set it to true to enable
+        /// looping (so the track will start over from the beginning when the file ends), or false to
+        /// disable looping (so when the file ends, playback of this track stops).
+        /// </summary>
         public bool Loop { get; set; }
 
-        public string CodecName { get; }
+        /// <summary>
+        /// This describes some of the details about the track for your information. It doesn't have
+        /// any bearing on playback, just here if you want to see what's going on inside the track.
+        /// </summary>
+        public TrackInfo Info { get; }
 
-        public int NumberOfChannels { get; }
-
-        public long Bitrate { get; }
-
-        public int SamplesPerFrame { get; }
-
-        public TimeSpan Duration { get; }
-
-        internal bool IsPlaying;
-
-        unsafe internal AudioTrack(string FilePath)
+        /// <summary>
+        /// Creates a new AudioTrack instance.
+        /// </summary>
+        /// <param name="FilePath">The path of the file to open</param>
+        /// <param name="Name">The name to give the track</param>
+        /// <param name="Volume">The playback volume for the track</param>
+        /// <param name="Loop">Whether or not to enable playback looping for the track</param>
+        /// <remarks>
+        /// This doesn't have to be unsafe, but I do a lot of struct reading and writing and honestly I'm
+        /// just too lazy to copy it back and forth from unmanaged memory every time something changes.
+        /// </remarks>
+        unsafe internal AudioTrack(string FilePath, string Name = null, float Volume = 1.0f, bool Loop = false)
         {
+            // So first things first, let's make sure the file path is actually valid.
+            if(!File.Exists(FilePath))
+            {
+                throw new FileNotFoundException($"\"{FilePath}\" is not a valid file; it doesn't seem to exist.");
+            }
+
             SyncLock = new object();
-            Volume = 1;
+            this.Volume = Volume;
+            this.Name = Name ?? Path.GetFileName(FilePath);
+            this.Loop = Loop;
 
             // Create the FormatContext
             FormatContextPtr = AVFormatInterop.avformat_alloc_context();
@@ -171,8 +273,6 @@ namespace DMJukebox
             {
                 throw new Exception($"Output frame buffer allocation failed: {result}");
             }
-            LeftResampledDataPtr = (IntPtr)outputFrame->data0;
-            RightResampledDataPtr = (IntPtr)outputFrame->data1;
 
             // Set up the output capture buffers for playback. At minimum, they basically have to be able to
             // store two frames at once (because we might read a partial frame during the playback loop,
@@ -182,22 +282,22 @@ namespace DMJukebox
             int bufferSize = outputFrame->linesize[0] / sizeof(float) * 2;
             Buffer = new DecodedAudioBuffer(bufferSize);
 
-            // Last but not least, set up the metadata fields just for some extra info.
-            // TODO: am I going to keep this around? Probably not.
-            CodecName = codec.long_name;
-            NumberOfChannels = codecContext.channels;
-            Bitrate = codecContext.bit_rate;
-            SamplesPerFrame = codecContext.frame_size;
+            // Last but not least, create the TrackInfo object in case the user wants to see what's going on with the audio stream.
             double timeBaseInSeconds = Stream.time_base.num / (double)Stream.time_base.den;
             double durationInSeconds = Stream.duration * timeBaseInSeconds;
-            Duration = TimeSpan.FromSeconds(durationInSeconds);
+            TimeSpan duration = TimeSpan.FromSeconds(durationInSeconds);
+            Info = new TrackInfo(codec.long_name, codecContext.channels, codecContext.bit_rate, codecContext.sample_rate, duration);
         }
 
-        unsafe internal bool GetNextFrame()
+        /// <summary>
+        /// This reads the next audio frame from the file, decodes it, converts it to Discord
+        /// format, and stores it for later reading.
+        /// </summary>
+        /// <returns>True if processing the next frame was successful, or false if the end of
+        /// the file has been reached (and looping is disabled).</returns>
+        unsafe internal bool ProcessNextFrame()
         {
-            // Get pointers for the in and out frames. I don't think this adds enough overhead
-            // to each GetNextFrame() call to merit storing them as class variables, because
-            // that would require making the whole class unsafe. Maybe I'm wrong about that.
+            // Get pointers for the in and out frames.
             AVFrame* inputFrame = (AVFrame*)InputFramePtr.ToPointer();
             AVFrame* outputFrame = (AVFrame*)OutputFramePtr.ToPointer();
 
@@ -230,7 +330,7 @@ namespace DMJukebox
                         {
                             throw new Exception($"Error resetting stream to the beginning: {result}");
                         }
-                        return GetNextFrame();
+                        return ProcessNextFrame();
                     }
                     throw new Exception($"Error reading audio packet: {result}");
                 }
@@ -268,7 +368,7 @@ namespace DMJukebox
             // Copy the new data into the managed buffers
             while (outputFrame->nb_samples > 0)
             {
-                Buffer.AddIncomingData(LeftResampledDataPtr, RightResampledDataPtr, outputFrame->nb_samples);
+                Buffer.AddIncomingData((IntPtr)outputFrame->data0, (IntPtr)outputFrame->data1, outputFrame->nb_samples);
 
                 // Keep the cycle going until we've exhausted the swrcontext buffer
                 result = SWResampleInterop.swr_convert_frame(SwrContextPtr, OutputFramePtr, IntPtr.Zero);
@@ -288,16 +388,17 @@ namespace DMJukebox
             return true;
         }
 
+        /// <summary>
+        /// Begins playback of this track.
+        /// </summary>
         public void StartPlaying()
         {
 
         }
 
-        public void Pause()
-        {
-
-        }
-
+        /// <summary>
+        /// Stops playback of the track and resets it to the beginning.
+        /// </summary>
         public void Stop()
         {
             AVERROR result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0, AVSEEK_FLAG.AVSEEK_FLAG_BYTE);
@@ -309,9 +410,19 @@ namespace DMJukebox
             AVCodecInterop.avcodec_flush_buffers(Stream.codec);
         }
 
-        internal void WriteDataIntoMergeBuffers(float[] LeftChannelMergeBuffer, float[] RightChannelMergeBuffer, int NumberOfBytesToRead, bool OverwriteExistingData)
+        /// <summary>
+        /// This writes decoded data from this track into the buffers for audio playback.
+        /// </summary>
+        /// <param name="LeftChannelPlaybackBuffer">The left channel of the playback buffer</param>
+        /// <param name="RightChannelPlaybackBuffer">The right channel of the playback buffer</param>
+        /// <param name="NumberOfSamplesToWrite">The number of decoded samples to write into the playback buffers</param>
+        /// <param name="OverwriteExistingData">True to replace whatever's in the playback buffer with the decoded data
+        /// in this buffer, false to append this data to whatever's already inside the playback buffer. This is usually set to true
+        /// for the first stream in a playback loop iteration, to overwrite the old stale data from the previous loop. After that it's
+        /// set to false.</param>
+        internal void WriteDataIntoPlaybackBuffers(float[] LeftChannelPlaybackBuffer, float[] RightChannelPlaybackBuffer, int NumberOfSamplesToWrite, bool OverwriteExistingData)
         {
-            Buffer.WriteDataIntoPlaybackBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, NumberOfBytesToRead, Volume, OverwriteExistingData);
+            Buffer.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, NumberOfSamplesToWrite, Volume, OverwriteExistingData);
         }
 
         #region IDisposable Support

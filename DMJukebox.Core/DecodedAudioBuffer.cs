@@ -100,7 +100,7 @@ namespace DMJukebox
         /// </summary>
         /// <param name="LeftChannelPlaybackBuffer">The left channel of the playback buffer</param>
         /// <param name="RightChannelPlaybackBuffer">The right channel of the playback buffer</param>
-        /// <param name="NumberOfSamplesToRead">The number of decoded samples to write into the playback buffers</param>
+        /// <param name="NumberOfSamplesToWrite">The number of decoded samples to write into the playback buffers</param>
         /// <param name="Volume">The volume control to apply to this data (0.0 = muted, 1.0 = full volume)</param>
         /// <param name="OverwriteExistingData">True to replace whatever's in the playback buffer with the decoded data
         /// in this buffer, false to append this data to whatever's already inside the playback buffer. This is usually set to true
@@ -112,18 +112,18 @@ namespace DMJukebox
         /// happen as late as possible during the pipeline (which makes it feel responsive instead of laggy). At this point it's
         /// all about performance.
         /// </remarks>
-        public void WriteDataIntoPlaybackBuffers(float[] LeftChannelPlaybackBuffer, float[] RightChannelPlaybackBuffer, int NumberOfSamplesToRead, float Volume, bool OverwriteExistingData)
+        public void WriteDataIntoPlaybackBuffers(float[] LeftChannelPlaybackBuffer, float[] RightChannelPlaybackBuffer, int NumberOfSamplesToWrite, float Volume, bool OverwriteExistingData)
         {
             // This shouldn't ever be a thing because the player should always confirm that this buffer has enough data in it to fill the playback buffers.
             // If it doesn't, it should continuously read from the stream and store the decoded data here until it can cover the playback buffers.
-            if (NumberOfSamplesToRead > AvailableData)
+            if (NumberOfSamplesToWrite > AvailableData)
             {
                 throw new Exception("Circular buffer underflow, this should never happen but it did. Disaster.");
             }
 
             // This isn't a mass copy like AddIncomingData is, we have to iterate through the buffers piece-by-piece in order to
             // apply volume control and clamp it.
-            for (int i = 0; i < NumberOfSamplesToRead; i++)
+            for (int i = 0; i < NumberOfSamplesToWrite; i++)
             {
                 float newLeftValue = InternalLeftChannelBuffer[CurrentReadPosition] * Volume;
                 float newRightValue = InternalRightChannelBuffer[CurrentReadPosition] * Volume;
@@ -145,7 +145,7 @@ namespace DMJukebox
                 }
             }
 
-            AvailableData -= NumberOfSamplesToRead;
+            AvailableData -= NumberOfSamplesToWrite;
         }
 
         /// <summary>
