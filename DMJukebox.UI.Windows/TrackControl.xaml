@@ -10,8 +10,10 @@
             <Button x:Name="InfoButton" Height="20" Width="20" Canvas.Left="10" Canvas.Top="4" BorderThickness="0" Background="Transparent">
                 <Image Source="pack://application:,,,/Resources/Info.png" Width="16" Height="16" />
             </Button>
-            <Label x:Name="NameLabel" Content="Track Name Here" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="30" Width="222"/>
-            <TextBox x:Name="NameBox" Visibility="Hidden" HorizontalAlignment="Left" Height="20" TextWrapping="NoWrap" Text="TextBox" VerticalAlignment="Top" Width="217" Canvas.Left="35" Canvas.Top="4"/>
+            <Label x:Name="NameLabel" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="30" Width="222" MouseDoubleClick="EnableRename">
+                <TextBlock x:Name="NameLabelText" TextTrimming="CharacterEllipsis">Name goes here</TextBlock>
+            </Label>
+            <TextBox x:Name="NameBox" Visibility="Hidden" HorizontalAlignment="Left" Height="20" TextWrapping="NoWrap" Text="" KeyDown="NameBox_KeyDown" LostFocus="NameBox_LostFocus" VerticalAlignment="Top" Width="217" Canvas.Left="35" Canvas.Top="4"/>
             <Slider x:Name="VolumeSlider" Minimum="0" Maximum="1" TickFrequency="0.05" Value="1" TickPlacement="BottomRight" HorizontalAlignment="Left" VerticalAlignment="Top" Width="130" Canvas.Left="10" Canvas.Top="26"/>
             <Image Source="pack://application:,,,/Resources/Volume.png" HorizontalAlignment="Left" Height="24" VerticalAlignment="Top" Width="24" Canvas.Left="145" Canvas.Top="26"/>
             <Button x:Name="PlayButton" HorizontalAlignment="Left" Width="24" Height="24" VerticalAlignment="Top" Canvas.Left="183" Canvas.Top="26">
