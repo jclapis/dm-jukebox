@@ -171,12 +171,11 @@ namespace DMJukebox
         }
 
         /// <summary>
-        /// Clears the buffer, resetting it to the empty state.
+        /// Reset the buffer to an empty state. Note that this doesn't clear old data, but it will all
+        /// get overwritten before playback anyway so it doesn't matter.
         /// </summary>
         public void Reset()
         {
-            Array.Clear(InternalLeftChannelBuffer, 0, BufferSize);
-            Array.Clear(InternalRightChannelBuffer, 0, BufferSize);
             CurrentReadPosition = 0;
             CurrentWritePosition = 0;
             AvailableData = 0;

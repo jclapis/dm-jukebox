@@ -5,6 +5,7 @@
 using DMJukebox.Interop;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DMJukebox
@@ -15,21 +16,25 @@ namespace DMJukebox
     /// </summary>
     public class AudioTrackManager
     {
-        private readonly object StreamLock;
+        private readonly object ActiveTrackLock;
 
         private readonly object StopLock;
 
-        private bool _IsStopping;
+        private readonly AutoResetEvent ActiveTrackWaiter;
 
-        private readonly List<AudioTrack> Streams;
+        private bool _IsClosing;
+
+        private readonly Dictionary<string, AudioTrack> Tracks;
+
+        private readonly HashSet<AudioTrack> ActiveTracks;
+
+        private readonly LocalSoundPlayer LocalPlayer;
 
         private Task PlayTask;
 
-        private LocalSoundPlayer LocalPlayer;
 
-        public bool PlayToSpeakers { get; set; }
+        private PlaybackMode _PlaybackMode;
 
-        public bool StreamToDiscord { get; set; }
 
         internal const int MergeBufferLength = 480;
 
@@ -39,24 +44,25 @@ namespace DMJukebox
 
         private static readonly AudioTrackManager Instance;
 
-        private bool IsStopping
+        private bool IsClosing
         {
             get
             {
-                lock(StopLock)
+                lock (StopLock)
                 {
-                    return _IsStopping;
+                    return _IsClosing;
                 }
             }
 
             set
             {
-                lock(StopLock)
+                lock (StopLock)
                 {
-                    _IsStopping = value;
+                    _IsClosing = value;
                 }
             }
         }
+        public PlaybackMode PlaybackMode { get; set; }
 
         static AudioTrackManager()
         {
@@ -65,112 +71,164 @@ namespace DMJukebox
 
         public AudioTrackManager()
         {
-            StreamLock = new object();
+            ActiveTrackWaiter = new AutoResetEvent(false);
+            ActiveTrackLock = new object();
             StopLock = new object();
-            Streams = new List<AudioTrack>();
+            Tracks = new Dictionary<string, AudioTrack>();
+            ActiveTracks = new HashSet<AudioTrack>();
             LocalPlayer = new LocalSoundPlayer();
             LeftChannelPlaybackBuffer = new float[MergeBufferLength];
             RightChannelPlaybackBuffer = new float[MergeBufferLength];
+            IsClosing = false;
+            PlayTask = Task.Run((Action)PlaybackLoop);
         }
 
-        public void Start()
+        public void Close()
         {
-            IsStopping = false;
-            PlayTask = Task.Run((Action)Run);
-            LocalPlayer.Start();
-        }
-
-        public void StopAll()
-        {
-            IsStopping = true;
-            if(PlayTask != null && PlayTask.Status == TaskStatus.Running)
+            StopAllTracks();
+            IsClosing = true;
+            if (PlayTask != null && PlayTask.Status == TaskStatus.Running)
             {
                 PlayTask.Wait(2000);
             }
-            foreach (AudioTrack stream in Streams)
-            {
-                stream.Stop();
-            }
-            //Array.Clear(LeftChannelMergeBuffer, 0, MergeBufferLength);
-            //Array.Clear(RightChannelMergeBuffer, 0, MergeBufferLength);
-            LocalPlayer.Stop();
         }
 
-        public AudioTrack AddTrack(string Filename)
+        public void StopAllTracks()
         {
-            lock(StreamLock)
+            lock(ActiveTrackLock)
             {
-                AudioTrack stream = new AudioTrack(Filename);
-                Streams.Add(stream);
+                foreach (AudioTrack track in ActiveTracks)
+                {
+                    track.Reset();
+                }
+                ActiveTracks.Clear();
+            }
+        }
+
+        public AudioTrack CreateTrack(string FilePath)
+        {
+            if (Tracks.ContainsKey(FilePath))
+            {
+                throw new Exception($"A track has already been added for file \"{FilePath}\"");
+            }
+            lock (ActiveTrackLock)
+            {
+                AudioTrack stream = new AudioTrack(this, FilePath);
+                Tracks.Add(FilePath, stream);
                 return stream;
             }
         }
 
-        private void Run()
+        public void RemoveTrack(AudioTrack Track)
         {
-            while (!IsStopping)
+            Tracks.Remove(Track.Info.Path);
+            ActiveTracks.Remove(Track);
+            Track.Dispose();
+            // TODO: Stop playback
+        }
+
+        internal void AddTrackToPlaybackList(AudioTrack Track)
+        {
+            lock (ActiveTrackLock)
             {
-                lock(StreamLock)
+                if (ActiveTracks.Contains(Track))
                 {
-                    int maxSamplesReceived = 0; // Keep track of the largest number of samples received during this loop
-                    for (int i = 0; i < Streams.Count; i++)
+                    return;
+                }
+                ActiveTracks.Add(Track);
+                ActiveTrackWaiter.Set();
+            }
+        }
+
+        internal void RemoveTrackFromPlaybackList(AudioTrack Track)
+        {
+            lock(ActiveTrackLock)
+            {
+                ActiveTracks.Remove(Track);
+                Track.Reset();
+            }
+        }
+
+        private void PlaybackLoop()
+        {
+            while (!IsClosing)
+            {
+                List<AudioTrack> endedTracks = null;
+                int maxSamplesReceived = 0; // Keep track of the largest number of samples received during this loop
+                bool isFirstStream = true;
+                if (ActiveTracks.Count == 0)
+                {
+                    ActiveTrackWaiter.WaitOne();
+                    LocalPlayer.Start();
+                }
+
+                lock (ActiveTrackLock)
+                {
+                    foreach (AudioTrack track in ActiveTracks)
                     {
                         // Start off by figuring out if there's enough data left in the stream's buffer to read right away,
                         // or if we have to process a new frame from it.
-                        AudioTrack stream = Streams[i];
                         bool streamEnded = false;
-                        bool isFirstStream = i == 0;
-                        int availableData = stream.AvailableData;
+                        int availableData = track.AvailableData;
 
                         // Read new frames until we have enough data to work with.
                         while (availableData < MergeBufferLength)
                         {
                             // Not enough data left, we have to decode a new frame from the stream.
-                            bool success = stream.ProcessNextFrame();
-                            if(!success)
+                            bool trackEnded = !track.ProcessNextFrame();
+                            if (trackEnded)
                             {
                                 // We hit the end of the file, handle the leftovers and then remove the stream.
-                                stream.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, availableData, isFirstStream);
+                                track.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, availableData, isFirstStream);
                                 maxSamplesReceived = Math.Max(maxSamplesReceived, availableData);
-                                Streams.RemoveAt(i);
-                                streamEnded = true;
-                                i--;
+                                if (endedTracks == null)
+                                {
+                                    endedTracks = new List<AudioTrack>();
+                                }
+                                endedTracks.Add(track);
 
                                 // If this is the first stream, we have to clear the remaining data from the buffer so the data from the
                                 // previous loop doesn't leak into this one.
-                                if(isFirstStream)
+                                if (isFirstStream)
                                 {
                                     Array.Clear(LeftChannelPlaybackBuffer, availableData, MergeBufferLength - availableData);
                                     Array.Clear(RightChannelPlaybackBuffer, availableData, MergeBufferLength - availableData);
                                 }
                                 break;
                             }
-                            availableData = stream.AvailableData;
+                            availableData = track.AvailableData;
                         }
+                        isFirstStream = false;
 
                         // If we hit the end of the stream above, there's nothing left to do.
-                        if(streamEnded)
+                        if (streamEnded)
                         {
                             continue;
                         }
 
                         // Otherwise, merge the new data into the buffers!
-                        stream.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, MergeBufferLength, isFirstStream);
+                        track.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, MergeBufferLength, isFirstStream);
                         maxSamplesReceived = Math.Max(maxSamplesReceived, MergeBufferLength);
                     }
+                }
 
-                    // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
-                    // so all that's left to do is send the data off to the output.
-                    LocalPlayer.AddPlaybackData(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, maxSamplesReceived);
+                // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
+                // so all that's left to do is send the data off to the output.
+                LocalPlayer.AddPlaybackData(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, maxSamplesReceived);
 
-                    // Clean up if playback is done.
-                    if(Streams.Count == 0)
+                // Remove all of the tracks that ended during this iteration
+                if (endedTracks != null)
+                {
+                    foreach(AudioTrack track in endedTracks)
                     {
-                        IsStopping = true;
-                        LocalPlayer.Stop();
-                        System.Diagnostics.Debug.WriteLine("Finished playback, standing by.");
-                        return;
+                        RemoveTrackFromPlaybackList(track);
                     }
+                }
+                
+                // Clean up if playback is done.
+                if (ActiveTracks.Count == 0)
+                {
+                    LocalPlayer.Stop();
                 }
             }
         }

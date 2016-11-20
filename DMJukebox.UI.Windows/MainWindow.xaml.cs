@@ -52,7 +52,7 @@ namespace DMJukebox
                 string filename = dialog.FileName;
                 try
                 {
-                    Stream = Player.AddTrack(filename);
+                    Stream = Player.CreateTrack(filename);
                     using (StringWriter writer = new StringWriter())
                     {
                         writer.WriteLine($"Loaded file {Path.GetFileName(filename)}");
@@ -75,13 +75,13 @@ namespace DMJukebox
 
         private void PlayButtonClick(object sender, RoutedEventArgs e)
         {
-            Player.Start();
+            Stream.Play();
             System.Diagnostics.Debug.WriteLine("Started playing");
         }
 
         private void StopButtonClick(object sender, RoutedEventArgs e)
         {
-            Player.StopAll();
+            Player.StopAllTracks();
             System.Diagnostics.Debug.WriteLine("Stopped playing");
         }
 

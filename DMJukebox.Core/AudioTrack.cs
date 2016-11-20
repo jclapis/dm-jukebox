@@ -101,6 +101,11 @@ namespace DMJukebox
         }
 
         /// <summary>
+        /// This flag is set to true once the track has reached the end of the file and should be stopped.
+        /// </summary>
+        internal bool HasEnded { get; set; }
+
+        /// <summary>
         /// This is the name of the track. It defaults to the file name, but you can set it to whatever
         /// you want.
         /// </summary>
@@ -147,14 +152,15 @@ namespace DMJukebox
         /// This doesn't have to be unsafe, but I do a lot of struct reading and writing and honestly I'm
         /// just too lazy to copy it back and forth from unmanaged memory every time something changes.
         /// </remarks>
-        unsafe internal AudioTrack(string FilePath, string Name = null, float Volume = 1.0f, bool Loop = false)
+        unsafe internal AudioTrack(AudioTrackManager Manager, string FilePath, string Name = null, float Volume = 1.0f, bool Loop = false)
         {
             // So first things first, let's make sure the file path is actually valid.
             if(!File.Exists(FilePath))
             {
                 throw new FileNotFoundException($"\"{FilePath}\" is not a valid file; it doesn't seem to exist.");
             }
-            
+
+            this.Manager = Manager;
             this.Volume = Volume;
             this.Name = Name ?? Path.GetFileName(FilePath);
             this.Loop = Loop;
@@ -284,7 +290,7 @@ namespace DMJukebox
             double timeBaseInSeconds = Stream.time_base.num / (double)Stream.time_base.den;
             double durationInSeconds = Stream.duration * timeBaseInSeconds;
             TimeSpan duration = TimeSpan.FromSeconds(durationInSeconds);
-            Info = new TrackInfo(codec.long_name, codecContext.channels, codecContext.bit_rate, codecContext.sample_rate, duration);
+            Info = new TrackInfo(FilePath, codec.long_name, codecContext.channels, codecContext.bit_rate, codecContext.sample_rate, duration);
         }
 
         /// <summary>
@@ -319,6 +325,7 @@ namespace DMJukebox
                         // If this file isn't looping, just return to signal that the file's done.
                         if (!Loop)
                         {
+                            HasEnded = true;
                             return false;
                         }
 
@@ -389,9 +396,9 @@ namespace DMJukebox
         /// <summary>
         /// Begins playback of this track.
         /// </summary>
-        public void StartPlaying()
+        public void Play()
         {
-
+            Manager.AddTrackToPlaybackList(this);
         }
 
         /// <summary>
@@ -399,13 +406,19 @@ namespace DMJukebox
         /// </summary>
         public void Stop()
         {
+            Manager.RemoveTrackFromPlaybackList(this);
+        }
+
+        internal void Reset()
+        {
             AVERROR result = AVFormatInterop.av_seek_frame(FormatContextPtr, Stream.index, 0, AVSEEK_FLAG.AVSEEK_FLAG_BYTE);
             if (result != AVERROR.AVERROR_SUCCESS)
             {
                 throw new Exception($"Error resetting stream to the beginning: {result}");
             }
-            Buffer.Reset();
             AVCodecInterop.avcodec_flush_buffers(Stream.codec);
+            Buffer.Reset();
+            HasEnded = false;
         }
 
         /// <summary>
