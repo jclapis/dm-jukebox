@@ -45,183 +45,183 @@ namespace DMJukebox.Interop
         #region Windows Function
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_create_windows();
+        private static extern IntPtr soundio_create_windows();
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_destroy_windows(IntPtr soundio);
+        private static extern void soundio_destroy_windows(IntPtr soundio);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_connect), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_connect_windows(IntPtr soundio);
+        private static extern SoundIoError soundio_connect_windows(IntPtr soundio);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_flush_events), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_flush_events_windows(IntPtr soundio);
+        private static extern void soundio_flush_events_windows(IntPtr soundio);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_output_device_count), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_output_device_count_windows(IntPtr soundio);
+        private static extern int soundio_output_device_count_windows(IntPtr soundio);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_get_output_device), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_get_output_device_windows(IntPtr soundio, int index);
+        private static extern IntPtr soundio_get_output_device_windows(IntPtr soundio, int index);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_default_output_device_index), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_default_output_device_index_windows(IntPtr soundio);
+        private static extern int soundio_default_output_device_index_windows(IntPtr soundio);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_outstream_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_outstream_create_windows(IntPtr device);
+        private static extern IntPtr soundio_outstream_create_windows(IntPtr device);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_outstream_open), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_open_windows(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_open_windows(IntPtr outstream);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_outstream_start), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_start_windows(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_start_windows(IntPtr outstream);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_outstream_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_outstream_destroy_windows(IntPtr outstream);
+        private static extern void soundio_outstream_destroy_windows(IntPtr outstream);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_device_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_device_unref_windows(IntPtr device);
+        private static extern void soundio_device_unref_windows(IntPtr device);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_outstream_begin_write), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_begin_write_windows(IntPtr outstream, ref IntPtr areas, ref int frame_count);
+        private static extern SoundIoError soundio_outstream_begin_write_windows(IntPtr outstream, ref IntPtr areas, ref int frame_count);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_outstream_end_write), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_end_write_windows(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_end_write_windows(IntPtr outstream);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_outstream_pause), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_pause_windows(IntPtr outstream, bool pause);
+        private static extern SoundIoError soundio_outstream_pause_windows(IntPtr outstream, bool pause);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_get_builtin), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_channel_layout_get_builtin_windows(SoundIoChannelLayoutId index);
+        private static extern IntPtr soundio_channel_layout_get_builtin_windows(SoundIoChannelLayoutId index);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_device_supports_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern bool soundio_device_supports_layout_windows(IntPtr device, IntPtr layout);
+        private static extern bool soundio_device_supports_layout_windows(IntPtr device, IntPtr layout);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_find_channel), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_channel_layout_find_channel_windows(IntPtr layout, SoundIoChannelId channel);
+        private static extern int soundio_channel_layout_find_channel_windows(IntPtr layout, SoundIoChannelId channel);
 
         [DllImport(WindowsSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_get_default), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_channel_layout_get_default_windows(int channel_count);
+        private static extern IntPtr soundio_channel_layout_get_default_windows(int channel_count);
 
         #endregion
 
         #region Linux Functions
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_create_linux();
+        private static extern IntPtr soundio_create_linux();
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_destroy_linux(IntPtr soundio);
+        private static extern void soundio_destroy_linux(IntPtr soundio);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_connect), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_connect_linux(IntPtr soundio);
+        private static extern SoundIoError soundio_connect_linux(IntPtr soundio);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_flush_events), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_flush_events_linux(IntPtr soundio);
+        private static extern void soundio_flush_events_linux(IntPtr soundio);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_output_device_count), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_output_device_count_linux(IntPtr soundio);
+        private static extern int soundio_output_device_count_linux(IntPtr soundio);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_get_output_device), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_get_output_device_linux(IntPtr soundio, int index);
+        private static extern IntPtr soundio_get_output_device_linux(IntPtr soundio, int index);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_default_output_device_index), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_default_output_device_index_linux(IntPtr soundio);
+        private static extern int soundio_default_output_device_index_linux(IntPtr soundio);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_outstream_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_outstream_create_linux(IntPtr device);
+        private static extern IntPtr soundio_outstream_create_linux(IntPtr device);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_outstream_open), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_open_linux(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_open_linux(IntPtr outstream);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_outstream_start), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_start_linux(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_start_linux(IntPtr outstream);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_outstream_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_outstream_destroy_linux(IntPtr outstream);
+        private static extern void soundio_outstream_destroy_linux(IntPtr outstream);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_device_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_device_unref_linux(IntPtr device);
+        private static extern void soundio_device_unref_linux(IntPtr device);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_outstream_begin_write), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_begin_write_linux(IntPtr outstream, ref IntPtr areas, ref int frame_count);
+        private static extern SoundIoError soundio_outstream_begin_write_linux(IntPtr outstream, ref IntPtr areas, ref int frame_count);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_outstream_end_write), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_end_write_linux(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_end_write_linux(IntPtr outstream);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_outstream_pause), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_pause_linux(IntPtr outstream, bool pause);
+        private static extern SoundIoError soundio_outstream_pause_linux(IntPtr outstream, bool pause);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_get_builtin), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_channel_layout_get_builtin_linux(SoundIoChannelLayoutId index);
+        private static extern IntPtr soundio_channel_layout_get_builtin_linux(SoundIoChannelLayoutId index);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_device_supports_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern bool soundio_device_supports_layout_linux(IntPtr device, IntPtr layout);
+        private static extern bool soundio_device_supports_layout_linux(IntPtr device, IntPtr layout);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_find_channel), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_channel_layout_find_channel_linux(IntPtr layout, SoundIoChannelId channel);
+        private static extern int soundio_channel_layout_find_channel_linux(IntPtr layout, SoundIoChannelId channel);
 
         [DllImport(LinuxSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_get_default), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_channel_layout_get_default_linux(int channel_count);
+        private static extern IntPtr soundio_channel_layout_get_default_linux(int channel_count);
 
         #endregion
 
         #region OSX Functions
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_create_osx();
+        private static extern IntPtr soundio_create_osx();
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_destroy_osx(IntPtr soundio);
+        private static extern void soundio_destroy_osx(IntPtr soundio);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_connect), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_connect_osx(IntPtr soundio);
+        private static extern SoundIoError soundio_connect_osx(IntPtr soundio);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_flush_events), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_flush_events_osx(IntPtr soundio);
+        private static extern void soundio_flush_events_osx(IntPtr soundio);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_output_device_count), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_output_device_count_osx(IntPtr soundio);
+        private static extern int soundio_output_device_count_osx(IntPtr soundio);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_get_output_device), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_get_output_device_osx(IntPtr soundio, int index);
+        private static extern IntPtr soundio_get_output_device_osx(IntPtr soundio, int index);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_default_output_device_index), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_default_output_device_index_osx(IntPtr soundio);
+        private static extern int soundio_default_output_device_index_osx(IntPtr soundio);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_outstream_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_outstream_create_osx(IntPtr device);
+        private static extern IntPtr soundio_outstream_create_osx(IntPtr device);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_outstream_open), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_open_osx(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_open_osx(IntPtr outstream);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_outstream_start), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_start_osx(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_start_osx(IntPtr outstream);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_outstream_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_outstream_destroy_osx(IntPtr outstream);
+        private static extern void soundio_outstream_destroy_osx(IntPtr outstream);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_device_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void soundio_device_unref_osx(IntPtr device);
+        private static extern void soundio_device_unref_osx(IntPtr device);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_outstream_begin_write), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_begin_write_osx(IntPtr outstream, ref IntPtr areas, ref int frame_count);
+        private static extern SoundIoError soundio_outstream_begin_write_osx(IntPtr outstream, ref IntPtr areas, ref int frame_count);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_outstream_end_write), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_end_write_osx(IntPtr outstream);
+        private static extern SoundIoError soundio_outstream_end_write_osx(IntPtr outstream);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_outstream_pause), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern SoundIoError soundio_outstream_pause_osx(IntPtr outstream, bool pause);
+        private static extern SoundIoError soundio_outstream_pause_osx(IntPtr outstream, bool pause);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_get_builtin), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_channel_layout_get_builtin_osx(SoundIoChannelLayoutId index);
+        private static extern IntPtr soundio_channel_layout_get_builtin_osx(SoundIoChannelLayoutId index);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_device_supports_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern bool soundio_device_supports_layout_osx(IntPtr device, IntPtr layout);
+        private static extern bool soundio_device_supports_layout_osx(IntPtr device, IntPtr layout);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_find_channel), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int soundio_channel_layout_find_channel_osx(IntPtr layout, SoundIoChannelId channel);
+        private static extern int soundio_channel_layout_find_channel_osx(IntPtr layout, SoundIoChannelId channel);
 
         [DllImport(MacSoundIoLibrary, EntryPoint = nameof(soundio_channel_layout_get_default), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr soundio_channel_layout_get_default_osx(int channel_count);
+        private static extern IntPtr soundio_channel_layout_get_default_osx(int channel_count);
 
         #endregion
 

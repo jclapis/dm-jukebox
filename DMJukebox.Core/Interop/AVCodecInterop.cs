@@ -54,28 +54,28 @@ namespace DMJukebox.Interop
         private static extern AVERROR avcodec_send_packet_windows(IntPtr avctx, IntPtr avpkt);
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(avcodec_receive_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avcodec_receive_frame_windows(IntPtr avctx, IntPtr frame);
+        private static extern AVERROR avcodec_receive_frame_windows(IntPtr avctx, IntPtr frame);
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_packet_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr av_packet_alloc_windows();
+        private static extern IntPtr av_packet_alloc_windows();
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_packet_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_packet_free_windows(ref IntPtr pkt);
+        private static extern void av_packet_free_windows(ref IntPtr pkt);
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_new_packet), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_new_packet_windows(IntPtr pkt, int size);
+        private static extern AVERROR av_new_packet_windows(IntPtr pkt, int size);
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_init_packet), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_init_packet_windows(IntPtr pkt);
+        private static extern void av_init_packet_windows(IntPtr pkt);
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_packet_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_packet_unref_windows(IntPtr pkt);
+        private static extern void av_packet_unref_windows(IntPtr pkt);
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avcodec_flush_buffers_windows(IntPtr avctx);
+        private static extern void avcodec_flush_buffers_windows(IntPtr avctx);
 
         [DllImport(WindowsAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int av_get_exact_bits_per_sample_windows(AVCodecID codec_id);
+        private static extern int av_get_exact_bits_per_sample_windows(AVCodecID codec_id);
 
         #endregion
 
@@ -91,28 +91,28 @@ namespace DMJukebox.Interop
         private static extern AVERROR avcodec_send_packet_linux(IntPtr avctx, IntPtr avpkt);
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(avcodec_receive_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avcodec_receive_frame_linux(IntPtr avctx, IntPtr frame);
+        private static extern AVERROR avcodec_receive_frame_linux(IntPtr avctx, IntPtr frame);
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_packet_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr av_packet_alloc_linux();
+        private static extern IntPtr av_packet_alloc_linux();
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_packet_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_packet_free_linux(ref IntPtr pkt);
+        private static extern void av_packet_free_linux(ref IntPtr pkt);
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_new_packet), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_new_packet_linux(IntPtr pkt, int size);
+        private static extern AVERROR av_new_packet_linux(IntPtr pkt, int size);
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_init_packet), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_init_packet_linux(IntPtr pkt);
+        private static extern void av_init_packet_linux(IntPtr pkt);
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_packet_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_packet_unref_linux(IntPtr pkt);
+        private static extern void av_packet_unref_linux(IntPtr pkt);
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avcodec_flush_buffers_linux(IntPtr avctx);
+        private static extern void avcodec_flush_buffers_linux(IntPtr avctx);
 
         [DllImport(LinuxAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int av_get_exact_bits_per_sample_linux(AVCodecID codec_id);
+        private static extern int av_get_exact_bits_per_sample_linux(AVCodecID codec_id);
 
         #endregion
 
@@ -128,28 +128,28 @@ namespace DMJukebox.Interop
         private static extern AVERROR avcodec_send_packet_osx(IntPtr avctx, IntPtr avpkt);
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(avcodec_receive_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avcodec_receive_frame_osx(IntPtr avctx, IntPtr frame);
+        private static extern AVERROR avcodec_receive_frame_osx(IntPtr avctx, IntPtr frame);
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_packet_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr av_packet_alloc_osx();
+        private static extern IntPtr av_packet_alloc_osx();
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_packet_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_packet_free_osx(ref IntPtr pkt);
+        private static extern void av_packet_free_osx(ref IntPtr pkt);
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_new_packet), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_new_packet_osx(IntPtr pkt, int size);
+        private static extern AVERROR av_new_packet_osx(IntPtr pkt, int size);
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_init_packet), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_init_packet_osx(IntPtr pkt);
+        private static extern void av_init_packet_osx(IntPtr pkt);
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_packet_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_packet_unref_osx(IntPtr pkt);
+        private static extern void av_packet_unref_osx(IntPtr pkt);
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(avcodec_flush_buffers), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avcodec_flush_buffers_osx(IntPtr avctx);
+        private static extern void avcodec_flush_buffers_osx(IntPtr avctx);
 
         [DllImport(MacAVCodecLibrary, EntryPoint = nameof(av_get_exact_bits_per_sample), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int av_get_exact_bits_per_sample_osx(AVCodecID codec_id);
+        private static extern int av_get_exact_bits_per_sample_osx(AVCodecID codec_id);
 
         #endregion
 

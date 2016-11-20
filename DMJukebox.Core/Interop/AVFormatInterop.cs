@@ -45,102 +45,102 @@ namespace DMJukebox.Interop
         #region Windows Functions
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_register_all), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_register_all_windows();
+        private static extern void av_register_all_windows();
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_alloc_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr avformat_alloc_context_windows();
+        private static extern IntPtr avformat_alloc_context_windows();
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_free_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avformat_free_context_windows(IntPtr s);
+        private static extern void avformat_free_context_windows(IntPtr s);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_open_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_open_input_windows(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
+        private static extern AVERROR avformat_open_input_windows(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_close_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avformat_close_input_windows(ref IntPtr s);
+        private static extern void avformat_close_input_windows(ref IntPtr s);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_find_stream_info), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_find_stream_info_windows(IntPtr ic, ref IntPtr options);
+        private static extern AVERROR avformat_find_stream_info_windows(IntPtr ic, ref IntPtr options);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_dump_format_windows(IntPtr ic, int index, string url, int is_output);
+        private static extern void av_dump_format_windows(IntPtr ic, int index, string url, int is_output);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_read_frame_windows(IntPtr s, IntPtr pkt);
+        private static extern AVERROR av_read_frame_windows(IntPtr s, IntPtr pkt);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_seek_frame_windows(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+        private static extern AVERROR av_seek_frame_windows(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_seek_file_windows(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
+        private static extern AVERROR avformat_seek_file_windows(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
 
         #endregion
 
         #region Linux Functions
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_register_all), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_register_all_linux();
+        private static extern void av_register_all_linux();
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_alloc_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr avformat_alloc_context_linux();
+        private static extern IntPtr avformat_alloc_context_linux();
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_free_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avformat_free_context_linux(IntPtr s);
+        private static extern void avformat_free_context_linux(IntPtr s);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_open_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_open_input_linux(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
+        private static extern AVERROR avformat_open_input_linux(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_close_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avformat_close_input_linux(ref IntPtr s);
+        private static extern void avformat_close_input_linux(ref IntPtr s);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_find_stream_info), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_find_stream_info_linux(IntPtr ic, ref IntPtr options);
+        private static extern AVERROR avformat_find_stream_info_linux(IntPtr ic, ref IntPtr options);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_dump_format_linux(IntPtr ic, int index, string url, int is_output);
+        private static extern void av_dump_format_linux(IntPtr ic, int index, string url, int is_output);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_read_frame_linux(IntPtr s, IntPtr pkt);
+        private static extern AVERROR av_read_frame_linux(IntPtr s, IntPtr pkt);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_seek_frame_linux(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+        private static extern AVERROR av_seek_frame_linux(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_seek_file_linux(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
+        private static extern AVERROR avformat_seek_file_linux(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
 
         #endregion
 
         #region OSX Functions
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_register_all), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_register_all_osx();
+        private static extern void av_register_all_osx();
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_alloc_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr avformat_alloc_context_osx();
+        private static extern IntPtr avformat_alloc_context_osx();
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_free_context), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avformat_free_context_osx(IntPtr s);
+        private static extern void avformat_free_context_osx(IntPtr s);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_open_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_open_input_osx(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
+        private static extern AVERROR avformat_open_input_osx(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_close_input), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void avformat_close_input_osx(ref IntPtr s);
+        private static extern void avformat_close_input_osx(ref IntPtr s);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_find_stream_info), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_find_stream_info_osx(IntPtr ic, ref IntPtr options);
+        private static extern AVERROR avformat_find_stream_info_osx(IntPtr ic, ref IntPtr options);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_dump_format_osx(IntPtr ic, int index, string url, int is_output);
+        private static extern void av_dump_format_osx(IntPtr ic, int index, string url, int is_output);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_read_frame_osx(IntPtr s, IntPtr pkt);
+        private static extern AVERROR av_read_frame_osx(IntPtr s, IntPtr pkt);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_seek_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_seek_frame_osx(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
+        private static extern AVERROR av_seek_frame_osx(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(avformat_seek_file), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR avformat_seek_file_osx(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
+        private static extern AVERROR avformat_seek_file_osx(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
 
         #endregion
 

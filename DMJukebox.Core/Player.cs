@@ -91,7 +91,7 @@ namespace DMJukebox
             }
             Array.Clear(LeftChannelMergeBuffer, 0, MergeBufferLength);
             Array.Clear(RightChannelMergeBuffer, 0, MergeBufferLength);
-            LocalPlayer.Pause();
+            LocalPlayer.Stop();
             LocalPlayer.ResetBuffer();
         }
 
@@ -166,7 +166,7 @@ namespace DMJukebox
                     if(Streams.Count == 0)
                     {
                         IsStopping = true;
-                        LocalPlayer.Pause();
+                        LocalPlayer.Stop();
                         System.Diagnostics.Debug.WriteLine("Finished playback, standing by.");
                         return;
                     }

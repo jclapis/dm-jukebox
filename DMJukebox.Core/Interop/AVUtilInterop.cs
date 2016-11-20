@@ -58,84 +58,84 @@ namespace DMJukebox.Interop
         #region Windows Functions
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_log_set_callback), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_log_set_callback_windows([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
+        private static extern void av_log_set_callback_windows([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_frame_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr av_frame_alloc_windows();
+        private static extern IntPtr av_frame_alloc_windows();
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_frame_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_free_windows(ref IntPtr frame);
+        private static extern void av_frame_free_windows(ref IntPtr frame);
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_frame_get_buffer), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_frame_get_buffer_windows(IntPtr frame, int align);
+        private static extern AVERROR av_frame_get_buffer_windows(IntPtr frame, int align);
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_frame_get_channels), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int av_frame_get_channels_windows(IntPtr frame);
+        private static extern int av_frame_get_channels_windows(IntPtr frame);
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_frame_set_channels), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_set_channels_windows(IntPtr frame, int val);
+        private static extern void av_frame_set_channels_windows(IntPtr frame, int val);
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_frame_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_unref_windows(IntPtr frame);
+        private static extern void av_frame_unref_windows(IntPtr frame);
 
         [DllImport(WindowsAVUtilLibrary, EntryPoint = nameof(av_get_default_channel_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AV_CH_LAYOUT av_get_default_channel_layout_windows(int nb_channels);
+        private static extern AV_CH_LAYOUT av_get_default_channel_layout_windows(int nb_channels);
 
         #endregion
 
         #region Linux Functions
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_log_set_callback), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_log_set_callback_linux([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
+        private static extern void av_log_set_callback_linux([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_frame_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr av_frame_alloc_linux();
+        private static extern IntPtr av_frame_alloc_linux();
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_frame_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_free_linux(ref IntPtr frame);
+        private static extern void av_frame_free_linux(ref IntPtr frame);
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_frame_get_buffer), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_frame_get_buffer_linux(IntPtr frame, int align);
+        private static extern AVERROR av_frame_get_buffer_linux(IntPtr frame, int align);
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_frame_get_channels), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int av_frame_get_channels_linux(IntPtr frame);
+        private static extern int av_frame_get_channels_linux(IntPtr frame);
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_frame_set_channels), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_set_channels_linux(IntPtr frame, int val);
+        private static extern void av_frame_set_channels_linux(IntPtr frame, int val);
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_frame_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_unref_linux(IntPtr frame);
+        private static extern void av_frame_unref_linux(IntPtr frame);
 
         [DllImport(LinuxAVUtilLibrary, EntryPoint = nameof(av_get_default_channel_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AV_CH_LAYOUT av_get_default_channel_layout_linux(int nb_channels);
+        private static extern AV_CH_LAYOUT av_get_default_channel_layout_linux(int nb_channels);
 
         #endregion
 
         #region OSX Functions
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_log_set_callback), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_log_set_callback_osx([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
+        private static extern void av_log_set_callback_osx([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback);
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_frame_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr av_frame_alloc_osx();
+        private static extern IntPtr av_frame_alloc_osx();
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_frame_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_free_osx(ref IntPtr frame);
+        private static extern void av_frame_free_osx(ref IntPtr frame);
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_frame_get_buffer), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR av_frame_get_buffer_osx(IntPtr frame, int align);
+        private static extern AVERROR av_frame_get_buffer_osx(IntPtr frame, int align);
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_frame_get_channels), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern int av_frame_get_channels_osx(IntPtr frame);
+        private static extern int av_frame_get_channels_osx(IntPtr frame);
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_frame_set_channels), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_set_channels_osx(IntPtr frame, int val);
+        private static extern void av_frame_set_channels_osx(IntPtr frame, int val);
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_frame_unref), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void av_frame_unref_osx(IntPtr frame);
+        private static extern void av_frame_unref_osx(IntPtr frame);
 
         [DllImport(MacAVUtilLibrary, EntryPoint = nameof(av_get_default_channel_layout), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AV_CH_LAYOUT av_get_default_channel_layout_osx(int nb_channels);
+        private static extern AV_CH_LAYOUT av_get_default_channel_layout_osx(int nb_channels);
 
         #endregion
 

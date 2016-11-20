@@ -46,66 +46,66 @@ namespace DMJukebox.Interop
         #region Windows Functions
 
         [DllImport(WindowsSWResampleLibrary, EntryPoint = nameof(swr_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr swr_alloc_windows();
+        private static extern IntPtr swr_alloc_windows();
 
         [DllImport(WindowsSWResampleLibrary, EntryPoint = nameof(swr_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void swr_free_windows(ref IntPtr s);
+        private static extern void swr_free_windows(ref IntPtr s);
 
         [DllImport(WindowsSWResampleLibrary, EntryPoint = nameof(swr_config_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_config_frame_windows(IntPtr swr, IntPtr @out, IntPtr @in);
+        private static extern AVERROR swr_config_frame_windows(IntPtr swr, IntPtr @out, IntPtr @in);
 
         [DllImport(WindowsSWResampleLibrary, EntryPoint = nameof(swr_convert_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_convert_frame_windows(IntPtr swr, IntPtr output, IntPtr input);
+        private static extern AVERROR swr_convert_frame_windows(IntPtr swr, IntPtr output, IntPtr input);
 
         [DllImport(WindowsSWResampleLibrary, EntryPoint = nameof(swr_get_delay), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern long swr_get_delay_windows(IntPtr s, long @base);
+        private static extern long swr_get_delay_windows(IntPtr s, long @base);
 
         [DllImport(WindowsSWResampleLibrary, EntryPoint = nameof(swr_init), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_init_windows(IntPtr s);
+        private static extern AVERROR swr_init_windows(IntPtr s);
 
         #endregion
 
         #region Linux Functions
 
         [DllImport(LinuxSWResampleLibrary, EntryPoint = nameof(swr_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr swr_alloc_linux();
+        private static extern IntPtr swr_alloc_linux();
 
         [DllImport(LinuxSWResampleLibrary, EntryPoint = nameof(swr_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void swr_free_linux(ref IntPtr s);
+        private static extern void swr_free_linux(ref IntPtr s);
 
         [DllImport(LinuxSWResampleLibrary, EntryPoint = nameof(swr_config_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_config_frame_linux(IntPtr swr, IntPtr @out, IntPtr @in);
+        private static extern AVERROR swr_config_frame_linux(IntPtr swr, IntPtr @out, IntPtr @in);
 
         [DllImport(LinuxSWResampleLibrary, EntryPoint = nameof(swr_convert_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_convert_frame_linux(IntPtr swr, IntPtr output, IntPtr input);
+        private static extern AVERROR swr_convert_frame_linux(IntPtr swr, IntPtr output, IntPtr input);
 
         [DllImport(LinuxSWResampleLibrary, EntryPoint = nameof(swr_get_delay), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern long swr_get_delay_linux(IntPtr s, long @base);
+        private static extern long swr_get_delay_linux(IntPtr s, long @base);
 
         [DllImport(LinuxSWResampleLibrary, EntryPoint = nameof(swr_init), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_init_linux(IntPtr s);
+        private static extern AVERROR swr_init_linux(IntPtr s);
 
         #endregion
 
         #region OSX Functions
 
         [DllImport(MacSWResampleLibrary, EntryPoint = nameof(swr_alloc), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern IntPtr swr_alloc_osx();
+        private static extern IntPtr swr_alloc_osx();
 
         [DllImport(MacSWResampleLibrary, EntryPoint = nameof(swr_free), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern void swr_free_osx(ref IntPtr s);
+        private static extern void swr_free_osx(ref IntPtr s);
 
         [DllImport(MacSWResampleLibrary, EntryPoint = nameof(swr_config_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_config_frame_osx(IntPtr swr, IntPtr @out, IntPtr @in);
+        private static extern AVERROR swr_config_frame_osx(IntPtr swr, IntPtr @out, IntPtr @in);
 
         [DllImport(MacSWResampleLibrary, EntryPoint = nameof(swr_convert_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_convert_frame_osx(IntPtr swr, IntPtr output, IntPtr input);
+        private static extern AVERROR swr_convert_frame_osx(IntPtr swr, IntPtr output, IntPtr input);
 
         [DllImport(MacSWResampleLibrary, EntryPoint = nameof(swr_get_delay), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern long swr_get_delay_osx(IntPtr s, long @base);
+        private static extern long swr_get_delay_osx(IntPtr s, long @base);
 
         [DllImport(MacSWResampleLibrary, EntryPoint = nameof(swr_init), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public static extern AVERROR swr_init_osx(IntPtr s);
+        private static extern AVERROR swr_init_osx(IntPtr s);
 
         #endregion
 
