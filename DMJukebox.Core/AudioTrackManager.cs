@@ -168,14 +168,14 @@ namespace DMJukebox
                     {
                         // Start off by figuring out if there's enough data left in the stream's buffer to read right away,
                         // or if we have to process a new frame from it.
-                        bool streamEnded = false;
+                        bool trackEnded = false;
                         int availableData = track.AvailableData;
 
                         // Read new frames until we have enough data to work with.
                         while (availableData < MergeBufferLength)
                         {
                             // Not enough data left, we have to decode a new frame from the stream.
-                            bool trackEnded = !track.ProcessNextFrame();
+                            trackEnded = !track.ProcessNextFrame();
                             if (trackEnded)
                             {
                                 // We hit the end of the file, handle the leftovers and then remove the stream.
@@ -198,17 +198,18 @@ namespace DMJukebox
                             }
                             availableData = track.AvailableData;
                         }
-                        isFirstStream = false;
 
                         // If we hit the end of the stream above, there's nothing left to do.
-                        if (streamEnded)
+                        if (trackEnded)
                         {
+                            isFirstStream = false;
                             continue;
                         }
 
                         // Otherwise, merge the new data into the buffers!
                         track.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, MergeBufferLength, isFirstStream);
                         maxSamplesReceived = Math.Max(maxSamplesReceived, MergeBufferLength);
+                        isFirstStream = false;
                     }
                 }
 
