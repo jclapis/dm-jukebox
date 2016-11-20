@@ -31,6 +31,12 @@ namespace DMJukebox
         private const int WavSize = 4096;
 
         /// <summary>
+        /// This is a handle to the manager for this stream, so this can notify it when playback
+        /// starts and stops.
+        /// </summary>
+        private AudioTrackManager Manager;
+
+        /// <summary>
         /// This is the AVFormatContext for this file.
         /// </summary>
         private readonly IntPtr FormatContextPtr;
@@ -83,8 +89,6 @@ namespace DMJukebox
         /// </summary>
         private float _Volume;
 
-        private readonly object SyncLock;
-
         /// <summary>
         /// The amount of decoded data in the buffer that's ready for playback.
         /// </summary>
@@ -95,11 +99,6 @@ namespace DMJukebox
                 return Buffer.AvailableData;
             }
         }
-
-        /// <summary>
-        /// This flag is true if playback is currently enabled for the stream, or false if it's disabled.
-        /// </summary>
-        internal bool IsPlaying { get; private set; }
 
         /// <summary>
         /// This is the name of the track. It defaults to the file name, but you can set it to whatever
@@ -155,8 +154,7 @@ namespace DMJukebox
             {
                 throw new FileNotFoundException($"\"{FilePath}\" is not a valid file; it doesn't seem to exist.");
             }
-
-            SyncLock = new object();
+            
             this.Volume = Volume;
             this.Name = Name ?? Path.GetFileName(FilePath);
             this.Loop = Loop;

@@ -1,11 +1,19 @@
-﻿using DMJukebox.Interop;
+﻿/*
+ * Copyright (c) 2016 Joe Clapis.
+ */
+
+using DMJukebox.Interop;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace DMJukebox
 {
-    public class Player
+    /// <summary>
+    /// AudioTrackManager is the main public interface for DMJukebox's core. This is what you use to
+    /// create AudioTracks. Internally this is what runs all of the playback logic.
+    /// </summary>
+    public class AudioTrackManager
     {
         private readonly object StreamLock;
 
@@ -25,11 +33,11 @@ namespace DMJukebox
 
         internal const int MergeBufferLength = 480;
 
-        private readonly float[] LeftChannelMergeBuffer;
+        private readonly float[] LeftChannelPlaybackBuffer;
 
-        private readonly float[] RightChannelMergeBuffer;
+        private readonly float[] RightChannelPlaybackBuffer;
 
-        private static readonly Player Instance;
+        private static readonly AudioTrackManager Instance;
 
         private bool IsStopping
         {
@@ -50,25 +58,19 @@ namespace DMJukebox
             }
         }
 
-        static Player()
+        static AudioTrackManager()
         {
             AVFormatInterop.av_register_all();
-            Instance = new Player();
         }
 
-        public static Player Create()
-        {
-            return Instance;
-        }
-
-        private Player()
+        public AudioTrackManager()
         {
             StreamLock = new object();
             StopLock = new object();
             Streams = new List<AudioTrack>();
             LocalPlayer = new LocalSoundPlayer();
-            LeftChannelMergeBuffer = new float[MergeBufferLength];
-            RightChannelMergeBuffer = new float[MergeBufferLength];
+            LeftChannelPlaybackBuffer = new float[MergeBufferLength];
+            RightChannelPlaybackBuffer = new float[MergeBufferLength];
         }
 
         public void Start()
@@ -89,10 +91,9 @@ namespace DMJukebox
             {
                 stream.Stop();
             }
-            Array.Clear(LeftChannelMergeBuffer, 0, MergeBufferLength);
-            Array.Clear(RightChannelMergeBuffer, 0, MergeBufferLength);
+            //Array.Clear(LeftChannelMergeBuffer, 0, MergeBufferLength);
+            //Array.Clear(RightChannelMergeBuffer, 0, MergeBufferLength);
             LocalPlayer.Stop();
-            LocalPlayer.ResetBuffer();
         }
 
         public AudioTrack AddTrack(string Filename)
@@ -129,7 +130,7 @@ namespace DMJukebox
                             if(!success)
                             {
                                 // We hit the end of the file, handle the leftovers and then remove the stream.
-                                stream.WriteDataIntoPlaybackBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, availableData, isFirstStream);
+                                stream.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, availableData, isFirstStream);
                                 maxSamplesReceived = Math.Max(maxSamplesReceived, availableData);
                                 Streams.RemoveAt(i);
                                 streamEnded = true;
@@ -139,8 +140,8 @@ namespace DMJukebox
                                 // previous loop doesn't leak into this one.
                                 if(isFirstStream)
                                 {
-                                    Array.Clear(LeftChannelMergeBuffer, availableData, MergeBufferLength - availableData);
-                                    Array.Clear(RightChannelMergeBuffer, availableData, MergeBufferLength - availableData);
+                                    Array.Clear(LeftChannelPlaybackBuffer, availableData, MergeBufferLength - availableData);
+                                    Array.Clear(RightChannelPlaybackBuffer, availableData, MergeBufferLength - availableData);
                                 }
                                 break;
                             }
@@ -154,13 +155,13 @@ namespace DMJukebox
                         }
 
                         // Otherwise, merge the new data into the buffers!
-                        stream.WriteDataIntoPlaybackBuffers(LeftChannelMergeBuffer, RightChannelMergeBuffer, MergeBufferLength, isFirstStream);
+                        stream.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, MergeBufferLength, isFirstStream);
                         maxSamplesReceived = Math.Max(maxSamplesReceived, MergeBufferLength);
                     }
 
                     // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
                     // so all that's left to do is send the data off to the output.
-                    LocalPlayer.AddPlaybackData(LeftChannelMergeBuffer, RightChannelMergeBuffer, maxSamplesReceived);
+                    LocalPlayer.AddPlaybackData(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, maxSamplesReceived);
 
                     // Clean up if playback is done.
                     if(Streams.Count == 0)
@@ -172,26 +173,6 @@ namespace DMJukebox
                     }
                 }
             }
-        }
-
-        private void ProcessSingleStream()
-        {
-
-        }
-
-        private void ProcessMultipleStreams()
-        {
-
-        }
-
-        private void PlayAudioToLocalSound()
-        {
-
-        }
-
-        private void SetupLocalSound()
-        {
-
         }
 
     }

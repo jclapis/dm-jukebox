@@ -89,7 +89,8 @@
     <Compile Include="Interop\SoundIoInterop.cs" />
     <Compile Include="Interop\SWResampleInterop.cs" />
     <Compile Include="LocalSoundPlayer.cs" />
-    <Compile Include="Player.cs" />
+    <Compile Include="AudioTrackManager.cs" />
+    <Compile Include="PlaybackMode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SoundIo\SoundIo.cs" />
     <Compile Include="SoundIo\SoundIoBackend.cs" />

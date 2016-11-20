@@ -1,9 +1,7 @@
-﻿using DMJukebox.Interop;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System;
 using System.ComponentModel;
 using System.IO;
-using System.Text;
 using System.Windows;
 
 namespace DMJukebox
@@ -15,7 +13,7 @@ namespace DMJukebox
     {
         //private static LogCallback LoggerDelegate;
 
-        private readonly Player Player;
+        private readonly AudioTrackManager Player;
 
         private AudioTrack Stream;
 
@@ -23,7 +21,7 @@ namespace DMJukebox
         {
             InitializeComponent();
             //LoggerDelegate = Logger;
-            Player = Player.Create();
+            Player = new AudioTrackManager();
 
             //AVUtilInterop.av_log_set_callback(LoggerDelegate);
             
