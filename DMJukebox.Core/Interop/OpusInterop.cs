@@ -27,39 +27,39 @@ namespace DMJukebox.Interop
         #region Windows Functions
 
         [DllImport(WindowsOpusLibrary, EntryPoint = nameof(opus_encoder_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr opus_encoder_create_windows(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, ref OpusErrorCode error);
+        private static extern IntPtr opus_encoder_create_windows(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, out OpusErrorCode error);
 
         [DllImport(WindowsOpusLibrary, EntryPoint = nameof(opus_encoder_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void opus_encoder_destroy_windows(IntPtr st);
 
         [DllImport(WindowsOpusLibrary, EntryPoint = nameof(opus_encode_float), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern int opus_encode_float_windows(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
+        private static extern int opus_encode_float_windows(IntPtr st, IntPtr pcm, int frame_size, IntPtr data, int max_data_bytes);
 
         #endregion
 
         #region Linux Functions
 
         [DllImport(LinuxOpusLibrary, EntryPoint = nameof(opus_encoder_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr opus_encoder_create_linux(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, ref OpusErrorCode error);
+        private static extern IntPtr opus_encoder_create_linux(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, out OpusErrorCode error);
 
         [DllImport(LinuxOpusLibrary, EntryPoint = nameof(opus_encoder_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void opus_encoder_destroy_linux(IntPtr st);
 
         [DllImport(LinuxOpusLibrary, EntryPoint = nameof(opus_encode_float), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern int opus_encode_float_linux(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
+        private static extern int opus_encode_float_linux(IntPtr st, IntPtr pcm, int frame_size, IntPtr data, int max_data_bytes);
 
         #endregion
 
         #region OSX Functions
 
         [DllImport(MacOpusLibrary, EntryPoint = nameof(opus_encoder_create), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern IntPtr opus_encoder_create_osx(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, ref OpusErrorCode error);
+        private static extern IntPtr opus_encoder_create_osx(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, out OpusErrorCode error);
 
         [DllImport(MacOpusLibrary, EntryPoint = nameof(opus_encoder_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void opus_encoder_destroy_osx(IntPtr st);
 
         [DllImport(MacOpusLibrary, EntryPoint = nameof(opus_encode_float), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern int opus_encode_float_osx(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
+        private static extern int opus_encode_float_osx(IntPtr st, IntPtr pcm, int frame_size, IntPtr data, int max_data_bytes);
 
         #endregion
 
@@ -67,9 +67,9 @@ namespace DMJukebox.Interop
 
         // These delegates all represent the function signatures for the libopus methods I need to call.
 
-        private delegate IntPtr opus_encoder_create_delegate(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, ref OpusErrorCode error);
+        private delegate IntPtr opus_encoder_create_delegate(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, out OpusErrorCode error);
         private delegate void opus_encoder_destroy_delegate(IntPtr st);
-        private delegate int opus_encode_float_delegate(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
+        private delegate int opus_encode_float_delegate(IntPtr st, IntPtr pcm, int frame_size, IntPtr data, int max_data_bytes);
 
         // These fields represent function pointers towards each of the extern functions. They get set
         // to the proper platform-specific functions by the static constructor. For example, if this is
@@ -140,9 +140,9 @@ namespace DMJukebox.Interop
         /// <param name="application">Coding mode (OPUS_APPLICATION_VOIP/OPUS_APPLICATION_AUDIO/OPUS_APPLICATION_RESTRICTED_LOWDELAY)</param>
         /// <param name="error">Error codes</param>
         /// <returns></returns>
-        public static IntPtr opus_encoder_create(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, ref OpusErrorCode error)
+        public static IntPtr opus_encoder_create(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, out OpusErrorCode error)
         {
-            return opus_encoder_create_impl(Fs, channels, application, ref error);
+            return opus_encoder_create_impl(Fs, channels, application, out error);
         }
 
         /// <summary>
@@ -154,9 +154,9 @@ namespace DMJukebox.Interop
             opus_encoder_destroy_impl(st);
         }
 
-        public static int opus_encode_float(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes)
+        public static int opus_encode_float(IntPtr st, IntPtr pcm, int frame_size, IntPtr data, int max_data_bytes)
         {
-            return opus_encode_float_impl(st, pcm, frame_size, ref data, max_data_bytes);
+            return opus_encode_float_impl(st, pcm, frame_size, data, max_data_bytes);
         }
 
         #endregion

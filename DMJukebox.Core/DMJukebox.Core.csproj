@@ -82,6 +82,7 @@
     <Compile Include="AVUtil\AV_CH.cs" />
     <Compile Include="AVUtil\AV_CH_LAYOUT.cs" />
     <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
+    <Compile Include="DiscordPlayer.cs" />
     <Compile Include="Interop\AVCodecInterop.cs" />
     <Compile Include="Interop\AVFormatInterop.cs" />
     <Compile Include="Interop\AVUtilInterop.cs" />
