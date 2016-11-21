@@ -36,7 +36,7 @@ namespace DMJukebox
         private PlaybackMode _PlaybackMode;
 
 
-        internal const int MergeBufferLength = 480;
+        internal const int MergeBufferLength = 480 * 2;
 
         private readonly float[] LeftChannelPlaybackBuffer;
 
