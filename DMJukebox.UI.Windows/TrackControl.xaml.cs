@@ -39,6 +39,16 @@ namespace DMJukebox
             Uri stopIconUri = new Uri("pack://application:,,,/Resources/Stop.png");
             PlayIcon = new BitmapImage(playIconUri);
             StopIcon = new BitmapImage(stopIconUri);
+            Track.Stopped += HandleTrackStopped;
+        }
+
+        private void HandleTrackStopped(object sender, EventArgs e)
+        {
+            Dispatcher.BeginInvoke((Action)(() =>
+            {
+                PlayImage.Source = PlayIcon;
+            }));
+            IsPlaying = false;
         }
 
         private void EnableRename(object sender, MouseButtonEventArgs e)

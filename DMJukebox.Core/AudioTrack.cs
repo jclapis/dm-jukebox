@@ -101,11 +101,6 @@ namespace DMJukebox
         }
 
         /// <summary>
-        /// This flag is set to true once the track has reached the end of the file and should be stopped.
-        /// </summary>
-        internal bool HasEnded { get; set; }
-
-        /// <summary>
         /// This is the name of the track. It defaults to the file name, but you can set it to whatever
         /// you want.
         /// </summary>
@@ -140,6 +135,11 @@ namespace DMJukebox
         /// any bearing on playback, just here if you want to see what's going on inside the track.
         /// </summary>
         public TrackInfo Info { get; }
+
+        /// <summary>
+        /// This event is triggered when playback for this track stops.
+        /// </summary>
+        public event EventHandler Stopped;
 
         /// <summary>
         /// Creates a new AudioTrack instance.
@@ -325,7 +325,6 @@ namespace DMJukebox
                         // If this file isn't looping, just return to signal that the file's done.
                         if (!Loop)
                         {
-                            HasEnded = true;
                             return false;
                         }
 
@@ -418,7 +417,7 @@ namespace DMJukebox
             }
             AVCodecInterop.avcodec_flush_buffers(Stream.codec);
             Buffer.Reset();
-            HasEnded = false;
+            Stopped?.Invoke(this, null);
         }
 
         /// <summary>
