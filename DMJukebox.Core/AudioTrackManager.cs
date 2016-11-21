@@ -36,11 +36,9 @@ namespace DMJukebox
         private PlaybackMode _PlaybackMode;
 
 
-        internal const int MergeBufferLength = 480 * 2;
+        internal const int NumberOfPlaybackSamplesPerFrame = 480;
 
-        private readonly float[] LeftChannelPlaybackBuffer;
-
-        private readonly float[] RightChannelPlaybackBuffer;
+        private readonly float[] PlaybackBuffer;
 
         private static readonly AudioTrackManager Instance;
 
@@ -77,8 +75,7 @@ namespace DMJukebox
             Tracks = new Dictionary<string, AudioTrack>();
             ActiveTracks = new HashSet<AudioTrack>();
             LocalPlayer = new LocalSoundPlayer();
-            LeftChannelPlaybackBuffer = new float[MergeBufferLength];
-            RightChannelPlaybackBuffer = new float[MergeBufferLength];
+            PlaybackBuffer = new float[NumberOfPlaybackSamplesPerFrame * 2];
             IsClosing = false;
             PlayTask = Task.Run((Action)PlaybackLoop);
         }
@@ -172,14 +169,14 @@ namespace DMJukebox
                         int availableData = track.AvailableData;
 
                         // Read new frames until we have enough data to work with.
-                        while (availableData < MergeBufferLength)
+                        while (availableData < NumberOfPlaybackSamplesPerFrame)
                         {
                             // Not enough data left, we have to decode a new frame from the stream.
                             trackEnded = !track.ProcessNextFrame();
                             if (trackEnded)
                             {
                                 // We hit the end of the file, handle the leftovers and then remove the stream.
-                                track.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, availableData, isFirstStream);
+                                track.WriteDataIntoPlaybackBuffer(PlaybackBuffer, availableData, isFirstStream);
                                 maxSamplesReceived = Math.Max(maxSamplesReceived, availableData);
                                 if (endedTracks == null)
                                 {
@@ -191,8 +188,7 @@ namespace DMJukebox
                                 // previous loop doesn't leak into this one.
                                 if (isFirstStream)
                                 {
-                                    Array.Clear(LeftChannelPlaybackBuffer, availableData, MergeBufferLength - availableData);
-                                    Array.Clear(RightChannelPlaybackBuffer, availableData, MergeBufferLength - availableData);
+                                    Array.Clear(PlaybackBuffer, availableData * 2, (NumberOfPlaybackSamplesPerFrame - availableData) * 2);
                                 }
                                 break;
                             }
@@ -207,15 +203,15 @@ namespace DMJukebox
                         }
 
                         // Otherwise, merge the new data into the buffers!
-                        track.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, MergeBufferLength, isFirstStream);
-                        maxSamplesReceived = Math.Max(maxSamplesReceived, MergeBufferLength);
+                        track.WriteDataIntoPlaybackBuffer(PlaybackBuffer, NumberOfPlaybackSamplesPerFrame, isFirstStream);
+                        maxSamplesReceived = Math.Max(maxSamplesReceived, NumberOfPlaybackSamplesPerFrame);
                         isFirstStream = false;
                     }
                 }
 
                 // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
                 // so all that's left to do is send the data off to the output.
-                LocalPlayer.AddPlaybackData(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, maxSamplesReceived);
+                LocalPlayer.AddPlaybackData(PlaybackBuffer, maxSamplesReceived);
 
                 // Remove all of the tracks that ended during this iteration
                 if (endedTracks != null)

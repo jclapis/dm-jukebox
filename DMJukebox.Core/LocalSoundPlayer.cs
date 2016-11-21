@@ -207,12 +207,11 @@ namespace DMJukebox
         /// <summary>
         /// Adds samples of decoded, playback-ready data to this player so they can be sent out to the speakers.
         /// </summary>
-        /// <param name="LeftChannelPlaybackData">The buffer with the left channel data to write</param>
-        /// <param name="RightChannelPlaybackData">The buffer with the right channel data to write</param>
+        /// <param name="PlaybackData">The buffer with the data to write</param>
         /// <param name="NumberOfSamplesToWrite">The number of samples from each channel to add to the player</param>
-        public void AddPlaybackData(float[] LeftChannelPlaybackData, float[] RightChannelPlaybackData, int NumberOfSamplesToWrite)
+        public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
         {
-            Buffer.AddPlaybackData(LeftChannelPlaybackData, RightChannelPlaybackData, NumberOfSamplesToWrite);
+            Buffer.AddPlaybackData(PlaybackData, NumberOfSamplesToWrite);
         }
 
         #region IDisposable Support

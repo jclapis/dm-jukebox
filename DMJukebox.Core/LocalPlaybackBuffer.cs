@@ -77,10 +77,9 @@ namespace DMJukebox
         /// Adds incoming aggregated playback data from the audio track decoding and mixing system into this buffer, making
         /// it ready for local playback.
         /// </summary>
-        /// <param name="LeftChannelPlaybackData">The left channel of the incoming playback data</param>
-        /// <param name="RightChannelPlaybackData">The right channel of the incoming playback data</param>
+        /// <param name="PlaybackData">The incoming playback data</param>
         /// <param name="NumberOfSamplesToWrite">The number of samples to copy from the incoming data</param>
-        public void AddPlaybackData(float[] LeftChannelPlaybackData, float[] RightChannelPlaybackData, int NumberOfSamplesToWrite)
+        public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
         {
             // This loop will cycle until there's enough free space to write all of the samples into the buffer.
             bool isNotReady;
@@ -97,23 +96,46 @@ namespace DMJukebox
                 }
             }
 
-            // Once there's room available, copy the data! The first block handles the case where we don't need to wrap around to the beginning of the buffer,
-            // the second block handles the case where we have too much incoming data and do have to wrap around.
+            // Once there's room available, copy the data! The first block handles the case where we don't need to wrap around to the beginning of the buffer.
             int headroom = BufferSize - CurrentWritePosition;
-            if (headroom >= NumberOfSamplesToWrite)
+            if(headroom >= NumberOfSamplesToWrite)
             {
-                Buffer.BlockCopy(LeftChannelPlaybackData, 0, InternalLeftChannelBuffer, CurrentWritePosition * sizeof(float), NumberOfSamplesToWrite * sizeof(float));
-                Buffer.BlockCopy(RightChannelPlaybackData, 0, InternalRightChannelBuffer, CurrentWritePosition * sizeof(float), NumberOfSamplesToWrite * sizeof(float));
-                CurrentWritePosition += NumberOfSamplesToWrite;
+                for (int i = 0; i < NumberOfSamplesToWrite; i++)
+                {
+                    // The playback buffer is interleaved to make life easier for Opus support, so we have to
+                    // uninterleave it here.
+                    InternalLeftChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2];
+                    InternalRightChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2 + 1];
+                    CurrentWritePosition++;
+                }
+                if (CurrentWritePosition == BufferSize)
+                {
+                    CurrentWritePosition = 0;
+                }
             }
+            // The second block handles the case where we have too much incoming data and do have to wrap around.
             else
             {
                 int overflow = NumberOfSamplesToWrite - headroom;
-                Buffer.BlockCopy(LeftChannelPlaybackData, 0, InternalLeftChannelBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
-                Buffer.BlockCopy(LeftChannelPlaybackData, headroom * sizeof(float), InternalLeftChannelBuffer, 0, overflow * sizeof(float));
-                Buffer.BlockCopy(RightChannelPlaybackData, 0, InternalRightChannelBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
-                Buffer.BlockCopy(RightChannelPlaybackData, headroom * sizeof(float), InternalRightChannelBuffer, 0, overflow * sizeof(float));
-                CurrentWritePosition = overflow;
+                for (int i = 0; i < headroom; i++)
+                {
+                    InternalLeftChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2];
+                    InternalRightChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2 + 1];
+                    CurrentWritePosition++;
+                }
+                CurrentWritePosition = 0;
+
+                for (int i = 0; i < overflow; i++)
+                {
+                    int playbackIndex = (headroom + i) * 2;
+                    InternalLeftChannelBuffer[CurrentWritePosition] = PlaybackData[playbackIndex];
+                    InternalRightChannelBuffer[CurrentWritePosition] = PlaybackData[playbackIndex + 1];
+                    CurrentWritePosition++;
+                }
+                if (CurrentWritePosition == BufferSize)
+                {
+                    CurrentWritePosition = 0;
+                }
             }
 
             lock(Lock)

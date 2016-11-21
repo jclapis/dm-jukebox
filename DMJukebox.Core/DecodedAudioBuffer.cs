@@ -95,11 +95,10 @@ namespace DMJukebox
         }
 
         /// <summary>
-        /// Writes stored, decoded audio data into the aggregate merge buffers for playback. This will combine the data from the stream
-        /// that owns this buffer into the merge buffer and takes care of stream-specific volume control.
+        /// Writes stored, decoded audio data into the aggregated buffer for playback. This will combine the data from the stream
+        /// that owns this buffer into the playback buffer and takes care of stream-specific volume control.
         /// </summary>
-        /// <param name="LeftChannelPlaybackBuffer">The left channel of the playback buffer</param>
-        /// <param name="RightChannelPlaybackBuffer">The right channel of the playback buffer</param>
+        /// <param name="PlaybackBuffer">The playback buffer</param>
         /// <param name="NumberOfSamplesToWrite">The number of decoded samples to write into the playback buffers</param>
         /// <param name="Volume">The volume control to apply to this data (0.0 = muted, 1.0 = full volume)</param>
         /// <param name="OverwriteExistingData">True to replace whatever's in the playback buffer with the decoded data
@@ -112,7 +111,7 @@ namespace DMJukebox
         /// happen as late as possible during the pipeline (which makes it feel responsive instead of laggy). At this point it's
         /// all about performance.
         /// </remarks>
-        public void WriteDataIntoPlaybackBuffers(float[] LeftChannelPlaybackBuffer, float[] RightChannelPlaybackBuffer, int NumberOfSamplesToWrite, float Volume, bool OverwriteExistingData)
+        public void WriteDataIntoPlaybackBuffer(float[] PlaybackBuffer, int NumberOfSamplesToWrite, float Volume, bool OverwriteExistingData)
         {
             // This shouldn't ever be a thing because the player should always confirm that this buffer has enough data in it to fill the playback buffers.
             // If it doesn't, it should continuously read from the stream and store the decoded data here until it can cover the playback buffers.
@@ -125,17 +124,22 @@ namespace DMJukebox
             // apply volume control and clamp it.
             for (int i = 0; i < NumberOfSamplesToWrite; i++)
             {
+                int leftPlaybackIndex = i * 2;
+                int rightPlaybackIndex = i * 2 + 1;
                 float newLeftValue = InternalLeftChannelBuffer[CurrentReadPosition] * Volume;
                 float newRightValue = InternalRightChannelBuffer[CurrentReadPosition] * Volume;
                 if (!OverwriteExistingData)
                 {
                     // If this is the first stream, then whatever is in the buffer is considered old and gets overwritten.
                     // If it isn't the first stream, then the new value gets added to the old value.
-                    newLeftValue += LeftChannelPlaybackBuffer[i];
-                    newRightValue += RightChannelPlaybackBuffer[i];
+                    newLeftValue += PlaybackBuffer[leftPlaybackIndex];
+                    newRightValue += PlaybackBuffer[rightPlaybackIndex];
                 }
-                LeftChannelPlaybackBuffer[i] = Clamp(newLeftValue);
-                RightChannelPlaybackBuffer[i] = Clamp(newRightValue);
+
+                // The playback buffer has to be interleaved to make life easier for Opus support, which is why
+                // there's only one overall buffer instead of one per channel.
+                PlaybackBuffer[leftPlaybackIndex] = Clamp(newLeftValue);
+                PlaybackBuffer[rightPlaybackIndex] = Clamp(newRightValue);
 
                 // Reset the current read position to the start of the buffer once we hit the end.
                 CurrentReadPosition++;

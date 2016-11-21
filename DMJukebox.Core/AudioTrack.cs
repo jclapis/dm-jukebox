@@ -421,18 +421,17 @@ namespace DMJukebox
         }
 
         /// <summary>
-        /// This writes decoded data from this track into the buffers for audio playback.
+        /// This writes decoded data from this track into the buffer for audio playback.
         /// </summary>
-        /// <param name="LeftChannelPlaybackBuffer">The left channel of the playback buffer</param>
-        /// <param name="RightChannelPlaybackBuffer">The right channel of the playback buffer</param>
-        /// <param name="NumberOfSamplesToWrite">The number of decoded samples to write into the playback buffers</param>
+        /// <param name="PlaybackBuffer">The playback buffer</param>
+        /// <param name="NumberOfSamplesToWrite">The number of decoded samples to write into the playback buffer</param>
         /// <param name="OverwriteExistingData">True to replace whatever's in the playback buffer with the decoded data
         /// in this buffer, false to append this data to whatever's already inside the playback buffer. This is usually set to true
         /// for the first stream in a playback loop iteration, to overwrite the old stale data from the previous loop. After that it's
         /// set to false.</param>
-        internal void WriteDataIntoPlaybackBuffers(float[] LeftChannelPlaybackBuffer, float[] RightChannelPlaybackBuffer, int NumberOfSamplesToWrite, bool OverwriteExistingData)
+        internal void WriteDataIntoPlaybackBuffer(float[] PlaybackBuffer, int NumberOfSamplesToWrite, bool OverwriteExistingData)
         {
-            Buffer.WriteDataIntoPlaybackBuffers(LeftChannelPlaybackBuffer, RightChannelPlaybackBuffer, NumberOfSamplesToWrite, Volume, OverwriteExistingData);
+            Buffer.WriteDataIntoPlaybackBuffer(PlaybackBuffer, NumberOfSamplesToWrite, Volume, OverwriteExistingData);
         }
 
         #region IDisposable Support
