@@ -13,3 +13,7 @@ libsoundio was compiled from the master branch, commit afe6024 as of 10/31/2016.
 ffmpeg was compiled from the release/3.2 branch, commit 7568b0f as of 11/6/2016. It's just v3.2 with a few fixes. It was compiled as a shared LGPL library.
 	I didn't modify it at all. I compiled it on Windows using MSVC 2015.3 and MinGW, using the following config:
 	> ./configure --enable-asm --enable-yasm --arch=x86_64 --enable-shared --toolchain=msvc
+
+libsodium wasn't actually compiled because Visual Studio kept hanging during linking, so I grabbed the pre-compiled binaries from the libsodium site. You
+	can find them here: https://download.libsodium.org/libsodium/releases/libsodium-1.0.11-msvc.zip
+	I used the latest version, which is 1.0.11 at the time of creating this document.
