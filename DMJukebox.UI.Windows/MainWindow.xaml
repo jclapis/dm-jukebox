@@ -45,7 +45,7 @@
                         <Button x:Name="StopAllButton" Content="Stop All Tracks" HorizontalAlignment="Left" Margin="189,72,0,0" Height="28" VerticalAlignment="Top" Width="92"/>
                         <Slider x:Name="MasterVolumeSlider" Minimum="0" Maximum="1" Value="1" TickFrequency="0.05" TickPlacement="BottomRight" HorizontalAlignment="Left" Margin="108,41,0,0" VerticalAlignment="Top" Width="172" Height="26"/>
                         <Label Content="Playback Mode:" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <ComboBox x:Name="comboBox" HorizontalAlignment="Left" Margin="108,10,0,0" VerticalAlignment="Top" Width="172" Height="26"/>
+                        <ComboBox x:Name="PlaybackModeBox" DisplayMemberPath="Name" HorizontalAlignment="Left" Margin="108,10,0,0" VerticalAlignment="Top" Width="172" Height="26" SelectionChanged="PlaybackModeBox_SelectionChanged"/>
                     </Grid>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
                         <Grid x:Name="ActiveTrackGrid"/>

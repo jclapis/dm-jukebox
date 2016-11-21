@@ -14,7 +14,7 @@ namespace DMJukebox
     {
         //private static LogCallback LoggerDelegate;
 
-        private readonly AudioTrackManager Player;
+        private readonly AudioTrackManager Manager;
 
         public MainWindow()
         {
@@ -22,7 +22,18 @@ namespace DMJukebox
             //LoggerDelegate = Logger;
             try
             {
-                Player = new AudioTrackManager();
+                Manager = new AudioTrackManager();
+                PlaybackModeBox.Items.Add(new PlaybackModeItem
+                {
+                    Name = "Local Speakers",
+                    Value = PlaybackMode.LocalSpeakers
+                });
+                PlaybackModeBox.Items.Add(new PlaybackModeItem
+                {
+                    Name = "Discord",
+                    Value = PlaybackMode.Discord
+                });
+                PlaybackModeBox.SelectedIndex = 0;
             }
             catch(Exception ex)
             {
@@ -59,7 +70,7 @@ namespace DMJukebox
                 string filename = dialog.FileName;
                 try
                 {
-                    AudioTrack track = Player.CreateTrack(filename);
+                    AudioTrack track = Manager.CreateTrack(filename);
                     ActiveTrackGrid.RowDefinitions.Add(new RowDefinition
                     {
                         Height = GridLength.Auto
@@ -77,10 +88,25 @@ namespace DMJukebox
 
         private void HandleExitButton(object sender, RoutedEventArgs e)
         {
-            Player.StopAllTracks();
+            Manager.StopAllTracks();
             //Player.Dispose();
             Application.Current.Shutdown();
         }
 
+        private void PlaybackModeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            object selection = PlaybackModeBox.SelectedItem;
+            if (Manager != null && selection != null)
+            {
+                Manager.PlaybackMode = ((PlaybackModeItem)selection).Value;
+            }
+        }
+    }
+
+    internal class PlaybackModeItem
+    {
+        public string Name { get; set; }
+
+        public PlaybackMode Value { get; set; }
     }
 }
