@@ -32,6 +32,9 @@ namespace DMJukebox.Interop
         [DllImport(WindowsOpusLibrary, EntryPoint = nameof(opus_encoder_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void opus_encoder_destroy_windows(IntPtr st);
 
+        [DllImport(WindowsOpusLibrary, EntryPoint = nameof(opus_encode_float), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern int opus_encode_float_windows(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
+
         #endregion
 
         #region Linux Functions
@@ -41,6 +44,9 @@ namespace DMJukebox.Interop
 
         [DllImport(LinuxOpusLibrary, EntryPoint = nameof(opus_encoder_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void opus_encoder_destroy_linux(IntPtr st);
+
+        [DllImport(LinuxOpusLibrary, EntryPoint = nameof(opus_encode_float), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern int opus_encode_float_linux(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
 
         #endregion
 
@@ -52,6 +58,9 @@ namespace DMJukebox.Interop
         [DllImport(MacOpusLibrary, EntryPoint = nameof(opus_encoder_destroy), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void opus_encoder_destroy_osx(IntPtr st);
 
+        [DllImport(MacOpusLibrary, EntryPoint = nameof(opus_encode_float), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern int opus_encode_float_osx(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
+
         #endregion
 
         #region Delegates and Platform-Dependent Loading
@@ -60,6 +69,7 @@ namespace DMJukebox.Interop
 
         private delegate IntPtr opus_encoder_create_delegate(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, ref OpusErrorCode error);
         private delegate void opus_encoder_destroy_delegate(IntPtr st);
+        private delegate int opus_encode_float_delegate(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes);
 
         // These fields represent function pointers towards each of the extern functions. They get set
         // to the proper platform-specific functions by the static constructor. For example, if this is
@@ -68,6 +78,7 @@ namespace DMJukebox.Interop
 
         private static opus_encoder_create_delegate opus_encoder_create_impl;
         private static opus_encoder_destroy_delegate opus_encoder_destroy_impl;
+        private static opus_encode_float_delegate opus_encode_float_impl;
 
         /// <summary>
         /// The static constructor figures out which library to use for P/Invoke based
@@ -81,16 +92,19 @@ namespace DMJukebox.Interop
             {
                 opus_encoder_create_impl = opus_encoder_create_windows;
                 opus_encoder_destroy_impl = opus_encoder_destroy_windows;
+                opus_encode_float_impl = opus_encode_float_windows;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 opus_encoder_create_impl = opus_encoder_create_linux;
                 opus_encoder_destroy_impl = opus_encoder_destroy_linux;
+                opus_encode_float_impl = opus_encode_float_linux;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 opus_encoder_create_impl = opus_encoder_create_osx;
                 opus_encoder_destroy_impl = opus_encoder_destroy_osx;
+                opus_encode_float_impl = opus_encode_float_osx;
             }
             else
             {
@@ -109,7 +123,7 @@ namespace DMJukebox.Interop
         /// 
         /// OPUS_APPLICATION_VOIP gives best quality at a given bitrate for voice signals. It enhances the input signal by
         /// high-pass filtering and emphasizing formants and harmonics. Optionally it includes in-band forward error
-        /// correction to protect against packet loss.Use this mode for typical VoIP applications.Because of the enhancement,
+        /// correction to protect against packet loss. Use this mode for typical VoIP applications.Because of the enhancement,
         /// even at high bitrates the output may sound different from the input.
         /// 
         /// OPUS_APPLICATION_AUDIO gives best quality at a given bitrate for most non-voice signals like music. Use this mode
@@ -138,6 +152,11 @@ namespace DMJukebox.Interop
         public static void opus_encoder_destroy(IntPtr st)
         {
             opus_encoder_destroy_impl(st);
+        }
+
+        public static int opus_encode_float(IntPtr st, IntPtr pcm, int frame_size, ref IntPtr data, int max_data_bytes)
+        {
+            return opus_encode_float_impl(st, pcm, frame_size, ref data, max_data_bytes);
         }
 
         #endregion
