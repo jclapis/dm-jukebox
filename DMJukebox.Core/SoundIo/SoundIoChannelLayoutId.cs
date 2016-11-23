@@ -2,10 +2,6 @@
  * This file contains a C# implementation of the SoundIoChannelLayoutId enum
  * as defined in soundio.h of the libsoundio project, for interop use.
  * 
- * All of the documentation and comments have been copied directly from
- * that header and are not my own work - they are the work of Andrew Kelley
- * and the other contributors to libsoundio. Credit goes to them.
- * 
  * For more information, please see the documentation at
  * http://libsound.io/doc-1.1.0/soundio_8h.html or the source code at
  * https://github.com/andrewrk/libsoundio.
@@ -15,9 +11,6 @@
 
 namespace DMJukebox.Interop
 {
-    /// <summary>
-    /// Built-in channel layouts for convenience.
-    /// </summary>
     internal enum SoundIoChannelLayoutId
     {
         SoundIoChannelLayoutIdMono,

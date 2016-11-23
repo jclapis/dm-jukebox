@@ -115,40 +115,12 @@ namespace DMJukebox.Interop
         #endregion
 
         #region Public API
-
-        /// <summary>
-        /// Allocates and initializes an encoder state.
-        /// 
-        /// There are three coding modes:
-        /// 
-        /// OPUS_APPLICATION_VOIP gives best quality at a given bitrate for voice signals. It enhances the input signal by
-        /// high-pass filtering and emphasizing formants and harmonics. Optionally it includes in-band forward error
-        /// correction to protect against packet loss. Use this mode for typical VoIP applications.Because of the enhancement,
-        /// even at high bitrates the output may sound different from the input.
-        /// 
-        /// OPUS_APPLICATION_AUDIO gives best quality at a given bitrate for most non-voice signals like music. Use this mode
-        /// for music and mixed (music/voice) content, broadcast, and applications requiring less than 15 ms of coding delay.
-        /// 
-        /// OPUS_APPLICATION_RESTRICTED_LOWDELAY configures low-delay mode that disables the speech-optimized mode in exchange
-        /// for slightly reduced delay. This mode can only be set on an newly initialized or freshly reset encoder because it
-        /// changes the codec delay.
-        /// 
-        /// This is useful when the caller knows that the speech-optimized modes will not be needed (use with caution).
-        /// </summary>
-        /// <param name="Fs">Sampling rate of input signal (Hz) This must be one of 8000, 12000, 16000, 24000, or 48000.</param>
-        /// <param name="channels">Number of channels (1 or 2) in input signal</param>
-        /// <param name="application">Coding mode (OPUS_APPLICATION_VOIP/OPUS_APPLICATION_AUDIO/OPUS_APPLICATION_RESTRICTED_LOWDELAY)</param>
-        /// <param name="error">Error codes</param>
-        /// <returns></returns>
+        
         public static IntPtr opus_encoder_create(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, out OpusErrorCode error)
         {
             return opus_encoder_create_impl(Fs, channels, application, out error);
         }
-
-        /// <summary>
-        /// Frees an OpusEncoder allocated by opus_encoder_create().
-        /// </summary>
-        /// <param name="st">State to be freed.</param>
+        
         public static void opus_encoder_destroy(IntPtr st)
         {
             opus_encoder_destroy_impl(st);

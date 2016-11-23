@@ -16,6 +16,10 @@ namespace DMJukebox
 
         private readonly IntPtr OpusEncoder;
 
+        private ushort PacketNumber;
+
+        private uint Ssrc;
+
         public DiscordPlayer()
         {
             OpusEncodeBuffer = Marshal.AllocHGlobal(OpusEncodeBufferSize);
@@ -39,6 +43,18 @@ namespace DMJukebox
                 OpusErrorCode error = (OpusErrorCode)result;
                 throw new Exception($"Opus failed to encode data: {error}");
             }
+        }
+
+        private void CreateRtpHeader()
+        {
+            byte[] header = new byte[12];
+            header[0] = 0x80;
+            header[1] = 0x78;
+            
+            header[2] = (byte)(PacketNumber >> 8);
+            header[3] = (byte)PacketNumber;
+
+
         }
 
         #region IDisposable Support

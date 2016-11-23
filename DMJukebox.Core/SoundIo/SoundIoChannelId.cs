@@ -2,10 +2,6 @@
  * This file contains a C# implementation of the SoundIoChannelId enum
  * as defined in soundio.h of the libsoundio project, for interop use.
  * 
- * All of the documentation and comments have been copied directly from
- * that header and are not my own work - they are the work of Andrew Kelley
- * and the other contributors to libsoundio. Credit goes to them.
- * 
  * For more information, please see the documentation at
  * http://libsound.io/doc-1.1.0/soundio_8h.html or the source code at
  * https://github.com/andrewrk/libsoundio.
@@ -15,16 +11,9 @@
 
 namespace DMJukebox.Interop
 {
-    /// <summary>
-    /// Specifies where a channel is physically located.
-    /// </summary>
     internal enum SoundIoChannelId
     {
         SoundIoChannelIdInvalid,
-
-        /// <summary>
-        /// First of the more commonly supported ids.
-        /// </summary>
         SoundIoChannelIdFrontLeft,
         SoundIoChannelIdFrontRight,
         SoundIoChannelIdFrontCenter,
@@ -42,15 +31,7 @@ namespace DMJukebox.Interop
         SoundIoChannelIdTopFrontRight,
         SoundIoChannelIdTopBackLeft,
         SoundIoChannelIdTopBackCenter,
-
-        /// <summary>
-        /// Last of the more commonly supported ids.
-        /// </summary>
         SoundIoChannelIdTopBackRight,
-
-        /// <summary>
-        /// First of the less commonly supported ids.
-        /// </summary>
         SoundIoChannelIdBackLeftCenter,
         SoundIoChannelIdBackRightCenter,
         SoundIoChannelIdFrontLeftWide,
@@ -68,30 +49,14 @@ namespace DMJukebox.Interop
         SoundIoChannelIdBottomCenter,
         SoundIoChannelIdBottomLeftCenter,
         SoundIoChannelIdBottomRightCenter,
-
-        /// <summary>
-        /// Mid/side recording
-        /// </summary>
         SoundIoChannelIdMsMid,
         SoundIoChannelIdMsSide,
-
-        /// <summary>
-        /// first order ambisonic channels
-        /// </summary>
         SoundIoChannelIdAmbisonicW,
         SoundIoChannelIdAmbisonicX,
         SoundIoChannelIdAmbisonicY,
         SoundIoChannelIdAmbisonicZ,
-
-        /// <summary>
-        /// X-Y Recording
-        /// </summary>
         SoundIoChannelIdXyX,
         SoundIoChannelIdXyY,
-
-        /// <summary>
-        /// First of the "other" channel ids
-        /// </summary>
         SoundIoChannelIdHeadphonesLeft,
         SoundIoChannelIdHeadphonesRight,
         SoundIoChannelIdClickTrack,
@@ -99,12 +64,7 @@ namespace DMJukebox.Interop
         SoundIoChannelIdHearingImpaired,
         SoundIoChannelIdNarration,
         SoundIoChannelIdHaptic,
-
-        /// <summary>
-        /// Last of the "other" channel ids
-        /// </summary>
         SoundIoChannelIdDialogCentricMix,
-
         SoundIoChannelIdAux,
         SoundIoChannelIdAux0,
         SoundIoChannelIdAux1,
@@ -121,6 +81,6 @@ namespace DMJukebox.Interop
         SoundIoChannelIdAux12,
         SoundIoChannelIdAux13,
         SoundIoChannelIdAux14,
-        SoundIoChannelIdAux15,
+        SoundIoChannelIdAux15
     }
 }

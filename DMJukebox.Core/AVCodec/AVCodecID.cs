@@ -4,11 +4,6 @@
  * 
  * Fun fact: this is probably the biggest enum I've ever seen.
  * 
- * The documentation and comments have been largely copied from those headers and
- * are not my own work - they are the work of the contributors to ffmpeg.
- * Credit goes to them. I may have modified them in places where it made sense
- * to help document the C# bindings.
- * 
  * For more information, please see the documentation at
  * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
  * https://github.com/FFmpeg/FFmpeg.
@@ -18,34 +13,11 @@
 
 namespace DMJukebox.Interop
 {
-    /// <summary>
-    /// Identify the syntax and semantics of the bitstream.
-    /// The principle is roughly:
-    /// Two decoders with the same ID can decode the same streams.
-    /// Two encoders with the same ID can encode compatible streams.
-    /// There may be slight deviations from the principle due to implementation
-    /// details.
-    /// 
-    /// If you add a codec ID to this list, add it so that
-    /// 1. no value of an existing codec ID changes (that would break ABI),
-    /// 2. it is as close as possible to similar codecs
-    /// 
-    /// After adding new codec IDs, do not forget to add an entry to the codec
-    /// descriptor list and bump libavcodec minor version.
-    /// </summary>
     internal enum AVCodecID
     {
         AV_CODEC_ID_NONE,
-
-        #region video codecs
-
         AV_CODEC_ID_MPEG1VIDEO,
-
-        /// <summary>
-        /// preferred ID for MPEG-1/2 video decoding
-        /// </summary>
         AV_CODEC_ID_MPEG2VIDEO,
-
         AV_CODEC_ID_MPEG2VIDEO_XVMC,
         AV_CODEC_ID_H261,
         AV_CODEC_ID_H263,
@@ -238,7 +210,6 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_DXV,
         AV_CODEC_ID_SCREENPRESSO,
         AV_CODEC_ID_RSCC,
-
         AV_CODEC_ID_Y41P = 0x8000,
         AV_CODEC_ID_AVRP,
         AV_CODEC_ID_012V,
@@ -261,15 +232,7 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_MAGICYUV,
         AV_CODEC_ID_SHEERVIDEO,
         AV_CODEC_ID_YLC,
-        #endregion
-
-        #region various PCM "codecs"
-
-        /// <summary>
-        /// A dummy id pointing at the start of audio codecs
-        /// </summary>
         AV_CODEC_ID_FIRST_AUDIO = 0x10000,
-
         AV_CODEC_ID_PCM_S16LE = 0x10000,
         AV_CODEC_ID_PCM_S16BE,
         AV_CODEC_ID_PCM_U16LE,
@@ -301,14 +264,6 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_PCM_S24LE_PLANAR,
         AV_CODEC_ID_PCM_S32LE_PLANAR,
         AV_CODEC_ID_PCM_S16BE_PLANAR,
-
-        /* new PCM "codecs" should be added right below this line starting with
-         * an explicit value of for example 0x10800
-         */
-        #endregion
-
-        #region various ADPCM codecs
-
         AV_CODEC_ID_ADPCM_IMA_QT = 0x11000,
         AV_CODEC_ID_ADPCM_IMA_WAV,
         AV_CODEC_ID_ADPCM_IMA_DK3,
@@ -341,7 +296,6 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_ADPCM_IMA_APC,
         AV_CODEC_ID_ADPCM_VIMA,
         AV_CODEC_ID_VIMA = AV_CODEC_ID_ADPCM_VIMA,
-
         AV_CODEC_ID_ADPCM_AFC = 0x11800,
         AV_CODEC_ID_ADPCM_IMA_OKI,
         AV_CODEC_ID_ADPCM_DTK,
@@ -352,43 +306,17 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_ADPCM_AICA,
         AV_CODEC_ID_ADPCM_IMA_DAT4,
         AV_CODEC_ID_ADPCM_MTAF,
-
-        #endregion
-
-        #region AMR
-
         AV_CODEC_ID_AMR_NB = 0x12000,
         AV_CODEC_ID_AMR_WB,
-
-        #endregion
-
-        #region RealAudio codecs
-
         AV_CODEC_ID_RA_144 = 0x13000,
         AV_CODEC_ID_RA_288,
-
-        #endregion
-
-        #region various DPCM codecs
-
         AV_CODEC_ID_ROQ_DPCM = 0x14000,
         AV_CODEC_ID_INTERPLAY_DPCM,
         AV_CODEC_ID_XAN_DPCM,
         AV_CODEC_ID_SOL_DPCM,
-
         AV_CODEC_ID_SDX2_DPCM = 0x14800,
-
-        #endregion
-
-        #region audio codecs
-
         AV_CODEC_ID_MP2 = 0x15000,
-
-        /// <summary>
-        /// preferred ID for decoding MPEG audio layer 1, 2 or 3
-        /// </summary>
         AV_CODEC_ID_MP3,
-
         AV_CODEC_ID_AAC,
         AV_CODEC_ID_AC3,
         AV_CODEC_ID_DTS,
@@ -405,12 +333,7 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_SHORTEN,
         AV_CODEC_ID_ALAC,
         AV_CODEC_ID_WESTWOOD_SND1,
-
-        /// <summary>
-        /// as in Berlin toast format
-        /// </summary>
         AV_CODEC_ID_GSM,
-
         AV_CODEC_ID_QDM2,
         AV_CODEC_ID_COOK,
         AV_CODEC_ID_TRUESPEECH,
@@ -422,12 +345,7 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_IMC,
         AV_CODEC_ID_MUSEPACK7,
         AV_CODEC_ID_MLP,
-
-        /// <summary>
-        /// as found in WAV
-        /// </summary>
         AV_CODEC_ID_GSM_MS,
-
         AV_CODEC_ID_ATRAC3,
         AV_CODEC_ID_VOXWARE,
         AV_CODEC_ID_APE,
@@ -465,7 +383,6 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_PAF_AUDIO,
         AV_CODEC_ID_ON2AVC,
         AV_CODEC_ID_DSS_SP,
-
         AV_CODEC_ID_FFWAVESYNTH = 0x15800,
         AV_CODEC_ID_SONIC,
         AV_CODEC_ID_SONIC_LS,
@@ -480,31 +397,16 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_XMA1,
         AV_CODEC_ID_XMA2,
         AV_CODEC_ID_DST,
-
-        #endregion
-
-        #region subtitle codecs
-
-        /// <summary>
-        /// A dummy ID pointing at the start of subtitle codecs.
-        /// </summary>
         AV_CODEC_ID_FIRST_SUBTITLE = 0x17000,
-
         AV_CODEC_ID_DVD_SUBTITLE = 0x17000,
         AV_CODEC_ID_DVB_SUBTITLE,
-
-        /// <summary>
-        /// raw UTF-8 text
-        /// </summary>
         AV_CODEC_ID_TEXT,
-
         AV_CODEC_ID_XSUB,
         AV_CODEC_ID_SSA,
         AV_CODEC_ID_MOV_TEXT,
         AV_CODEC_ID_HDMV_PGS_SUBTITLE,
         AV_CODEC_ID_DVB_TELETEXT,
         AV_CODEC_ID_SRT,
-
         AV_CODEC_ID_MICRODVD = 0x17800,
         AV_CODEC_ID_EIA_608,
         AV_CODEC_ID_JACOSUB,
@@ -520,18 +422,8 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_PJS,
         AV_CODEC_ID_ASS,
         AV_CODEC_ID_HDMV_TEXT_SUBTITLE,
-
-        #endregion
-
-        #region other specific kind of codecs (generally used for attachments)
-
-        /// <summary>
-        /// A dummy ID pointing at the start of various fake codecs.
-        /// </summary>
         AV_CODEC_ID_FIRST_UNKNOWN = 0x18000,
-
         AV_CODEC_ID_TTF = 0x18000,
-
         AV_CODEC_ID_BINTEXT = 0x18800,
         AV_CODEC_ID_XBIN,
         AV_CODEC_ID_IDF,
@@ -540,34 +432,10 @@ namespace DMJukebox.Interop
         AV_CODEC_ID_DVD_NAV,
         AV_CODEC_ID_TIMED_ID3,
         AV_CODEC_ID_BIN_DATA,
-
-        /// <summary>
-        /// codec_id is not known (like AV_CODEC_ID_NONE) but lavf should attempt to identify it
-        /// </summary>
         AV_CODEC_ID_PROBE = 0x19000,
-
-        /// <summary>
-        /// _FAKE_ codec to indicate a raw MPEG-2 TS
-        /// stream (only used by libavformat)
-        /// </summary>
         AV_CODEC_ID_MPEG2TS = 0x20000,
-
-        /// <summary>
-        /// _FAKE_ codec to indicate a MPEG-4 Systems
-        /// stream (only used by libavformat)
-        /// </summary>
         AV_CODEC_ID_MPEG4SYSTEMS = 0x20001,
-
-        /// <summary>
-        /// Dummy codec for streams containing only metadata information.
-        /// </summary>
         AV_CODEC_ID_FFMETADATA = 0x21000,
-
-        /// <summary>
-        /// Passthrough codec, AVFrames wrapped in AVPacket
-        /// </summary>
         AV_CODEC_ID_WRAPPED_AVFRAME = 0x21001
-
-        #endregion
     }
 }
