@@ -2,6 +2,7 @@
  * Copyright (c) 2016 Joe Clapis.
  */
 
+using DMJukebox.Discord;
 using DMJukebox.Interop;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,8 @@ namespace DMJukebox
         private readonly HashSet<AudioTrack> ActiveTracks;
 
         private readonly LocalSoundPlayer LocalPlayer;
+
+        private readonly DiscordClient Discord;
 
         private Task PlayTask;
 
@@ -78,6 +81,12 @@ namespace DMJukebox
             PlaybackBuffer = new float[NumberOfPlaybackSamplesPerFrame * 2];
             IsClosing = false;
             PlayTask = Task.Run((Action)PlaybackLoop);
+            Discord = new DiscordClient();
+        }
+
+        public async Task ConnectToDiscord()
+        {
+            await Discord.Connect();
         }
 
         public void Close()

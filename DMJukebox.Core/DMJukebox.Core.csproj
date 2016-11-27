@@ -82,7 +82,14 @@
     <Compile Include="AVUtil\AV_CH.cs" />
     <Compile Include="AVUtil\AV_CH_LAYOUT.cs" />
     <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
-    <Compile Include="DiscordPlayer.cs" />
+    <Compile Include="Discord\DiscordClient.cs" />
+    <Compile Include="Discord\DiscordPlayer.cs" />
+    <Compile Include="Discord\GatewayHelloData.cs" />
+    <Compile Include="Discord\GatewayIdentifyData.cs" />
+    <Compile Include="Discord\GatewayIdentifyDataProperties.cs" />
+    <Compile Include="Discord\GatewayOpCode.cs" />
+    <Compile Include="Discord\GatewayPayload.cs" />
+    <Compile Include="Discord\GetGatewayResponse.cs" />
     <Compile Include="Interop\AVCodecInterop.cs" />
     <Compile Include="Interop\AVFormatInterop.cs" />
     <Compile Include="Interop\AVUtilInterop.cs" />

@@ -42,6 +42,11 @@ namespace DMJukebox
             Track.Stopped += HandleTrackStopped;
         }
 
+        public void SetName(string Name)
+        {
+            NameLabelBlock.Text = Name;
+        }
+
         private void HandleTrackStopped(object sender, EventArgs e)
         {
             Dispatcher.BeginInvoke((Action)(() =>

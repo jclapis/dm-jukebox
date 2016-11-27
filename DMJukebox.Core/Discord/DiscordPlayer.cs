@@ -20,6 +20,8 @@ namespace DMJukebox
 
         private uint Ssrc;
 
+        private readonly byte[] header;
+
         public DiscordPlayer()
         {
             OpusEncodeBuffer = Marshal.AllocHGlobal(OpusEncodeBufferSize);
@@ -29,6 +31,9 @@ namespace DMJukebox
             {
                 throw new Exception($"Failed to create Opus encoder: {error}");
             }
+            header = new byte[12];
+            header[0] = 0x80;
+            header[1] = 0x78;
         }
 
         unsafe public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
@@ -48,8 +53,6 @@ namespace DMJukebox
         private void CreateRtpHeader()
         {
             byte[] header = new byte[12];
-            header[0] = 0x80;
-            header[1] = 0x78;
             
             header[2] = (byte)(PacketNumber >> 8);
             header[3] = (byte)PacketNumber;

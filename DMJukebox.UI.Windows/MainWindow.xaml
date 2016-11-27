@@ -42,7 +42,7 @@
                     <Grid Grid.Row="0">
                         <Label Content="Master Volume:" Margin="11,41,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Label Content="Currently Playing Tracks:" Margin="11,72,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="28"/>
-                        <Button x:Name="StopAllButton" Content="Stop All Tracks" HorizontalAlignment="Left" Margin="189,72,0,0" Height="28" VerticalAlignment="Top" Width="92"/>
+                        <Button x:Name="StopAllButton" Content="Stop All Tracks" HorizontalAlignment="Left" Margin="189,72,0,0" Height="28" VerticalAlignment="Top" Width="92" Click="StopAllButton_Click"/>
                         <Slider x:Name="MasterVolumeSlider" Minimum="0" Maximum="1" Value="1" TickFrequency="0.05" TickPlacement="BottomRight" HorizontalAlignment="Left" Margin="108,41,0,0" VerticalAlignment="Top" Width="172" Height="26"/>
                         <Label Content="Playback Mode:" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <ComboBox x:Name="PlaybackModeBox" DisplayMemberPath="Name" HorizontalAlignment="Left" Margin="108,10,0,0" VerticalAlignment="Top" Width="172" Height="26" SelectionChanged="PlaybackModeBox_SelectionChanged"/>
@@ -56,11 +56,44 @@
             <GroupBox Grid.Column="1" Header="Tracks" Margin="5">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <Grid>
-                        <Expander Header="Uncategorized" BorderBrush="SlateGray" BorderThickness="1" Margin="10,10,10,0" Height="221" VerticalAlignment="Top">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Expander Grid.Row="0" Header="Sound Effects" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
                             <WrapPanel Orientation="Horizontal" Background="#FFE5E5E5">
+                            </WrapPanel>
+                        </Expander>
+                        <Expander Grid.Row="1" Header="Uncategorized" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
+                            <WrapPanel Orientation="Horizontal" Background="#FFE5E5E5">
+                            </WrapPanel>
+                        </Expander>
+                        <Expander Grid.Row="2" Header="Tension" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
+                            <WrapPanel x:Name="TensionPanel" Orientation="Horizontal">
                                 <dm:TrackControl></dm:TrackControl>
                                 <dm:TrackControl></dm:TrackControl>
                                 <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                                <dm:TrackControl></dm:TrackControl>
+                            </WrapPanel>
+                        </Expander>
+                        <Expander Grid.Row="3" Header="Battle Music" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
+                            <WrapPanel Orientation="Horizontal" Background="#FFE5E5E5">
+                            </WrapPanel>
+                        </Expander>
+                        <Expander Grid.Row="4" Header="Town Ambience" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
+                            <WrapPanel x:Name="BattlePanel" Orientation="Horizontal" Background="#FFE5E5E5">
+                                <dm:TrackControl/>
+                                <dm:TrackControl/>
+                                <dm:TrackControl/>
                             </WrapPanel>
                         </Expander>
                     </Grid>
