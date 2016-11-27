@@ -92,6 +92,7 @@
     <Compile Include="Discord\ReadyData.cs" />
     <Compile Include="Discord\GetGatewayResponse.cs" />
     <Compile Include="Discord\UserInfo.cs" />
+    <Compile Include="Discord\VoiceStateUpdateData.cs" />
     <Compile Include="Interop\AVCodecInterop.cs" />
     <Compile Include="Interop\AVFormatInterop.cs" />
     <Compile Include="Interop\AVUtilInterop.cs" />
