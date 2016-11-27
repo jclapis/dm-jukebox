@@ -1,6 +1,6 @@
 ﻿namespace DMJukebox.Discord
 {
-    internal enum GatewayOpCode
+    internal enum OpCode
     {
         Dispatch,
         Heartbeat,

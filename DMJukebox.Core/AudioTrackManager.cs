@@ -89,6 +89,11 @@ namespace DMJukebox
             await Discord.Connect();
         }
 
+        public void SetDiscordToken(string Token)
+        {
+            Discord.Token = Token;
+        }
+
         public void Close()
         {
             StopAllTracks();

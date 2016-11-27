@@ -7,7 +7,7 @@ namespace DMJukebox.Discord
     /// server as soon as we connect.
     /// </summary>
     [JsonObject]
-    internal class GatewayHelloData
+    internal class HelloData
     {
         /// <summary>
         /// This is the interval (in milliseconds) that we should wait between sending

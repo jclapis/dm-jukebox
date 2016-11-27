@@ -8,7 +8,7 @@ namespace DMJukebox.Discord
     /// Discord server.
     /// </summary>
     [JsonObject]
-    internal class GatewayPayload
+    internal class Payload
     {
         /// <summary>
         /// This is the event name for the payload. It only gets used on 
@@ -30,13 +30,13 @@ namespace DMJukebox.Discord
         /// it is)
         /// </summary>
         [JsonProperty("op")]
-        public GatewayOpCode OpCode { get; set; }
+        public OpCode OpCode { get; set; }
 
         /// <summary>
         /// This is the message-specific data structure that holds the
         /// important info for each message.
         /// </summary>
         [JsonProperty("d")]
-        public JObject Data { get; set; }
+        public object Data { get; set; }
     }
 }

@@ -7,7 +7,7 @@ namespace DMJukebox.Discord
     /// authentication message.
     /// </summary>
     [JsonObject]
-    internal class GatewayIdentifyData
+    internal class IdentifyData
     {
         /// <summary>
         /// The authentication token for identifying the current user
@@ -19,7 +19,7 @@ namespace DMJukebox.Discord
         /// Client-specific properties
         /// </summary>
         [JsonProperty("properties")]
-        public GatewayIdentifyDataProperties Properties { get; set; }
+        public IdentifyDataProperties Properties { get; set; }
 
         /// <summary>
         /// True if this client supports compression of the initial
@@ -41,6 +41,6 @@ namespace DMJukebox.Discord
         /// used for guild sharding in bots.
         /// </summary>
         [JsonProperty("shard")]
-        public int[] Shard { get; set; }
+        public int[] ShardInfo { get; set; }
     }
 }

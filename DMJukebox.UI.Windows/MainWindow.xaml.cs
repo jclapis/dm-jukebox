@@ -116,6 +116,7 @@ namespace DMJukebox
 
         private async void StopAllButton_Click(object sender, RoutedEventArgs e)
         {
+            Manager.SetDiscordToken(DebugDiscordBox.Text);
             Manager.ConnectToDiscord();
         }
     }

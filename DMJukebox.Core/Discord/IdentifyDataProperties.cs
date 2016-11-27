@@ -7,7 +7,7 @@ namespace DMJukebox.Discord
     /// the Discord client.
     /// </summary>
     [JsonObject]
-    internal class GatewayIdentifyDataProperties
+    internal class IdentifyDataProperties
     {
         /// <summary>
         /// The Operating System that the client is running on
