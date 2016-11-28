@@ -114,11 +114,27 @@ namespace DMJukebox
             }
         }
 
-        private async void StopAllButton_Click(object sender, RoutedEventArgs e)
+        private void StopAllButton_Click(object sender, RoutedEventArgs e)
         {
-            Manager.SetDiscordToken(DebugDiscordBox.Text);
+
+        }
+
+        private async void DiscordConnectButton_Click(object sender, RoutedEventArgs e)
+        {
             Manager.ConnectToDiscord();
         }
+
+        private void DiscordSettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Configuration config = Manager.Configuration;
+            DiscordSettingsWindow settingsWindow = new DiscordSettingsWindow(config.DiscordSettings);
+            settingsWindow.Owner = this;
+            if (settingsWindow.ShowDialog() == true)
+            {
+                Manager.SetDiscordSettings(settingsWindow.Settings);
+            }
+        }
+
     }
 
     internal class PlaybackModeItem

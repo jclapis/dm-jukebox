@@ -40,18 +40,18 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0">
-                        <Label Content="Master Volume:" Margin="11,41,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Label Content="Currently Playing Tracks:" Margin="11,72,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="28"/>
-                        <Button x:Name="StopAllButton" Content="Stop All Tracks" HorizontalAlignment="Left" Margin="189,72,0,0" Height="28" VerticalAlignment="Top" Width="92" Click="StopAllButton_Click"/>
-                        <Slider x:Name="MasterVolumeSlider" Minimum="0" Maximum="1" Value="1" TickFrequency="0.05" TickPlacement="BottomRight" HorizontalAlignment="Left" Margin="108,41,0,0" VerticalAlignment="Top" Width="172" Height="26"/>
                         <Label Content="Playback Mode:" Margin="10,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <ComboBox x:Name="PlaybackModeBox" DisplayMemberPath="Name" HorizontalAlignment="Left" Margin="108,10,0,0" VerticalAlignment="Top" Width="172" Height="26" SelectionChanged="PlaybackModeBox_SelectionChanged"/>
+                        <Label Content="Discord Control:" Margin="11,41,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Label Content="Master Volume:" Margin="11,72,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Slider x:Name="MasterVolumeSlider" Minimum="0" Maximum="1" Value="1" TickFrequency="0.05" TickPlacement="BottomRight" HorizontalAlignment="Left" Margin="108,72,0,0" VerticalAlignment="Top" Width="172" Height="26"/>
+                        <Label Content="Currently Playing Tracks:" Margin="11,103,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="28"/>
+                        <Button x:Name="StopAllButton" Content="Stop All Tracks" HorizontalAlignment="Left" Margin="188,102,0,0" Height="28" VerticalAlignment="Top" Width="92" Click="StopAllButton_Click"/>
+                        <Button x:Name="DiscordSettingsButton" Content="Settings" HorizontalAlignment="Left" Margin="220,41,0,0" Height="26" VerticalAlignment="Top" Width="60" Click="DiscordSettingsButton_Click" />
+                        <Button x:Name="DiscordConnectButton" Content="Connect" HorizontalAlignment="Left" Margin="146,41,0,0" Height="26" VerticalAlignment="Top" Width="60" Click="DiscordConnectButton_Click"/>
                     </Grid>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
-                        <Grid x:Name="ActiveTrackGrid">
-                            <TextBox x:Name="DebugDiscordBox" HorizontalAlignment="Left" Height="23" Margin="5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="250"/>
-
-                        </Grid>
+                        <Grid x:Name="ActiveTrackGrid"/>
                     </ScrollViewer>
                 </Grid>
             </GroupBox>

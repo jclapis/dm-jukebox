@@ -4,8 +4,10 @@
 
 using DMJukebox.Discord;
 using DMJukebox.Interop;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,10 +36,12 @@ namespace DMJukebox
         private readonly DiscordClient Discord;
 
         private Task PlayTask;
-
-
+        
         private PlaybackMode _PlaybackMode;
 
+        private const string ConfigurationFile = "Jukebox.cfg";
+
+        public Configuration Configuration { get; }
 
         internal const int NumberOfPlaybackSamplesPerFrame = 480;
 
@@ -63,6 +67,7 @@ namespace DMJukebox
                 }
             }
         }
+
         public PlaybackMode PlaybackMode { get; set; }
 
         static AudioTrackManager()
@@ -72,6 +77,20 @@ namespace DMJukebox
 
         public AudioTrackManager()
         {
+            if(File.Exists(ConfigurationFile))
+            {
+                using (FileStream stream = new FileStream(ConfigurationFile, FileMode.Open, FileAccess.Read))
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    string serializedConfig = reader.ReadToEnd();
+                    Configuration = JsonConvert.DeserializeObject<Configuration>(serializedConfig);
+                }
+            }
+            else
+            {
+                Configuration = new Configuration();
+            }
+
             ActiveTrackWaiter = new AutoResetEvent(false);
             ActiveTrackLock = new object();
             StopLock = new object();
@@ -84,6 +103,25 @@ namespace DMJukebox
             Discord = new DiscordClient();
         }
 
+        public void SetDiscordSettings(DiscordSettings Settings)
+        {
+            Discord.AuthenticationToken = Settings.BotTokenID;
+            Discord.GuildID = Settings.GuildID;
+            Discord.ChannelID = Settings.ChannelID;
+            Configuration.DiscordSettings = Settings;
+            SaveConfig();
+        }
+
+        private void SaveConfig()
+        {
+            using (FileStream stream = new FileStream(ConfigurationFile, FileMode.Create, FileAccess.Write))
+            using (StreamWriter writer = new StreamWriter(stream))
+            {
+                string serializedConfig = JsonConvert.SerializeObject(Configuration);
+                writer.Write(serializedConfig);
+            }
+        }
+
         public async Task ConnectToDiscord()
         {
             await Discord.Connect();
@@ -91,7 +129,7 @@ namespace DMJukebox
 
         public void SetDiscordToken(string Token)
         {
-            Discord.Token = Token;
+            Discord.AuthenticationToken = Token;
         }
 
         public void Close()

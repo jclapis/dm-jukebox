@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net.WebSockets;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Threading;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Net.Http;
+using System.Net.WebSockets;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DMJukebox.Discord
 {
@@ -22,6 +19,8 @@ namespace DMJukebox.Discord
         private static readonly Uri DiscordApiUri;
 
         private readonly ClientWebSocket Socket;
+
+        private readonly ClientWebSocket VoiceSocket;
 
         private readonly byte[] ReceiveBuffer;
 
@@ -66,7 +65,25 @@ namespace DMJukebox.Discord
 
         private string SessionID;
 
-        public string Token { get; set; }
+        private string BotUserID;
+
+        private string VoiceSessionID;
+
+        public string AuthenticationToken { get; set; }
+
+        public string GuildID { get; set; }
+
+        public string ChannelID { get; set; }
+
+        private ClientStep CurrentStep;
+
+        private readonly AutoResetEvent VoiceStateUpdateWaiter;
+
+        private readonly AutoResetEvent VoiceServerUpdateWaiter;
+
+        private string VoiceSessionToken;
+
+        private string VoiceServerEndpoint;
 
         static DiscordClient()
         {
@@ -95,18 +112,23 @@ namespace DMJukebox.Discord
             ReceiveBuffer = new byte[65536];
             ReceiveBufferSegment = new ArraySegment<byte>(ReceiveBuffer);
             Socket = new ClientWebSocket();
+            CurrentStep = ClientStep.Disconnected;
+            VoiceStateUpdateWaiter = new AutoResetEvent(false);
+            VoiceServerUpdateWaiter = new AutoResetEvent(false);
         }
 
         public async Task Connect()
         {
             try
             {
+                CurrentStep = ClientStep.Disconnected;
                 Uri gatewayRequestUri = new Uri(DiscordApiUri, "gateway");
                 HttpClient client = new HttpClient();
                 string responseBody = await client.GetStringAsync(gatewayRequestUri);
                 GetGatewayResponse response = JsonConvert.DeserializeObject<GetGatewayResponse>(responseBody);
 
                 Uri websocketUri = new Uri($"{response.Url}/?encoding=json&v=5");
+                CurrentStep = ClientStep.WaitingForHello;
                 await Socket.ConnectAsync(websocketUri, CancellationToken.None);
                 ReceiveLoopTask = Task.Run(ReceiveWebsocketMessageLoop);
             }
@@ -114,6 +136,39 @@ namespace DMJukebox.Discord
             {
                 string message = $"Error connecting to discord: {ex.GetDetails()}";
                 System.Diagnostics.Debug.WriteLine(message);
+            }
+        }
+
+        private void SendWebsocketMessage(Payload Message)
+        {
+            string serializedMessage = JsonConvert.SerializeObject(Message);
+            int bytesWritten = Encoding.UTF8.GetBytes(serializedMessage, 0, serializedMessage.Length, SendBuffer, 0);
+            ArraySegment<byte> messageSegment = new ArraySegment<byte>(SendBuffer, 0, bytesWritten);
+            lock (WriteLock)
+            {
+                Socket.SendAsync(messageSegment, WebSocketMessageType.Text, true, CancelSource.Token).Wait();
+            }
+        }
+
+        private void HeartbeatLoop()
+        {
+            while (!IsClosing)
+            {
+                try
+                {
+                    Payload heartbeatMessage = new Payload
+                    {
+                        OpCode = OpCode.Heartbeat,
+                        Data = LatestSequenceNumber
+                    };
+                    SendWebsocketMessage(heartbeatMessage);
+                    Task.Delay(HeartbeatInterval, CancelSource.Token).Wait();
+                    System.Diagnostics.Debug.WriteLine($"Sent heartbeat with seq {LatestSequenceNumber}");
+                }
+                catch (TaskCanceledException)
+                {
+
+                }
             }
         }
 
@@ -156,20 +211,48 @@ namespace DMJukebox.Discord
             switch (Payload.OpCode)
             {
                 case OpCode.Hello:
-                    HelloData helloData = ((JObject)(Payload.Data)).ToObject<HelloData>();
-                    HandleHello(helloData);
+                    if(CurrentStep == ClientStep.WaitingForHello)
+                    {
+                        HelloData helloData = ((JObject)Payload.Data).ToObject<HelloData>();
+                        HandleHello(helloData);
+                    }
                     break;
 
                 case OpCode.Dispatch:
                     switch(Payload.EventName)
                     {
                         case "READY":
-                            ReadyData readyData = ((JObject)(Payload.Data)).ToObject<ReadyData>();
-                            HandleReady(readyData);
+                            if (CurrentStep == ClientStep.WaitingForReady)
+                            {
+                                ReadyEventData readyData = ((JObject)Payload.Data).ToObject<ReadyEventData>();
+                                HandleReady(readyData);
+                            }
                             break;
 
                         case "GUILD_CREATE":
                             System.Diagnostics.Debug.WriteLine("Got a guild create message, ignoring it.");
+                            break;
+
+                        case "VOICE_STATE_UPDATE":
+                            if(CurrentStep == ClientStep.WaitingForVoiceServerInfo)
+                            {
+                                VoiceStateUpdateEventData voiceStateData = ((JObject)Payload.Data).ToObject<VoiceStateUpdateEventData>();
+                                if(voiceStateData.UserID.Equals(BotUserID))
+                                {
+                                    VoiceSessionID = voiceStateData.SessionID;
+                                    VoiceStateUpdateWaiter.Set();
+                                }
+                            }
+                            break;
+
+                        case "VOICE_SERVER_UPDATE":
+                            if(CurrentStep == ClientStep.WaitingForVoiceServerInfo)
+                            {
+                                VoiceServerUpdateEventData voiceServerData = ((JObject)Payload.Data).ToObject<VoiceServerUpdateEventData>();
+                                VoiceSessionToken = voiceServerData.VoiceConnectionToken;
+                                VoiceServerEndpoint = $"wss://{voiceServerData.VoiceServerHostname}";
+                                VoiceServerUpdateWaiter.Set();
+                            }
                             break;
                     }
                     break;
@@ -185,7 +268,7 @@ namespace DMJukebox.Discord
             HeartbeatInterval = Data.HeartbeatInterval;
             IdentifyData data = new IdentifyData
             {
-                Token = Token,
+                Token = AuthenticationToken,
                 IsCompressionSupported = false,
                 LargeThreshold = 50,
                 Properties = new IdentifyDataProperties
@@ -201,46 +284,38 @@ namespace DMJukebox.Discord
                 OpCode = OpCode.Identify,
                 Data = JObject.FromObject(data)
             };
+            CurrentStep = ClientStep.WaitingForReady;
             SendWebsocketMessage(message);
         }
 
-        private void HandleReady(ReadyData Data)
+        private void HandleReady(ReadyEventData Data)
         {
             SessionID = Data.SessionID;
+            BotUserID = Data.UserInfo.ID;
             HeartbeatLoopTask = Task.Run((Action)HeartbeatLoop);
+            ConnectToVoiceChannel();
         }
 
-        private void SendWebsocketMessage(Payload Message)
+        private void ConnectToVoiceChannel()
         {
-            string serializedMessage = JsonConvert.SerializeObject(Message);
-            int bytesWritten = Encoding.UTF8.GetBytes(serializedMessage, 0, serializedMessage.Length, SendBuffer, 0);
-            ArraySegment<byte> messageSegment = new ArraySegment<byte>(SendBuffer, 0, bytesWritten);
-            lock(WriteLock)
+            VoiceStateUpdateData data = new VoiceStateUpdateData
             {
-                Socket.SendAsync(messageSegment, WebSocketMessageType.Text, true, CancelSource.Token).Wait();
-            }
-        }
-
-        private void HeartbeatLoop()
-        {
-            while(!IsClosing)
+                GuildID = GuildID,
+                ChannelID = ChannelID,
+                IsDeafened = true,
+                IsMuted = false
+            };
+            Payload message = new Payload
             {
-                try
-                {
-                    Payload heartbeatMessage = new Payload
-                    {
-                        OpCode = OpCode.Heartbeat,
-                        Data = LatestSequenceNumber
-                    };
-                    SendWebsocketMessage(heartbeatMessage);
-                    Task.Delay(HeartbeatInterval, CancelSource.Token).Wait();
-                    System.Diagnostics.Debug.WriteLine($"Sent heartbeat with seq {LatestSequenceNumber}");
-                }
-                catch(TaskCanceledException)
-                {
+                OpCode = OpCode.VoiceStateUpdate,
+                Data = data
+            };
 
-                }
-            }
+            CurrentStep = ClientStep.WaitingForVoiceServerInfo;
+            VoiceStateUpdateWaiter.WaitOne();
+            VoiceServerUpdateWaiter.WaitOne();
+
+
         }
 
     }

@@ -42,6 +42,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioTrack.cs" />
+    <Compile Include="Configuration\Configuration.cs" />
+    <Compile Include="Configuration\DiscordSettings.cs" />
     <Compile Include="DecodedAudioBuffer.cs" />
     <Compile Include="AVCodec\AVCodec.cs" />
     <Compile Include="AVCodec\AVCodecContext.cs" />
@@ -82,6 +84,7 @@
     <Compile Include="AVUtil\AV_CH.cs" />
     <Compile Include="AVUtil\AV_CH_LAYOUT.cs" />
     <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
+    <Compile Include="Discord\ClientStep.cs" />
     <Compile Include="Discord\DiscordClient.cs" />
     <Compile Include="Discord\DiscordPlayer.cs" />
     <Compile Include="Discord\HelloData.cs" />
@@ -89,10 +92,12 @@
     <Compile Include="Discord\IdentifyDataProperties.cs" />
     <Compile Include="Discord\OpCode.cs" />
     <Compile Include="Discord\Payload.cs" />
-    <Compile Include="Discord\ReadyData.cs" />
+    <Compile Include="Discord\ReadyEventData.cs" />
     <Compile Include="Discord\GetGatewayResponse.cs" />
     <Compile Include="Discord\UserInfo.cs" />
+    <Compile Include="Discord\VoiceServerUpdateEventData.cs" />
     <Compile Include="Discord\VoiceStateUpdateData.cs" />
+    <Compile Include="Discord\VoiceStateUpdateEventData.cs" />
     <Compile Include="Interop\AVCodecInterop.cs" />
     <Compile Include="Interop\AVFormatInterop.cs" />
     <Compile Include="Interop\AVUtilInterop.cs" />

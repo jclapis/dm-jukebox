@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace DMJukebox.Discord
 {
     [JsonObject]
-    internal class ReadyData
+    internal class ReadyEventData
     {
         /// <summary>
         /// The protocol version of the connected Gateway

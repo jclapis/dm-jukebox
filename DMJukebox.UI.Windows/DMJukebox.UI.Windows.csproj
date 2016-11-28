@@ -132,12 +132,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DiscordSettingsWindow.xaml.cs">
+      <DependentUpon>DiscordSettingsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="TrackControl.xaml.cs">
       <DependentUpon>TrackControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="TrackInfoWindow.xaml.cs">
       <DependentUpon>TrackInfoWindow.xaml</DependentUpon>
     </Compile>
+    <Page Include="DiscordSettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
