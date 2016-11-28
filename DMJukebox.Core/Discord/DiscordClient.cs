@@ -20,7 +20,7 @@ namespace DMJukebox.Discord
 
         private readonly ClientWebSocket Socket;
 
-        private readonly ClientWebSocket VoiceSocket;
+        private ClientWebSocket VoiceSocket;
 
         private readonly byte[] ReceiveBuffer;
 
@@ -83,7 +83,7 @@ namespace DMJukebox.Discord
 
         private string VoiceSessionToken;
 
-        private string VoiceServerEndpoint;
+        private Uri VoiceServerEndpoint;
 
         static DiscordClient()
         {
@@ -192,7 +192,7 @@ namespace DMJukebox.Discord
                         string message = Encoding.UTF8.GetString(ReceiveBuffer, 0, result.Count);
                         System.Diagnostics.Debug.WriteLine($"Received a message from the Discord Server: {message}");
                         Payload payload = JsonConvert.DeserializeObject<Payload>(message);
-                        ParsePayloadData(payload);
+                        await ParsePayloadData(payload);
                         break;
 
                     case WebSocketMessageType.Binary:
@@ -201,7 +201,7 @@ namespace DMJukebox.Discord
             }
         }
         
-        private void ParsePayloadData(Payload Payload)
+        private async Task ParsePayloadData(Payload Payload)
         {
             if (Payload.SequenceNumber != null)
             {
@@ -225,7 +225,7 @@ namespace DMJukebox.Discord
                             if (CurrentStep == ClientStep.WaitingForReady)
                             {
                                 ReadyEventData readyData = ((JObject)Payload.Data).ToObject<ReadyEventData>();
-                                HandleReady(readyData);
+                                await HandleReady(readyData);
                             }
                             break;
 
@@ -250,7 +250,7 @@ namespace DMJukebox.Discord
                             {
                                 VoiceServerUpdateEventData voiceServerData = ((JObject)Payload.Data).ToObject<VoiceServerUpdateEventData>();
                                 VoiceSessionToken = voiceServerData.VoiceConnectionToken;
-                                VoiceServerEndpoint = $"wss://{voiceServerData.VoiceServerHostname}";
+                                VoiceServerEndpoint = new Uri($"wss://{voiceServerData.VoiceServerHostname}");
                                 VoiceServerUpdateWaiter.Set();
                             }
                             break;
@@ -288,17 +288,17 @@ namespace DMJukebox.Discord
             SendWebsocketMessage(message);
         }
 
-        private void HandleReady(ReadyEventData Data)
+        private async Task HandleReady(ReadyEventData Data)
         {
             SessionID = Data.SessionID;
             BotUserID = Data.UserInfo.ID;
             HeartbeatLoopTask = Task.Run((Action)HeartbeatLoop);
-            ConnectToVoiceChannel();
+            await ConnectToVoiceChannel();
         }
 
-        private void ConnectToVoiceChannel()
+        private async Task ConnectToVoiceChannel()
         {
-            VoiceStateUpdateData data = new VoiceStateUpdateData
+            VoiceStateUpdateData updateData = new VoiceStateUpdateData
             {
                 GuildID = GuildID,
                 ChannelID = ChannelID,
@@ -308,14 +308,52 @@ namespace DMJukebox.Discord
             Payload message = new Payload
             {
                 OpCode = OpCode.VoiceStateUpdate,
-                Data = data
+                Data = updateData
             };
 
             CurrentStep = ClientStep.WaitingForVoiceServerInfo;
             VoiceStateUpdateWaiter.WaitOne();
             VoiceServerUpdateWaiter.WaitOne();
 
+            VoiceSocket = new ClientWebSocket();
+            await VoiceSocket.ConnectAsync(VoiceServerEndpoint, CancelSource.Token);
+            VoiceIdentifyData identifyData = new VoiceIdentifyData
+            {
+                ServerID = GuildID,
+                UserID = BotUserID,
+                SessionID = VoiceSessionID,
+                Token = VoiceSessionToken
+            };
+            Payload identifyPayload = new Payload
+            {
+                OpCode = 0,
+                Data = identifyData
+            };
+            string serializedPayload = JsonConvert.SerializeObject(identifyPayload);
+            byte[] payloadBytes = Encoding.UTF8.GetBytes(serializedPayload);
+            ArraySegment<byte> payloadSegment = new ArraySegment<byte>(payloadBytes);
+            CurrentStep = ClientStep.WaitingForVoiceReady;
+            await VoiceSocket.SendAsync(payloadSegment, WebSocketMessageType.Text, true, CancelSource.Token);
 
+            byte[] voiceReceiveBuffer = new byte[65536];
+            ArraySegment<byte> voiceReceiveSegment = new ArraySegment<byte>(voiceReceiveBuffer);
+            while(true)
+            {
+                WebSocketReceiveResult result = await VoiceSocket.ReceiveAsync(voiceReceiveSegment, CancelSource.Token);
+                if(!result.EndOfMessage)
+                {
+                    throw new Exception("Voice socket receive buffer overloaded while waiting for a Ready message.");
+                }
+                string responseMessage = Encoding.UTF8.GetString(voiceReceiveBuffer, 0, result.Count);
+                System.Diagnostics.Debug.WriteLine($"Received a message from the Discord Voice Server: {responseMessage}");
+                Payload payload = JsonConvert.DeserializeObject<Payload>(responseMessage);
+                if((int)payload.OpCode != 2)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Message was OP code {payload.OpCode}, expected 2.");
+                    continue;
+                }
+
+            }
         }
 
     }
