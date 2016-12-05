@@ -68,13 +68,13 @@ namespace DMJukebox.Discord.Gateway
 
         private string SessionID;
 
-        private string BotUserID;
+        public string BotUserID { get; private set; }
 
-        private string VoiceSessionToken;
+        public string VoiceSessionToken { get; private set; }
 
-        private Uri VoiceServerEndpoint;
+        public string VoiceServerHostname { get; private set; }
 
-        private string VoiceSessionID;
+        public string VoiceSessionID { get; private set; }
 
         public string AuthenticationToken { get; set; }
 
@@ -240,7 +240,7 @@ namespace DMJukebox.Discord.Gateway
                             {
                                 VoiceServerUpdateEventData voiceServerData = ((JObject)Payload.Data).ToObject<VoiceServerUpdateEventData>();
                                 VoiceSessionToken = voiceServerData.VoiceConnectionToken;
-                                VoiceServerEndpoint = new Uri($"wss://{voiceServerData.VoiceServerHostname}");
+                                VoiceServerHostname = voiceServerData.VoiceServerHostname;
                                 VoiceServerUpdateWaiter.Set();
                             }
                             break;

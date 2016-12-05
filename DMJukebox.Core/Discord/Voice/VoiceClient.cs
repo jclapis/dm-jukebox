@@ -76,11 +76,11 @@ namespace DMJukebox.Discord.Voice
             ReceiveBufferSegment = new ArraySegment<byte>(ReceiveBuffer);
         }
 
-        public async void Connect(string BotUserID, string VoiceSessionID, string VoiceSessionToken, string VoiceServerHostname)
+        public async Task Connect(string BotUserID, string VoiceSessionID, string VoiceSessionToken, string VoiceServerHostname)
         {
             ConnectionStep = VoiceConnectionStep.Disconnected;
             this.VoiceServerHostname = VoiceServerHostname;
-            Uri endpointUri = new Uri(VoiceServerHostname);
+            Uri endpointUri = new Uri($"wss://{VoiceServerHostname}");
             await Socket.ConnectAsync(endpointUri, CancelToken);
             ReceiveLoopTask = ReceiveWebsocketMessageLoop();
             VoiceIdentifyData identifyData = new VoiceIdentifyData
