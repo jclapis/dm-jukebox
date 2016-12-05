@@ -239,11 +239,35 @@ namespace DMJukebox.Discord.Voice
 
         public void Start()
         {
+            SetSpeaking data = new SetSpeaking
+            {
+                IsSpeaking = true,
+                Delay = 0
+            };
+            Payload message = new Payload
+            {
+                SequenceNumber = LatestSequenceNumber,
+                OpCode = OpCode.Speaking,
+                Data = data
+            };
+            SendWebsocketMessage(message);
             VoiceChannel.StartSending();
         }
 
         public void Stop()
         {
+            SetSpeaking data = new SetSpeaking
+            {
+                IsSpeaking = false,
+                Delay = 0
+            };
+            Payload message = new Payload
+            {
+                SequenceNumber = LatestSequenceNumber,
+                OpCode = OpCode.Speaking,
+                Data = data
+            };
+            SendWebsocketMessage(message);
             VoiceChannel.StopSending();
         }
 

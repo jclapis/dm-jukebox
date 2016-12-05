@@ -102,6 +102,7 @@
     <Compile Include="Discord\Voice\SelectProtocol.cs" />
     <Compile Include="Discord\Voice\SelectProtocolData.cs" />
     <Compile Include="Discord\Voice\SessionDescription.cs" />
+    <Compile Include="Discord\Voice\SetSpeaking.cs" />
     <Compile Include="Discord\Voice\VoiceClient.cs" />
     <Compile Include="Discord\Voice\VoiceConnectionStep.cs" />
     <Compile Include="Discord\Voice\VoiceIdentifyData.cs" />
