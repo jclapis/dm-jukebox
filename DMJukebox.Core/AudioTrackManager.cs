@@ -36,8 +36,6 @@ namespace DMJukebox
         private readonly DiscordClient Discord;
 
         private Task PlayTask;
-        
-        private PlaybackMode _PlaybackMode;
 
         private const string ConfigurationFile = "Jukebox.cfg";
 
@@ -214,7 +212,16 @@ namespace DMJukebox
                 if (ActiveTracks.Count == 0)
                 {
                     ActiveTrackWaiter.WaitOne();
-                    LocalPlayer.Start();
+                    switch(PlaybackMode)
+                    {
+                        case PlaybackMode.LocalSpeakers:
+                            LocalPlayer.Start();
+                            break;
+
+                        case PlaybackMode.Discord:
+                            Discord.Start();
+                            break;
+                    }
                 }
 
                 lock (ActiveTrackLock)
@@ -269,7 +276,16 @@ namespace DMJukebox
 
                 // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
                 // so all that's left to do is send the data off to the output.
-                LocalPlayer.AddPlaybackData(PlaybackBuffer, maxSamplesReceived);
+                switch(PlaybackMode)
+                {
+                    case PlaybackMode.LocalSpeakers:
+                        LocalPlayer.AddPlaybackData(PlaybackBuffer, maxSamplesReceived);
+                        break;
+
+                    case PlaybackMode.Discord:
+                        Discord.AddPlaybackData(PlaybackBuffer, maxSamplesReceived);
+                        break;
+                }
 
                 // Remove all of the tracks that ended during this iteration
                 if (endedTracks != null)
@@ -285,7 +301,16 @@ namespace DMJukebox
                         // Clean up if playback is done.
                         if (ActiveTracks.Count == 0)
                         {
-                            LocalPlayer.Stop();
+                            switch(PlaybackMode)
+                            {
+                                case PlaybackMode.LocalSpeakers:
+                                    LocalPlayer.Stop();
+                                    break;
+
+                                case PlaybackMode.Discord:
+                                    Discord.Stop();
+                                    break;
+                            }
                         }
                     }
                 }

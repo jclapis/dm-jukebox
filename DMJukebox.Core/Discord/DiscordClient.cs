@@ -75,5 +75,20 @@ namespace DMJukebox.Discord
             System.Diagnostics.Debug.WriteLine("Connected to Discord!");
         }
 
+        public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
+        {
+            Voice.AddPlaybackData(PlaybackData, NumberOfSamplesToWrite);
+        }
+
+        public void Start()
+        {
+            Voice.Start();
+        }
+
+        public void Stop()
+        {
+            Voice.Stop();
+        }
+
     }
 }

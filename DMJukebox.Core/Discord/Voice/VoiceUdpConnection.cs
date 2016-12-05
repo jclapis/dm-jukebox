@@ -47,7 +47,7 @@ namespace DMJukebox.Discord.Voice
 
         private long TimeOfLastSend;
 
-        public DiscordPlaybackBuffer PlaybackBuffer { get; }
+        private readonly DiscordPlaybackBuffer PlaybackBuffer;
 
         private Task PlaybackTask;
 
@@ -225,6 +225,11 @@ namespace DMJukebox.Discord.Voice
                 }
                 Timestamp = unchecked(Timestamp + AudioTrackManager.NumberOfPlaybackSamplesPerFrame); // TODO: clean this up
             }
+        }
+
+        public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
+        {
+            PlaybackBuffer.AddPlaybackData(PlaybackData, NumberOfSamplesToWrite);
         }
 
     }

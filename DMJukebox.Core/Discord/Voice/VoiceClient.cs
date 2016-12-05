@@ -232,5 +232,20 @@ namespace DMJukebox.Discord.Voice
             SendWebsocketMessage(payload);
         }
 
+        public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
+        {
+            VoiceChannel.AddPlaybackData(PlaybackData, NumberOfSamplesToWrite);
+        }
+
+        public void Start()
+        {
+            VoiceChannel.StartSending();
+        }
+
+        public void Stop()
+        {
+            VoiceChannel.StopSending();
+        }
+
     }
 }
