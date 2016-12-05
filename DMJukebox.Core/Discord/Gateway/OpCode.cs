@@ -1,4 +1,4 @@
-﻿namespace DMJukebox.Discord
+﻿namespace DMJukebox.Discord.Gateway
 {
     internal enum OpCode
     {

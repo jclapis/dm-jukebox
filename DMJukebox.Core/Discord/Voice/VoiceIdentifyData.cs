@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace DMJukebox.Discord
+namespace DMJukebox.Discord.Voice
 {
     /// <summary>
     /// This payload is used to establish a connection to a Discord voice server.

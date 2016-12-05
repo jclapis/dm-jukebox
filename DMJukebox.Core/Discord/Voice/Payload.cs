@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
-namespace DMJukebox.Discord
+namespace DMJukebox.Discord.Voice
 {
     /// <summary>
     /// This structure is used to transfer information back and forth to the
@@ -16,7 +15,7 @@ namespace DMJukebox.Discord
         /// </summary>
         [JsonProperty("t", Required = Required.AllowNull)]
         public string EventName { get; set; }
-        
+
         /// <summary>
         /// This is the sequence number, which is used by the heartbeat
         /// and resume session systems. This only gets used on Dispatch

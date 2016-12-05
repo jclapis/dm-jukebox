@@ -1,14 +1,9 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DMJukebox.Discord
+namespace DMJukebox.Discord.Voice
 {
     [JsonObject]
-    internal class VoiceReadyData
+    internal class ReadyData
     {
         [JsonProperty("ssrc")]
         public uint SynchronizationSource { get; set; }
