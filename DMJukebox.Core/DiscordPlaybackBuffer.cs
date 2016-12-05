@@ -3,6 +3,7 @@
  */
 
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace DMJukebox
@@ -13,13 +14,8 @@ namespace DMJukebox
     /// </summary>
     internal class DiscordPlaybackBuffer
     {
-        /// <summary>
-        /// The number of samples the buffer can hold. The smaller this is, the lower the latency between user interaction
-        /// and playback results (such as setting the volume). It's set to 4800 by default which corresponds to 0.1 second
-        /// of latency - this should be fine for most cases.
-        /// </summary>
-        public const int BufferSize = 4800;
-        
+        public const int BufferSize = AudioTrackManager.NumberOfPlaybackSamplesPerFrame * 20;
+
         private readonly float[] InternalBuffer;
 
         /// <summary>
@@ -64,14 +60,10 @@ namespace DMJukebox
             WriteNotifier = new AutoResetEvent(false);
         }
 
-        /// <summary>
-        /// Adds incoming aggregated playback data from the audio track decoding and mixing system into this buffer, making
-        /// it ready for local playback.
-        /// </summary>
-        /// <param name="PlaybackData">The incoming playback data</param>
-        /// <param name="NumberOfSamplesToWrite">The number of samples to copy from the incoming data</param>
         public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
         {
+            NumberOfSamplesToWrite *= 2; // Since this data is interleaved, we really want to write twice as much.
+
             // This loop will cycle until there's enough free space to write all of the samples into the buffer.
             bool isNotReady;
             lock (Lock)
@@ -91,14 +83,8 @@ namespace DMJukebox
             int headroom = BufferSize - CurrentWritePosition;
             if (headroom >= NumberOfSamplesToWrite)
             {
-                for (int i = 0; i < NumberOfSamplesToWrite; i++)
-                {
-                    // The playback buffer is interleaved to make life easier for Opus support, so we have to
-                    // uninterleave it here.
-                    InternalLeftChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2];
-                    InternalRightChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2 + 1];
-                    CurrentWritePosition++;
-                }
+                Buffer.BlockCopy(PlaybackData, 0, InternalBuffer, CurrentWritePosition * sizeof(float), NumberOfSamplesToWrite * sizeof(float));
+                CurrentWritePosition += NumberOfSamplesToWrite;
                 if (CurrentWritePosition == BufferSize)
                 {
                     CurrentWritePosition = 0;
@@ -108,21 +94,9 @@ namespace DMJukebox
             else
             {
                 int overflow = NumberOfSamplesToWrite - headroom;
-                for (int i = 0; i < headroom; i++)
-                {
-                    InternalLeftChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2];
-                    InternalRightChannelBuffer[CurrentWritePosition] = PlaybackData[i * 2 + 1];
-                    CurrentWritePosition++;
-                }
-                CurrentWritePosition = 0;
-
-                for (int i = 0; i < overflow; i++)
-                {
-                    int playbackIndex = (headroom + i) * 2;
-                    InternalLeftChannelBuffer[CurrentWritePosition] = PlaybackData[playbackIndex];
-                    InternalRightChannelBuffer[CurrentWritePosition] = PlaybackData[playbackIndex + 1];
-                    CurrentWritePosition++;
-                }
+                Buffer.BlockCopy(PlaybackData, 0, InternalBuffer, CurrentWritePosition * sizeof(float), headroom * sizeof(float));
+                Buffer.BlockCopy(PlaybackData, headroom * sizeof(float), InternalBuffer, 0, overflow * sizeof(float));
+                CurrentWritePosition = overflow;
                 if (CurrentWritePosition == BufferSize)
                 {
                     CurrentWritePosition = 0;
@@ -136,16 +110,11 @@ namespace DMJukebox
             ReadNotifier.Set();
         }
 
-        /// <summary>
-        /// Writes data from the playback buffers out to the sound areas, which will then be played on the local system's output.
-        /// </summary>
-        /// <param name="LeftChannelArea">The SoundChannelArea for the left channel</param>
-        /// <param name="RightChannelArea">The SoundChannelArea for the right channel</param>
-        /// <param name="NumberOfSamplesToWrite">The number of samples to write from the internal buffer into the sound areas</param>
-        /// <param name="StepSize">The step size of the areas (how many bytes belong to each sample, per channel)</param>
-        unsafe public void WritePlaybackDataToSoundAreas(float* LeftChannelArea, float* RightChannelArea, int NumberOfSamplesToWrite, int StepSize)
+        unsafe public void WritePlaybackDataToAudioBuffer(IntPtr AudioBuffer, int NumberOfSamplesToWrite)
         {
-            // This loop will cycle until there's enough data available to write all of the samples into the sound areas.
+            NumberOfSamplesToWrite *= 2; // Since this data is interleaved, we really want to write twice as much.
+
+            // This loop will cycle until there's enough data available to write all of the samples into the output buffer.
             bool isNotReady;
             lock (Lock)
             {
@@ -160,19 +129,18 @@ namespace DMJukebox
                 }
             }
 
-            // Because we have to space things out according to the step size, we can't just do a straight copy.
-            for (int i = 0; i < NumberOfSamplesToWrite; i++)
+            int headroom = BufferSize - CurrentReadPosition;
+            if (headroom >= NumberOfSamplesToWrite)
             {
-                int areaIndex = StepSize * i;
-                LeftChannelArea[areaIndex] = InternalLeftChannelBuffer[CurrentReadPosition];
-                RightChannelArea[areaIndex] = InternalRightChannelBuffer[CurrentReadPosition];
-
-                // Reset the current read position to the start of the buffer once we hit the end.
-                CurrentReadPosition++;
-                if (CurrentReadPosition == BufferSize)
-                {
-                    CurrentReadPosition = 0;
-                }
+                Marshal.Copy(InternalBuffer, CurrentReadPosition, AudioBuffer, NumberOfSamplesToWrite);
+                CurrentReadPosition += NumberOfSamplesToWrite;
+            }
+            else
+            {
+                int overflow = NumberOfSamplesToWrite - headroom;
+                Marshal.Copy(InternalBuffer, CurrentReadPosition, AudioBuffer, headroom);
+                Marshal.Copy(InternalBuffer, 0, AudioBuffer + headroom * sizeof(float), overflow);
+                CurrentReadPosition = overflow;
             }
 
             lock (Lock)

@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,9 +25,9 @@ namespace DMJukebox.Discord.Voice
 
         private readonly byte[] NonceBuffer;
 
-        private readonly float[] AudioBuffer;
+        private readonly IntPtr PlaybackAudio;
 
-        private readonly byte[] OpusOutputBuffer;
+        private readonly IntPtr OpusOutputBuffer;
 
         public byte[] SecretKey { get; set; }
 
@@ -46,9 +47,18 @@ namespace DMJukebox.Discord.Voice
 
         private long TimeOfLastSend;
 
+        public DiscordPlaybackBuffer PlaybackBuffer { get; }
+
+        private Task PlaybackTask;
+
+        private readonly object StopLock;
+
+        private bool IsStopping;
+
         unsafe public VoiceUdpConnection(string ServerAddress, int Port, uint SynchronizationSource)
         {
             this.SynchronizationSource = SynchronizationSource;
+            StopLock = new object();
             IPAddress[] addresses = Dns.GetHostAddressesAsync(ServerAddress).Result;
             if (addresses.Length == 0)
             {
@@ -60,8 +70,8 @@ namespace DMJukebox.Discord.Voice
             IPEndPoint localEndpoint = new IPEndPoint(IPAddress.Any, 0);
             Client = new UdpClient(localEndpoint);
 
-            AudioBuffer = new float[AudioTrackManager.NumberOfPlaybackSamplesPerFrame * 2];
-            OpusOutputBuffer = new byte[4096];
+            PlaybackAudio = Marshal.AllocHGlobal(AudioTrackManager.NumberOfPlaybackSamplesPerFrame * 2 * sizeof(float));
+            OpusOutputBuffer = Marshal.AllocHGlobal(4096);
             SendBuffer = new byte[4096 + 12 + EncryptionOverhead];
             NonceBuffer = new byte[24];
             SendBuffer[0] = 0x80;
@@ -83,6 +93,8 @@ namespace DMJukebox.Discord.Voice
             TicksPerMillisecond = Stopwatch.Frequency / 1000.0;
             double millisecondsPerFrame = AudioTrackManager.NumberOfPlaybackSamplesPerFrame / 48.0; // Samples per frame / 48000 Hz * 1000 ms/s
             TicksPerFrame = (long)(TicksPerMillisecond * millisecondsPerFrame);
+
+            PlaybackBuffer = new DiscordPlaybackBuffer();
         }
 
         unsafe public IPEndPoint DiscoverAddress()
@@ -117,11 +129,18 @@ namespace DMJukebox.Discord.Voice
 
         public void StartSending()
         {
+            IsStopping = false;
             Timer.Start();
+            PlaybackTask = Task.Run((Action)PrepareNextPacket);
         }
 
         public void StopSending()
         {
+            lock(StopLock)
+            {
+                IsStopping = true;
+            }
+            PlaybackTask.Wait();
             Timer.Stop();
             Timer.Reset();
             TimeOfLastSend = 0;
@@ -131,71 +150,81 @@ namespace DMJukebox.Discord.Voice
 
         unsafe private void PrepareNextPacket()
         {
-            ushort sequenceNumber = Sequence;
-
-            // Write the sequence number in big-endian format
-            byte* sequencePtr = (byte*)&sequenceNumber;
-            SendBuffer[2] = sequencePtr[1];
-            SendBuffer[3] = sequencePtr[0];
-
-            // Write the timestamp in big-endian format
-            uint timestamp = Timestamp;
-            byte* timestampPtr = (byte*)&timestamp;
-            SendBuffer[4] = timestampPtr[3];
-            SendBuffer[5] = timestampPtr[2];
-            SendBuffer[6] = timestampPtr[1];
-            SendBuffer[7] = timestampPtr[0];
-
-            // Update the nonce
-            Buffer.BlockCopy(SendBuffer, 0, NonceBuffer, 0, 12);
-
-            // Encode the audio with Opus
-            int encodedDataSize;
-            fixed (float* audioPointer = AudioBuffer)
-            fixed (byte* opusBufferPointer = OpusOutputBuffer)
-            fixed (byte* sendBufferPointer = &SendBuffer[12])
-            fixed (byte* noncePointer = NonceBuffer)
-            fixed (byte* secretKeyPointer = SecretKey)
+            while (true)
             {
-                IntPtr input = (IntPtr)audioPointer;
-                IntPtr encodedDataPtr = (IntPtr)opusBufferPointer;
-                encodedDataSize = OpusInterop.opus_encode_float(OpusEncoderPtr, input, AudioTrackManager.NumberOfPlaybackSamplesPerFrame, encodedDataPtr, OpusOutputBuffer.Length);
-                if (encodedDataSize < 0)
+                lock(StopLock)
                 {
-                    OpusErrorCode error = (OpusErrorCode)encodedDataSize;
-                    System.Diagnostics.Debug.WriteLine($"Failed to encode Opus data: {error}");
-                    return;
+                    if(IsStopping)
+                    {
+                        return;
+                    }
                 }
-                int encryptionResult = SodiumInterop.crypto_secretbox_easy((IntPtr)sendBufferPointer, encodedDataPtr, (ulong)encodedDataSize, (IntPtr)noncePointer, (IntPtr)secretKeyPointer);
-                if(encryptionResult != 0)
+
+                // Get playback data from the buffer first
+                PlaybackBuffer.WritePlaybackDataToAudioBuffer(PlaybackAudio, AudioTrackManager.NumberOfPlaybackSamplesPerFrame);
+
+                ushort sequenceNumber = Sequence;
+
+                // Write the sequence number in big-endian format
+                byte* sequencePtr = (byte*)&sequenceNumber;
+                SendBuffer[2] = sequencePtr[1];
+                SendBuffer[3] = sequencePtr[0];
+
+                // Write the timestamp in big-endian format
+                uint timestamp = Timestamp;
+                byte* timestampPtr = (byte*)&timestamp;
+                SendBuffer[4] = timestampPtr[3];
+                SendBuffer[5] = timestampPtr[2];
+                SendBuffer[6] = timestampPtr[1];
+                SendBuffer[7] = timestampPtr[0];
+
+                // Update the nonce
+                Buffer.BlockCopy(SendBuffer, 0, NonceBuffer, 0, 12);
+
+                // Encode the audio with Opus
+                int encodedDataSize;
+                fixed (byte* sendBufferPointer = &SendBuffer[12])
+                fixed (byte* noncePointer = NonceBuffer)
+                fixed (byte* secretKeyPointer = SecretKey)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Encrypting voice data failed with code {encryptionResult}.");
-                    return;
+                    encodedDataSize = OpusInterop.opus_encode_float(OpusEncoderPtr, PlaybackAudio, AudioTrackManager.NumberOfPlaybackSamplesPerFrame, OpusOutputBuffer, 4096);
+                    if (encodedDataSize < 0)
+                    {
+                        OpusErrorCode error = (OpusErrorCode)encodedDataSize;
+                        System.Diagnostics.Debug.WriteLine($"Failed to encode Opus data: {error}");
+                        return;
+                    }
+                    int encryptionResult = SodiumInterop.crypto_secretbox_easy((IntPtr)sendBufferPointer, OpusOutputBuffer, (ulong)encodedDataSize, (IntPtr)noncePointer, (IntPtr)secretKeyPointer);
+                    if (encryptionResult != 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Encrypting voice data failed with code {encryptionResult}.");
+                        return;
+                    }
                 }
-            }
 
-            int sendPayloadSize = encodedDataSize + 12 + EncryptionOverhead;
-            long ticksSinceLastSend = Timer.ElapsedTicks - TimeOfLastSend;
-            long ticksUntilNextSend = TimeOfNextSend - ticksSinceLastSend;
-            if(ticksUntilNextSend > 0)
-            {
-                // Wait until it's time to send the next frame over.
-                Task.Delay(TimeSpan.FromTicks(ticksUntilNextSend)).Wait();
-            }
-            Task sendTask = Client.SendAsync(SendBuffer, sendPayloadSize, DiscordEndpoint);
-            TimeOfLastSend = Timer.ElapsedTicks;
-            TimeOfNextSend += TicksPerFrame;
+                int sendPayloadSize = encodedDataSize + 12 + EncryptionOverhead;
+                long ticksSinceLastSend = Timer.ElapsedTicks - TimeOfLastSend;
+                long ticksUntilNextSend = TimeOfNextSend - ticksSinceLastSend;
+                if (ticksUntilNextSend > 0)
+                {
+                    // Wait until it's time to send the next frame over.
+                    Task.Delay(TimeSpan.FromTicks(ticksUntilNextSend)).Wait();
+                }
+                Task sendTask = Client.SendAsync(SendBuffer, sendPayloadSize, DiscordEndpoint);
+                TimeOfLastSend = Timer.ElapsedTicks;
+                TimeOfNextSend += TicksPerFrame;
 
-            // Update the sequence number and timestamp
-            if (Sequence == ushort.MaxValue)
-            {
-                Sequence = 0;
+                // Update the sequence number and timestamp
+                if (Sequence == ushort.MaxValue)
+                {
+                    Sequence = 0;
+                }
+                else
+                {
+                    Sequence++;
+                }
+                Timestamp = unchecked(Timestamp + AudioTrackManager.NumberOfPlaybackSamplesPerFrame); // TODO: clean this up
             }
-            else
-            {
-                Sequence++;
-            }
-            Timestamp = unchecked(Timestamp + AudioTrackManager.NumberOfPlaybackSamplesPerFrame); // TODO: clean this up
         }
 
     }
