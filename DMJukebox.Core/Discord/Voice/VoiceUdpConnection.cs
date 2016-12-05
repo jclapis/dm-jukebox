@@ -102,7 +102,7 @@ namespace DMJukebox.Discord.Voice
                 throw new Exception($"Creating Opus encoder failed: {encoderCreationResult}");
             }
             Timer = new Stopwatch();
-            TicksPerMillisecond = Stopwatch.Frequency / 1000.0;
+            double ticksPerMillisecond = Stopwatch.Frequency / 1000.0;
             double millisecondsPerFrame = AudioTrackManager.NumberOfPlaybackSamplesPerFrame / 48.0; // Samples per frame / 48000 Hz * 1000 ms/s
             TicksPerFrame = (long)(TicksPerMillisecond * millisecondsPerFrame);
 
