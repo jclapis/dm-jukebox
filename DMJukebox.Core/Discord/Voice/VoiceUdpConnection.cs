@@ -23,26 +23,13 @@ namespace DMJukebox.Discord.Voice
 
         private readonly byte[] SendBuffer;
 
-        private readonly IntPtr NonceBufferPtr;
+        private readonly byte[] NonceBuffer;
 
         private readonly IntPtr PlaybackAudio;
 
-        private readonly IntPtr OpusOutputBufferPtr;
+        private readonly IntPtr OpusOutputBuffer;
 
-        public byte[] SecretKey
-        {
-            set
-            {
-                if(SecretKeyPtr != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(SecretKeyPtr);
-                }
-                SecretKeyPtr = Marshal.AllocHGlobal(value.Length);
-                Marshal.Copy(value, 0, SecretKeyPtr, value.Length);
-            }
-        }
-
-        private IntPtr SecretKeyPtr;
+        public byte[] SecretKey { get; set; }
 
         private static readonly byte[] OpusSilenceFrame = { 0xF8, 0xFF, 0xFE };
 
@@ -82,9 +69,9 @@ namespace DMJukebox.Discord.Voice
             Client = new UdpClient(localEndpoint);
 
             PlaybackAudio = Marshal.AllocHGlobal(AudioTrackManager.NumberOfPlaybackSamplesPerFrame * 2 * sizeof(float));
-            OpusOutputBufferPtr = Marshal.AllocHGlobal(4096);
+            OpusOutputBuffer = Marshal.AllocHGlobal(4096);
             SendBuffer = new byte[4096 + 12 + EncryptionOverhead];
-            NonceBufferPtr = Marshal.AllocHGlobal(24);
+            NonceBuffer = new byte[24];
             SendBuffer[0] = 0x80;
             SendBuffer[1] = 0x78;
 
@@ -189,20 +176,22 @@ namespace DMJukebox.Discord.Voice
                 SendBuffer[7] = timestampPtr[0];
 
                 // Update the nonce
-                Marshal.Copy(SendBuffer, 0, NonceBufferPtr, 12);
+                Buffer.BlockCopy(SendBuffer, 0, NonceBuffer, 0, 12);
 
                 // Encode the audio with Opus
                 int encodedDataSize;
                 fixed (byte* sendBufferPointer = &SendBuffer[12])
+                fixed (byte* noncePointer = NonceBuffer)
+                fixed (byte* secretKeyPointer = SecretKey)
                 {
-                    encodedDataSize = OpusInterop.opus_encode_float(OpusEncoderPtr, PlaybackAudio, AudioTrackManager.NumberOfPlaybackSamplesPerFrame, OpusOutputBufferPtr, 4096);
+                    encodedDataSize = OpusInterop.opus_encode_float(OpusEncoderPtr, PlaybackAudio, AudioTrackManager.NumberOfPlaybackSamplesPerFrame, OpusOutputBuffer, 4096);
                     if (encodedDataSize < 0)
                     {
                         OpusErrorCode error = (OpusErrorCode)encodedDataSize;
                         System.Diagnostics.Debug.WriteLine($"Failed to encode Opus data: {error}");
                         return;
                     }
-                    int encryptionResult = SodiumInterop.crypto_secretbox_easy((IntPtr)sendBufferPointer, OpusOutputBufferPtr, (ulong)encodedDataSize, NonceBufferPtr, SecretKeyPtr);
+                    int encryptionResult = SodiumInterop.crypto_secretbox_easy((IntPtr)sendBufferPointer, OpusOutputBuffer, (ulong)encodedDataSize, (IntPtr)noncePointer, (IntPtr)secretKeyPointer);
                     if (encryptionResult != 0)
                     {
                         System.Diagnostics.Debug.WriteLine($"Encrypting voice data failed with code {encryptionResult}.");
@@ -216,7 +205,7 @@ namespace DMJukebox.Discord.Voice
                 {
                     // Wait until it's time to send the next frame over.
                     Task.Delay(TimeSpan.FromTicks(ticksUntilNextSend)).Wait();
-                    //System.Diagnostics.Debug.WriteLine($"Voice delaying for {ticksUntilNextSend} ticks.");
+                    System.Diagnostics.Debug.WriteLine($"Voice delaying for {ticksUntilNextSend} ticks.");
                 }
                 //System.Diagnostics.Debug.WriteLine($"Sending {sendPayloadSize} bytes of voice data.");
                 Task sendTask = Client.SendAsync(SendBuffer, sendPayloadSize, DiscordEndpoint);
