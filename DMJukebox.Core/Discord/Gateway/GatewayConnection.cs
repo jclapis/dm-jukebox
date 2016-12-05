@@ -117,9 +117,9 @@ namespace DMJukebox.Discord.Gateway
         {
             try
             {
-                ConnectionStep = GatewayConnectionStep.Disconnected;
                 await Socket.ConnectAsync(WebSocketUri, CancellationToken.None);
-                ReceiveLoopTask = ReceiveWebsocketMessageLoop();
+                ConnectionStep = GatewayConnectionStep.WaitingForHello;
+                ReceiveLoopTask = Task.Run(ReceiveWebsocketMessageLoop);
                 ConnectWaiter.WaitOne();
             }
             catch (Exception ex)
@@ -180,9 +180,9 @@ namespace DMJukebox.Discord.Gateway
 
                     case WebSocketMessageType.Text:
                         string message = Encoding.UTF8.GetString(ReceiveBuffer, 0, result.Count);
-                        System.Diagnostics.Debug.WriteLine($"Received a message from the Discord Server: {message}");
+                        System.Diagnostics.Debug.WriteLine($"Received a message from the Discord Gateway: {message}");
                         Payload payload = JsonConvert.DeserializeObject<Payload>(message);
-                        ParsePayloadData(payload);
+                        Task.Run(() => ParsePayloadData(payload));
                         break;
 
                     case WebSocketMessageType.Binary:
@@ -248,7 +248,7 @@ namespace DMJukebox.Discord.Gateway
                     break;
 
                 case OpCode.HeartbeatAck:
-                    System.Diagnostics.Debug.WriteLine("Received a Heartbeat ack.");
+                    System.Diagnostics.Debug.WriteLine("Received a Gateway Heartbeat ack.");
                     break;
             }
         }
@@ -302,11 +302,11 @@ namespace DMJukebox.Discord.Gateway
             };
 
             ConnectionStep = GatewayConnectionStep.WaitingForVoiceServerInfo;
+            SendWebsocketMessage(message);
             VoiceStateUpdateWaiter.WaitOne();
             VoiceServerUpdateWaiter.WaitOne();
             ConnectionStep = GatewayConnectionStep.Connected;
             ConnectWaiter.Set();
-
         }
     }
 }

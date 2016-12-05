@@ -101,6 +101,11 @@ namespace DMJukebox
             IsClosing = false;
             PlayTask = Task.Run((Action)PlaybackLoop);
             Discord = new DiscordClient();
+
+            if (Configuration.DiscordSettings != null)
+            {
+                SetDiscordSettings(Configuration.DiscordSettings);
+            }
         }
 
         public void SetDiscordSettings(DiscordSettings Settings)
@@ -108,6 +113,7 @@ namespace DMJukebox
             Discord.AuthenticationToken = Settings.BotTokenID;
             Discord.GuildID = Settings.GuildID;
             Discord.ChannelID = Settings.ChannelID;
+
             Configuration.DiscordSettings = Settings;
             SaveConfig();
         }

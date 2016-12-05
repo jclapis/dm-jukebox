@@ -16,9 +16,44 @@ namespace DMJukebox.Discord
 
         private readonly CancellationTokenSource CancelSource;
 
-        private AutoResetEvent ConnectWaiter;
+        private const string DiscordApiUri = "https://discordapp.com/api/";
 
-        private const string DiscordApiUri = "https://discordapp.com/api";
+        public string AuthenticationToken
+        {
+            get
+            {
+                return Gateway.AuthenticationToken;
+            }
+            set
+            {
+                Gateway.AuthenticationToken = value;
+            }
+        }
+
+        public string GuildID
+        {
+            get
+            {
+                return Gateway.GuildID;
+            }
+            set
+            {
+                Gateway.GuildID = value;
+                Voice.GuildID = value;
+            }
+        }
+
+        public string ChannelID
+        {
+            get
+            {
+                return Gateway.ChannelID;
+            }
+            set
+            {
+                Gateway.ChannelID = value;
+            }
+        }
 
         public DiscordClient()
         {

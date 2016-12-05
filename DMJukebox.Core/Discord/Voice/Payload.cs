@@ -13,7 +13,7 @@ namespace DMJukebox.Discord.Voice
         /// This is the event name for the payload. It only gets used on 
         /// Dispatch messages (Code 0).
         /// </summary>
-        [JsonProperty("t", Required = Required.AllowNull)]
+        [JsonProperty("t")]
         public string EventName { get; set; }
 
         /// <summary>
@@ -21,7 +21,7 @@ namespace DMJukebox.Discord.Voice
         /// and resume session systems. This only gets used on Dispatch
         /// messages (Code 0).
         /// </summary>
-        [JsonProperty("s", Required = Required.AllowNull)]
+        [JsonProperty("s")]
         public int? SequenceNumber { get; set; }
 
         /// <summary>

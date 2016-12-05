@@ -84,6 +84,7 @@
     <Compile Include="AVUtil\AV_CH.cs" />
     <Compile Include="AVUtil\AV_CH_LAYOUT.cs" />
     <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
+    <Compile Include="DiscordPlaybackBuffer.cs" />
     <Compile Include="Discord\ClientStep.cs" />
     <Compile Include="Discord\DiscordClient.cs" />
     <Compile Include="Discord\DiscordPlayer.cs" />
@@ -116,6 +117,7 @@
     <Compile Include="Interop\MsvcrtInterop.cs" />
     <Compile Include="Interop\NativePathFinder.cs" />
     <Compile Include="Interop\OpusInterop.cs" />
+    <Compile Include="Interop\SodiumInterop.cs" />
     <Compile Include="Interop\SoundIoInterop.cs" />
     <Compile Include="Interop\SWResampleInterop.cs" />
     <Compile Include="LocalSoundPlayer.cs" />

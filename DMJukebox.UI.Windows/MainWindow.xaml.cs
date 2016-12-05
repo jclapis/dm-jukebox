@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -119,14 +120,18 @@ namespace DMJukebox
 
         }
 
-        private async void DiscordConnectButton_Click(object sender, RoutedEventArgs e)
+        private void DiscordConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            Manager.ConnectToDiscord();
+            Task connectTask = Manager.ConnectToDiscord();
         }
 
         private void DiscordSettingsButton_Click(object sender, RoutedEventArgs e)
         {
             Configuration config = Manager.Configuration;
+            if(config.DiscordSettings == null)
+            {
+                config.DiscordSettings = new DiscordSettings();
+            }
             DiscordSettingsWindow settingsWindow = new DiscordSettingsWindow(config.DiscordSettings);
             settingsWindow.Owner = this;
             if (settingsWindow.ShowDialog() == true)

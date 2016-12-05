@@ -48,6 +48,8 @@ namespace DMJukebox.Discord.Voice
 
         private Task ReceiveLoopTask;
 
+        private Task HeartbeatLoopTask;
+
         private int LatestSequenceNumber;
 
         private VoiceConnectionStep ConnectionStep;
@@ -79,10 +81,10 @@ namespace DMJukebox.Discord.Voice
         public async Task Connect(string BotUserID, string VoiceSessionID, string VoiceSessionToken, string VoiceServerHostname)
         {
             ConnectionStep = VoiceConnectionStep.Disconnected;
-            this.VoiceServerHostname = VoiceServerHostname;
-            Uri endpointUri = new Uri($"wss://{VoiceServerHostname}");
+            this.VoiceServerHostname = VoiceServerHostname.Substring(0, VoiceServerHostname.IndexOf(':'));
+            Uri endpointUri = new Uri($"wss://{this.VoiceServerHostname}");
             await Socket.ConnectAsync(endpointUri, CancelToken);
-            ReceiveLoopTask = ReceiveWebsocketMessageLoop();
+            ReceiveLoopTask = Task.Run(ReceiveWebsocketMessageLoop);
             VoiceIdentifyData identifyData = new VoiceIdentifyData
             {
                 ServerID = GuildID,
@@ -98,6 +100,28 @@ namespace DMJukebox.Discord.Voice
             ConnectionStep = VoiceConnectionStep.WaitForReady;
             SendWebsocketMessage(identifyPayload);
             ConnectWaiter.WaitOne();
+        }
+
+        private void HeartbeatLoop()
+        {
+            while (!IsClosing)
+            {
+                try
+                {
+                    Payload heartbeatMessage = new Payload
+                    {
+                        OpCode = OpCode.Heartbeat,
+                        Data = LatestSequenceNumber
+                    };
+                    SendWebsocketMessage(heartbeatMessage);
+                    Task.Delay(HeartbeatInterval, CancelToken).Wait();
+                    System.Diagnostics.Debug.WriteLine($"Sent heartbeat with seq {LatestSequenceNumber}");
+                }
+                catch (TaskCanceledException)
+                {
+
+                }
+            }
         }
 
         private void SendWebsocketMessage(Payload Message)
@@ -124,18 +148,21 @@ namespace DMJukebox.Discord.Voice
                 switch (result.MessageType)
                 {
                     case WebSocketMessageType.Close:
+                        System.Diagnostics.Debug.WriteLine("Voice connection got a close message.");
                         await Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancelToken);
                         return;
 
                     case WebSocketMessageType.Text:
                         string message = Encoding.UTF8.GetString(ReceiveBuffer, 0, result.Count);
-                        System.Diagnostics.Debug.WriteLine($"Received a message from the Discord Server: {message}");
+                        System.Diagnostics.Debug.WriteLine($"Received a message from the Voice Server: {message}");
                         Payload payload = JsonConvert.DeserializeObject<Payload>(message);
-                        ParsePayloadData(payload);
+                        Task parseTask = Task.Run(() => ParsePayloadData(payload));
                         break;
 
                     case WebSocketMessageType.Binary:
-                        throw new Exception("Got a binary websocket message?");
+                        System.Diagnostics.Debug.WriteLine("Voice connection got a binary message?");
+                        break;
+                        //throw new Exception("Got a binary websocket message?");
                 }
             }
         }
@@ -165,6 +192,14 @@ namespace DMJukebox.Discord.Voice
                         ConnectWaiter.Set();
                     }
                     break;
+
+                case OpCode.Heartbeat:
+                    System.Diagnostics.Debug.WriteLine("Received a Voice Heartbeat ack.");
+                    break;
+
+                default:
+                    System.Diagnostics.Debug.WriteLine($"VoiceClient got a message with code {Payload.OpCode}, ignoring it.");
+                    break;
             }
         }
 
@@ -192,6 +227,7 @@ namespace DMJukebox.Discord.Voice
                 Data = message
             };
 
+            HeartbeatLoopTask = Task.Run((Action)HeartbeatLoop);
             ConnectionStep = VoiceConnectionStep.WaitForSessionDescription;
             SendWebsocketMessage(payload);
         }
