@@ -1,19 +1,26 @@
-﻿/* 
- * This file contains a C# implementation of the AVFMT_FLAG enum
- * as defined in avformat.h of the libavformat project, for interop use.
- * It isn't technically an enum in ffmpeg, just a bunch of macros.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVFMT_FLAG enum in FFmpeg.
+    /// These modify how the muxer and demuxer processes media files.
+    /// I don't have much of a use for these settings.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in avformat.h of the libavformat project.
+    /// It isn't technically an enum in FFmpeg, just a bunch of macros.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [Flags]
     internal enum AVFMT_FLAG : int
     {
@@ -34,5 +41,4 @@ namespace DMJukebox.Interop
         AVFMT_FLAG_KEEP_SIDE_DATA = 0x40000,
         AVFMT_FLAG_FAST_SEEK = 0x80000
     }
-
 }

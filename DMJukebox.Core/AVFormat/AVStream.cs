@@ -1,19 +1,27 @@
-﻿/* 
- * This file contains a C# implementation of the AVStream struct
- * as defined in avformat.h of the libavformat project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVStream struct in FFmpeg.
+    /// It represents a single audio or video stream within a media file,
+    /// so it gets used by <see cref="AudioTrack"/> while loading audio
+    /// tracks.
+    /// </summary>
+    /// <remarks>
+    /// This struct is defined in avformat.h of the libavformat project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVStream
     {

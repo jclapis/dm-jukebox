@@ -1,19 +1,26 @@
-﻿/* 
- * This file contains a C# implementation of the AV_DISPOSITION enum
- * as defined in avformat.h of the libavformat project, for interop use.
- * It isn't technically an enum in ffmpeg, just a bunch of macros.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AV_DISPOSITION enum in FFmpeg.
+    /// I think this is just used to describe the purpose, or usage of
+    /// a media stream. It shows up in <see cref="AVStream.disposition"/>. 
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in avformat.h of the libavformat project.
+    /// It isn't technically an enum in FFmpeg, just a bunch of macros.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [Flags]
     internal enum AV_DISPOSITION : int
     {

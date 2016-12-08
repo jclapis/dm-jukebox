@@ -1,13 +1,9 @@
-﻿/* 
- * This file contains a C# implementation of the AVFormatContext struct
- * as defined in avformat.h of the libavformat project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -26,6 +22,18 @@ namespace DMJukebox.Interop
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate int open_cb_Delegate(IntPtr s, ref IntPtr p, string url, int flags, IntPtr int_cb, ref IntPtr options);
 
+    /// <summary>
+    /// This is a C# implementation of the AVFormatContext struct in FFmpeg.
+    /// This is one of the main structs that I use - it represents a media
+    /// file that FFmpeg was able to open and read, so each <see cref="AudioTrack"/>
+    /// has one under the hood.
+    /// </summary>
+    /// <remarks>
+    /// This struct is defined in avformat.h of the libavformat project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVFormatContext
     {
