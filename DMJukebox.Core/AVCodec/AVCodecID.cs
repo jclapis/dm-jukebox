@@ -1,18 +1,24 @@
-﻿/* 
- * This file contains a C# implementation of the AVCodecID enum
- * as defined in avcodec.h of the libavcodec project, for interop use.
+﻿/* ===================================================
  * 
- * Fun fact: this is probably the biggest enum I've ever seen.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
- * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVCodecID enum in FFmpeg.
+    /// It's a collection of the audio and video codecs that FFmpeg
+    /// supports, and is probably one of the the largest enums I've
+    /// ever worked with.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in avcodec.h of the libavcodec project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal enum AVCodecID
     {
         AV_CODEC_ID_NONE,

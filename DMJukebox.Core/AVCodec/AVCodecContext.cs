@@ -1,17 +1,9 @@
-﻿/* 
- * This file contains a partial C# implementation of the AVCodecContext struct
- * as defined in avcodec.h of the libavcodec project, for interop use.
+﻿/* ===================================================
  * 
- * Note that unlike everything else in the interop folders, this one isn't a full
- * binding because this struct is like a thousand lines long and I don't need
- * all of the fields to be populated... thus it's only partially implemented.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
- * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -25,7 +17,21 @@ namespace DMJukebox.Interop
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate AVPixelFormat get_format(IntPtr s, IntPtr fmt);
-    
+
+    /// <summary>
+    /// This is a C# implementation of the AVCodecContext struct in FFmpeg.
+    /// It describes many of the details for a particular audio or video stream
+    /// contained within a media file. I only use it for audio tracks, of course.
+    /// Note that this isn't a complete implementation; the actual struct in
+    /// FFmpeg is about 2000 lines long and I only need part of it for this
+    /// project.
+    /// </summary>
+    /// <remarks>
+    /// This struct is defined in avcodec.h of the libavcodec project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVCodecContext
     {
