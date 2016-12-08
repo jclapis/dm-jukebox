@@ -54,8 +54,6 @@ namespace DMJukebox.Discord.Voice
 
         private readonly long TicksPerFrame;
 
-        private readonly double TicksPerMillisecond;
-
         private long TimeOfNextSend;
 
         private readonly DiscordPlaybackBuffer PlaybackBuffer;
@@ -104,7 +102,7 @@ namespace DMJukebox.Discord.Voice
             Timer = new Stopwatch();
             double ticksPerMillisecond = Stopwatch.Frequency / 1000.0;
             double millisecondsPerFrame = AudioTrackManager.NumberOfPlaybackSamplesPerFrame / 48.0; // Samples per frame / 48000 Hz * 1000 ms/s
-            TicksPerFrame = (long)(TicksPerMillisecond * millisecondsPerFrame);
+            TicksPerFrame = (long)(ticksPerMillisecond * millisecondsPerFrame);
 
             PlaybackBuffer = new DiscordPlaybackBuffer();
         }
@@ -217,7 +215,7 @@ namespace DMJukebox.Discord.Voice
                 {
                     // Wait until it's time to send the next frame over.
                     Task.Delay(TimeSpan.FromTicks(ticksUntilNextSend)).Wait();
-                    //System.Diagnostics.Debug.WriteLine($"Voice delaying for {ticksUntilNextSend} ticks.");
+                    System.Diagnostics.Debug.WriteLine($"Voice delaying for {ticksUntilNextSend} ticks.");
                 }
                 else
                 {
