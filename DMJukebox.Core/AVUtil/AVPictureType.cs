@@ -1,16 +1,23 @@
-﻿/* 
- * This file contains a C# implementation of the AVPictureType enum
- * as defined in avutil.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVPictureType enum in FFmpeg.
+    /// It describes pixel formats and image plane processing. That means
+    /// it's used for video, so I ignore it.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in avutil.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal enum AVPictureType
     {
         AV_PICTURE_TYPE_NONE,

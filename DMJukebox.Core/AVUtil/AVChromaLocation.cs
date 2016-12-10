@@ -1,16 +1,23 @@
-﻿/* 
- * This file contains a C# implementation of the AVChromaLocation enum
- * as defined in pixfmt.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVChromaLocation enum in FFmpeg.
+    /// It describes the location of chroma samples in video stream data 
+    /// relative to luma samples. I don't need to use this.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in pixfmt.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal enum AVChromaLocation
     {
         AVCHROMA_LOC_UNSPECIFIED = 0,

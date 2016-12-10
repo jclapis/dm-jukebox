@@ -1,16 +1,23 @@
-﻿/* 
- * This file contains a C# implementation of the AVClassCategory enum
- * as defined in log.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVClassCategory enum in FFmpeg.
+    /// This describes what category an <see cref="AVClass"/> belongs to.
+    /// I think it's used for visualization purposes? I don't use it here.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in log.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal enum AVClassCategory
     {
         AV_CLASS_CATEGORY_NA = 0,

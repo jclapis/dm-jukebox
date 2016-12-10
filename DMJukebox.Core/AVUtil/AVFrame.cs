@@ -1,22 +1,29 @@
-﻿/* 
- * This file contains a C# implementation of the AVFrame struct
- * as defined in frame.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * This is one of the few unsafe structs, because for performance reasons I need
- * to access it directly from unmanaged memory instead of having to copy it over
- * to managed space every time it gets refreshed.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
- * 
- * Copyright (c) 2016 Joe Clapis.
- */
- 
+ * =================================================== */
+
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVFrame struct in FFmpeg.
+    /// This is one of the main ones I use. It holds a single frame of raw, decoded
+    /// audio ready for post-processing and playback.
+    /// </summary>
+    /// <remarks>
+    /// This is one of the few unsafe structs, because for performance reasons I need
+    /// to access it directly from unmanaged memory instead of having to copy it over
+    /// to managed space every time it gets refreshed.
+    /// 
+    /// This struct is defined in frame.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     unsafe internal struct AVFrame
     {

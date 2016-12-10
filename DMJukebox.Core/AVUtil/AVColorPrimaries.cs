@@ -1,16 +1,24 @@
-﻿/* 
- * This file contains a C# implementation of the AVColorPrimaries enum
- * as defined in pixfmt.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVColorPrimaries enum in FFmpeg.
+    /// The comments in the header for it claim that it represents
+    /// "chromaticity coordinates of the source primaries", so it's something
+    /// to do with video streams which I can safely ignore.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in pixfmt.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal enum AVColorPrimaries
     {
         AVCOL_PRI_RESERVED0 = 0,

@@ -1,16 +1,25 @@
-﻿/* 
- * This file contains a C# implementation of the AVColorSpace enum
- * as defined in pixfmt.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVColorSpace enum in FFmpeg.
+    /// Apparently in video streams encoded in YUV format, there are a whole
+    /// lot of different types / subformats for describing the colorspace.
+    /// This captures all of them (but because it's video-related, I'm
+    /// ignoring it).
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in pixfmt.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal enum AVColorSpace
     {
         AVCOL_SPC_RGB = 0,

@@ -1,13 +1,9 @@
-﻿/* 
- * This file contains a C# implementation of the AVClass struct
- * as defined in log.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -28,7 +24,20 @@ namespace DMJukebox.Interop
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     internal delegate int query_ranges(ref IntPtr ranges, IntPtr obj, string key, int flags);
-    
+
+    /// <summary>
+    /// This is a C# implementation of the AVClass struct in FFmpeg.
+    /// I think FFmpeg uses this internally to keep track of what
+    /// type a struct is, but I don't use it. The only reason it's
+    /// included is because <see cref="AVCodecContext.av_class"/>
+    /// points to one of these in case we ever need it for something.
+    /// </summary>
+    /// <remarks>
+    /// This struct is defined in log.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVClass
     {

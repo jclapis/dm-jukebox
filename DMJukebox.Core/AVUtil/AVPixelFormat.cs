@@ -1,16 +1,24 @@
-﻿/* 
- * This file contains a C# implementation of the AVPixelFormat enum
- * as defined in pixfmt.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVPixelFormat enum in FFmpeg.
+    /// It describes the pixel format of a video stream. It turns out there
+    /// are hundreds of formats out there, and this covers all of them. Since
+    /// it's video-related, I don't use it.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in pixfmt.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal enum AVPixelFormat
     {
         AV_PIX_FMT_NONE = -1,

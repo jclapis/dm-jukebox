@@ -1,19 +1,30 @@
-﻿/* 
- * This file contains a C# implementation of the FF_DECODE_ERROR enum
- * as defined in frame.h of the libavutil project, for interop use.
- * It isn't technically an enum in ffmpeg, just a bunch of macros.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the FF_DECODE_ERROR enum in FFmpeg.
+    /// It describes errors that might have occurred during decoding a media
+    /// stream. It's stored internally by <see cref="AVFrame"/>. I don't use
+    /// it yet but I should add support for it to get more info when something
+    /// goes wrong at some point.
+    /// </summary>
+    /// <remarks>
+    /// To get this, add a wrapper for av_frame_get_decode_error_flags(frame).
+    /// 
+    /// This enum is defined in frame.h of the libavutil project.
+    /// It isn't technically an enum in FFmpeg, just a bunch of macros.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     [Flags]
     internal enum FF_DECODE_ERROR
     {

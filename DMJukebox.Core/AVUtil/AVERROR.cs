@@ -1,16 +1,23 @@
-﻿/* 
- * This file contains a C# enum implementation of the various AVERROR
- * constants defined in error.h of ffmpeg's libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVERROR enum in FFmpeg.
+    /// It defines error codes that some of the FFmpeg functions return.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in error.h of ffmpeg's libavutil project.
+    /// It isn't technically an enum in FFmpeg, just a bunch of macros.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     public enum AVERROR
     {
         AVERROR_SUCCESS = 0,

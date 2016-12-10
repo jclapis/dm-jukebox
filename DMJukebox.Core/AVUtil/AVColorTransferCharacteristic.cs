@@ -1,16 +1,23 @@
-﻿/* 
- * This file contains a C# implementation of the AVColorTransferCharacteristic enum
- * as defined in pixfmt.h of the libavutil project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a C# implementation of the AVColorTransferCharacteristic enum in FFmpeg.
+    /// It has something to do with "color transfer" which is beyond me. It's all video
+    /// stuff so I'm not going to use it.
+    /// </summary>
+    /// <remarks>
+    /// This enum is defined in pixfmt.h of the libavutil project.
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     public enum AVColorTransferCharacteristic
     {
         AVCOL_TRC_RESERVED0 = 0,
