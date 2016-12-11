@@ -1,12 +1,9 @@
-﻿/* 
- * This file contains C# wrappers for some of the functions exported by libavutil.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -19,6 +16,11 @@ namespace DMJukebox.Interop
     /// <summary>
     /// This is a utility class that holds the P/Invoke wrappers for libavutil.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal static class AVUtilInterop
     {
         /// <summary>
@@ -202,42 +204,83 @@ namespace DMJukebox.Interop
 
         #region Public API
         
+        /// <summary>
+        /// Sets the logging callback that will receive internal messages. The callback must be thread-safe.
+        /// </summary>
+        /// <param name="callback">The callback to receive logging messages</param>
         public static void av_log_set_callback([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback callback)
         {
             av_log_set_callback_impl(callback);
         }
         
+        /// <summary>
+        /// Allocates a new, empty <see cref="AVFrame"/>.
+        /// </summary>
+        /// <returns>(<see cref="AVFrame"/>*) The new frame</returns>
         public static IntPtr av_frame_alloc()
         {
             return av_frame_alloc_impl();
         }
         
+        /// <summary>
+        /// Frees an <see cref="AVFrame"/> and its contents. The pointer in
+        /// <paramref name="frame"/> will be set to <see cref="IntPtr.Zero"/>.
+        /// </summary>
+        /// <param name="frame">(<see cref="AVFrame"/>*) The frame to free</param>
         public static void av_frame_free(ref IntPtr frame)
         {
             av_frame_free_impl(ref frame);
         }
-        
+
+        /// <summary>
+        /// Allocates new buffers for audio or video data. Before calling this,
+        /// the <see cref="AVFrame.nb_samples"/>, <see cref="AVFrame.channel_layout"/>,
+        /// and <see cref="AVFrame.format"/> fields need to be set properly.
+        /// </summary>
+        /// <param name="frame">(<see cref="AVFrame"/>*) The frame to hold the new buffers</param>
+        /// <param name="align">Required alignment for the buffer size (I think it's safe to
+        /// just leave this as zero)</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR av_frame_get_buffer(IntPtr frame, int align)
         {
             return av_frame_get_buffer_impl(frame, align);
         }
         
+        /// <summary>
+        /// Returns the number of audio channels contained within the given <see cref="AVFrame"/>.
+        /// </summary>
+        /// <param name="frame">(<see cref="AVFrame"/>*) The frame to get the channel count of</param>
+        /// <returns>The number of channels contained within the frame</returns>
         public static int av_frame_get_channels(IntPtr frame)
         {
             return av_frame_get_channels_impl(frame);
         }
         
+        /// <summary>
+        /// Sets the number of audio channels that an <see cref="AVFrame"/> is expected to have.
+        /// </summary>
+        /// <param name="frame">(<see cref="AVFrame"/>*) The frame to set the channel count of</param>
+        /// <param name="val">The new number of channels the frame should have</param>
         public static void av_frame_set_channels(IntPtr frame, int val)
         {
             av_frame_set_channels_impl(frame, val);
         }
         
+        /// <summary>
+        /// Resets an <see cref="AVFrame"/>, returning its fields to their default values and 
+        /// unreferencing the data buffer(s) inside.
+        /// </summary>
+        /// <param name="frame">(<see cref="AVFrame"/>*) The frame to reset</param>
         public static void av_frame_unref(IntPtr frame)
         {
             av_frame_unref_impl(frame);
         }
         
-        /// <returns></returns>
+        /// <summary>
+        /// Returns the default preferred layout for the given number of channels.
+        /// </summary>
+        /// <param name="nb_channels">The number of channels to get the layout for</param>
+        /// <returns>The default layout for this channel count</returns>
         public static AV_CH_LAYOUT av_get_default_channel_layout(int nb_channels)
         {
             return av_get_default_channel_layout_impl(nb_channels);
