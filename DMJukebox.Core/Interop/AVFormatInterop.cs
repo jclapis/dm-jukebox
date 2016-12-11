@@ -60,7 +60,7 @@ namespace DMJukebox.Interop
         private static extern AVERROR avformat_find_stream_info_windows(IntPtr ic, ref IntPtr options);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern void av_dump_format_windows(IntPtr ic, int index, string url, bool is_output);
+        private static extern void av_dump_format_windows(IntPtr ic, int index, string url, [MarshalAs(UnmanagedType.I4)] bool is_output);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern AVERROR av_read_frame_windows(IntPtr s, IntPtr pkt);
@@ -94,7 +94,7 @@ namespace DMJukebox.Interop
         private static extern AVERROR avformat_find_stream_info_linux(IntPtr ic, ref IntPtr options);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern void av_dump_format_linux(IntPtr ic, int index, string url, bool is_output);
+        private static extern void av_dump_format_linux(IntPtr ic, int index, string url, [MarshalAs(UnmanagedType.I4)] bool is_output);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern AVERROR av_read_frame_linux(IntPtr s, IntPtr pkt);
@@ -128,7 +128,7 @@ namespace DMJukebox.Interop
         private static extern AVERROR avformat_find_stream_info_osx(IntPtr ic, ref IntPtr options);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern void av_dump_format_osx(IntPtr ic, int index, string url, bool is_output);
+        private static extern void av_dump_format_osx(IntPtr ic, int index, string url, [MarshalAs(UnmanagedType.I4)] bool is_output);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern AVERROR av_read_frame_osx(IntPtr s, IntPtr pkt);

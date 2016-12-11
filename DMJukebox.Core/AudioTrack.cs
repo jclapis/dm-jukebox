@@ -40,25 +40,27 @@ namespace DMJukebox
         private AudioTrackManager Manager;
 
         /// <summary>
-        /// This is the AVFormatContext for this file.
+        /// This is the <see cref="AVFormatContext"/> for this file.
         /// </summary>
         private readonly IntPtr FormatContextPtr;
 
         /// <summary>
-        /// This is the AVPacket that holds encoded data read from the file.
+        /// This is the <see cref="AVPacket"/> that holds encoded data read from the file.
+        /// I reuse the same one for reading over and over because of performance reasons.
         /// </summary>
         private IntPtr PacketPtr;
 
         /// <summary>
-        /// This is the AVFrame that gets read from the data in AVPacket. It holds raw decoded data.
-        /// This data doesn't get passed to the playback buffer, this is just an intermediate holder.
+        /// This is the <see cref="AVFrame"/> that gets read from the data in AVPacket. It holds raw
+        /// decoded data. This data doesn't get passed to the playback buffer, this is just an
+        /// intermediate holder.
         /// </summary>
         private IntPtr InputFramePtr;
 
         /// <summary>
-        /// This is the AVFrame that gets converted data from the swresample context after it
-        /// converts the input frame into the Discord-friendly format. It holds the raw data that
-        /// will be sent to the playback buffers.
+        /// This is the <see cref="AVFrame"/> that gets converted data from the swresample context
+        /// after it converts the input frame into the Discord-friendly format. It holds the raw
+        /// data that will be sent to the playback buffers.
         /// </summary>
         private IntPtr OutputFramePtr;
 
@@ -105,7 +107,7 @@ namespace DMJukebox
 
         /// <summary>
         /// This is the name of the track. It defaults to the file name, but you can set it to whatever
-        /// you want.
+        /// you want. It's just used for display purposes so you know what track it is.
         /// </summary>
         public string Name { get; set; }
 
@@ -147,6 +149,7 @@ namespace DMJukebox
         /// <summary>
         /// Creates a new AudioTrack instance.
         /// </summary>
+        /// <param name="Manager">The manager that created this track</param>
         /// <param name="FilePath">The path of the file to open</param>
         /// <param name="Name">The name to give the track</param>
         /// <param name="Volume">The playback volume for the track</param>
@@ -281,7 +284,7 @@ namespace DMJukebox
                 throw new Exception($"Output frame buffer allocation failed: {result}");
             }
 
-            // Set up the output capture buffers for playback. At minimum, they basically have to be able to
+            // Set up the output capture buffer for playback. At minimum, it basically has to be able to
             // store two frames at once (because we might read a partial frame during the playback loop,
             // leaving some of that frame left over but not enough to continue playback so we have to read
             // another frame). Techincally I suppose the minimum buffer size is
@@ -304,7 +307,10 @@ namespace DMJukebox
         /// the file has been reached (and looping is disabled).</returns>
         unsafe internal bool ProcessNextFrame()
         {
-            // Get pointers for the in and out frames.
+            // Get pointers for the in and out frames. I wonder if I should just store these
+            // as pointers instead of IntPtrs and converting them every time? It probably doesn't
+            // add any appreciable overhead, and then the entire struct would have to be flagged
+            // as unsafe so I'll leave these here for now.
             AVFrame* inputFrame = (AVFrame*)InputFramePtr.ToPointer();
             AVFrame* outputFrame = (AVFrame*)OutputFramePtr.ToPointer();
 
@@ -404,13 +410,16 @@ namespace DMJukebox
         }
 
         /// <summary>
-        /// Stops playback of the track and resets it to the beginning.
+        /// Stops playback of the track.
         /// </summary>
         public void Stop()
         {
             Manager.RemoveTrackFromPlaybackList(this);
         }
 
+        /// <summary>
+        /// Resets the track back to the beginning of the file.
+        /// </summary>
         internal void Reset()
         {
             AVERROR result = AVFormatInterop.avformat_seek_file(FormatContextPtr, Stream.index, long.MinValue, Stream.start_time, long.MaxValue, AVSEEK_FLAG.AVSEEK_FLAG_BACKWARD);
