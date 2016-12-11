@@ -1,13 +1,9 @@
-﻿/* 
- * This file contains C# wrappers for some of the functions exported by libswresample.
- * They come from swresample.h.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -17,6 +13,11 @@ namespace DMJukebox.Interop
     /// <summary>
     /// This is a utility class that holds the P/Invoke wrappers for libswresample.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal static class SWResampleInterop
     {
         /// <summary>
@@ -172,31 +173,86 @@ namespace DMJukebox.Interop
 
         #region Public API
         
+        /// <summary>
+        /// Allocates a new resample context.
+        /// </summary>
+        /// <returns>An opaque pointer to the resample context</returns>
         public static IntPtr swr_alloc()
         {
             return swr_alloc_impl();
         }
         
+        /// <summary>
+        /// Frees a resample context.
+        /// </summary>
+        /// <param name="s">The resample context to free. The pointer will be set to
+        /// <see cref="IntPtr.Zero"/>.</param>
         public static void swr_free(ref IntPtr s)
         {
             swr_free_impl(ref s);
         }
-        
+
+        /// <summary>
+        /// Configures the given resample context using the parameters defined within
+        /// the provided input and output <see cref="AVFrame"/> arguments.
+        /// </summary>
+        /// <param name="swr">The resample context to use</param>
+        /// <param name="out">(<see cref="AVFrame"/>*) The output frame, with the output
+        /// conversion settings defined</param>
+        /// <param name="in">(<see cref="AVFrame"/>*) The input frame, with the input
+        /// conversion settings defined</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code 
+        /// on a failure.</returns>
         public static AVERROR swr_config_frame(IntPtr swr, IntPtr @out, IntPtr @in)
         {
             return swr_config_frame_impl(swr, @out, @in);
         }
-        
+
+        /// <summary>
+        /// Converts data from the input <see cref="AVFrame"/> into the target format,
+        /// and stores it in the output frame. This might not perform the whole
+        /// conversion at once; it's possible that you'll have to call this function
+        /// a few more times with <see cref="IntPtr.Zero"/> as the input in order to
+        /// get all of the converted output before calling it again with a new input
+        /// frame.
+        /// </summary>
+        /// <param name="swr">The resample context to use</param>
+        /// <param name="output">(<see cref="AVFrame"/>*) The output frame to receive
+        /// the converted data</param>
+        /// <param name="input">(<see cref="AVFrame"/>*) The input frame with the raw
+        /// data to be converted</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code 
+        /// on a failure.</returns>
         public static AVERROR swr_convert_frame(IntPtr swr, IntPtr output, IntPtr input)
         {
             return swr_convert_frame_impl(swr, output, input);
         }
         
+        /// <summary>
+        /// Returns the expected delay / additional overhead that the converter will
+        /// produce when converting between the target input format and the target
+        /// output format. The delay will be in 1 / <paramref name="base"/> units.
+        /// </summary>
+        /// <param name="s">The resample context to use</param>
+        /// <param name="base">The units to return the delay in. This can be:
+        /// 1 (for seconds), 1000 (for milliseconds), the input sample rate
+        /// (for number of input samples), the output sample rate (for number of
+        /// output samples), or the least common multiple of the input and output
+        /// sample rates.</param>
+        /// <returns>The delay caused by the conversion,
+        /// in 1 / <paramref name="base"/> units.</returns>
         public static long swr_get_delay(IntPtr s, long @base)
         {
             return swr_get_delay_impl(s, @base);
         }
-        
+
+        /// <summary>
+        /// Initializes the resample context once the parameters have been set,
+        /// preparing it for conversion.
+        /// </summary>
+        /// <param name="s">The resample context to use</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code 
+        /// on a failure.</returns>
         public static AVERROR swr_init(IntPtr s)
         {
             return swr_init_impl(s);
