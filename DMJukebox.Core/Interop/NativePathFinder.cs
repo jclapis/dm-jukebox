@@ -1,4 +1,11 @@
-﻿using System;
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
+ 
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -57,5 +64,6 @@ namespace DMJukebox.Interop
 
             PathFound = true;
         }
+
     }
 }
