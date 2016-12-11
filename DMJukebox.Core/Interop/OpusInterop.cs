@@ -1,4 +1,11 @@
-﻿using System;
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
@@ -116,16 +123,37 @@ namespace DMJukebox.Interop
 
         #region Public API
         
+        /// <summary>
+        /// Allocates a new Opus encoder context.
+        /// </summary>
+        /// <param name="Fs">The sample rate of the input (in Hz)</param>
+        /// <param name="channels">The number of channels contained in the input</param>
+        /// <param name="application">The encoding mode Opus should use</param>
+        /// <param name="error">An error code that describes what went wrong, if the function failed</param>
+        /// <returns>A pointer to an opaque Opus encoder context, or <see cref="IntPtr.Zero"/> if it failed.</returns>
         public static IntPtr opus_encoder_create(OpusSampleRate Fs, OpusChannelCount channels, OPUS_APPLICATION application, out OpusErrorCode error)
         {
             return opus_encoder_create_impl(Fs, channels, application, out error);
         }
         
+        /// <summary>
+        /// Frees an Opus encoder context.
+        /// </summary>
+        /// <param name="st">The context to free</param>
         public static void opus_encoder_destroy(IntPtr st)
         {
             opus_encoder_destroy_impl(st);
         }
 
+        /// <summary>
+        /// Encodes a raw input frame into an Opus frame.
+        /// </summary>
+        /// <param name="st">The Opus encoder context to use</param>
+        /// <param name="pcm">(float*) The input data buffer containing the frame to be encoded</param>
+        /// <param name="frame_size">The number of samples per frame in the input data</param>
+        /// <param name="data">(byte*) The output buffer to hold the encoded frame</param>
+        /// <param name="max_data_bytes">The size of the <paramref name="data"/> output buffer</param>
+        /// <returns>The number of bytes written into the <paramref name="data"/> buffer</returns>
         public static int opus_encode_float(IntPtr st, IntPtr pcm, int frame_size, IntPtr data, int max_data_bytes)
         {
             return opus_encode_float_impl(st, pcm, frame_size, data, max_data_bytes);
