@@ -258,8 +258,8 @@ namespace DMJukebox.Interop
         /// </summary>
         /// <param name="avctx">(<see cref="AVCodecContext"/>*) The context to prepare</param>
         /// <param name="codec">(<see cref="AVCodec"/>*) The codec to prepare the context with</param>
-        /// <param name="options">(<see cref="AVDictionary"/>*) A dictionary holding options for the assignment.
-        /// When the function returns, this will be filled with the options that weren't found.</param>
+        /// <param name="options">(<see cref="AVDictionary"/>*) Options for the assignment, or
+        /// <see cref="IntPtr.Zero"/> for the default options.</param>
         /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR avcodec_open2(IntPtr avctx, IntPtr codec, ref IntPtr options)
         {

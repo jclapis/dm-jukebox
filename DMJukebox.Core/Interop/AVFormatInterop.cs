@@ -1,12 +1,9 @@
-﻿/* 
- * This file contains C# wrappers for some of the functions exported by libavformat.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -16,6 +13,11 @@ namespace DMJukebox.Interop
     /// <summary>
     /// This is a utility class that holds the P/Invoke wrappers for libavformat.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal static class AVFormatInterop
     {
         /// <summary>
@@ -58,7 +60,7 @@ namespace DMJukebox.Interop
         private static extern AVERROR avformat_find_stream_info_windows(IntPtr ic, ref IntPtr options);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern void av_dump_format_windows(IntPtr ic, int index, string url, int is_output);
+        private static extern void av_dump_format_windows(IntPtr ic, int index, string url, bool is_output);
 
         [DllImport(WindowsAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern AVERROR av_read_frame_windows(IntPtr s, IntPtr pkt);
@@ -92,7 +94,7 @@ namespace DMJukebox.Interop
         private static extern AVERROR avformat_find_stream_info_linux(IntPtr ic, ref IntPtr options);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern void av_dump_format_linux(IntPtr ic, int index, string url, int is_output);
+        private static extern void av_dump_format_linux(IntPtr ic, int index, string url, bool is_output);
 
         [DllImport(LinuxAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern AVERROR av_read_frame_linux(IntPtr s, IntPtr pkt);
@@ -126,7 +128,7 @@ namespace DMJukebox.Interop
         private static extern AVERROR avformat_find_stream_info_osx(IntPtr ic, ref IntPtr options);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_dump_format), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        private static extern void av_dump_format_osx(IntPtr ic, int index, string url, int is_output);
+        private static extern void av_dump_format_osx(IntPtr ic, int index, string url, bool is_output);
 
         [DllImport(MacAVFormatLibrary, EntryPoint = nameof(av_read_frame), CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern AVERROR av_read_frame_osx(IntPtr s, IntPtr pkt);
@@ -149,7 +151,7 @@ namespace DMJukebox.Interop
         private delegate AVERROR avformat_open_input_delegate(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options);
         private delegate void avformat_close_input_delegate(ref IntPtr s);
         private delegate AVERROR avformat_find_stream_info_delegate(IntPtr ic, ref IntPtr options);
-        private delegate void av_dump_format_delegate(IntPtr ic, int index, string url, int is_output);
+        private delegate void av_dump_format_delegate(IntPtr ic, int index, string url, bool is_output);
         private delegate AVERROR av_read_frame_delegate(IntPtr s, IntPtr pkt);
         private delegate AVERROR av_seek_frame_delegate(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags);
         private delegate AVERROR avformat_seek_file_delegate(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags);
@@ -227,51 +229,126 @@ namespace DMJukebox.Interop
 
         #region Public API
 
+        /// <summary>
+        /// Initializes FFmpeg with all of the muxers, demuxers, codecs, protocols, etc. This is basically the
+        /// setup function that you should call when the program starts up.
+        /// </summary>
         public static void av_register_all()
         {
             av_register_all_impl();
         }
         
+        /// <summary>
+        /// Allocates a new, empty <see cref="AVFormatContext"/>. 
+        /// </summary>
+        /// <returns>(<see cref="AVFormatContext"/>*) The new context</returns>
         public static IntPtr avformat_alloc_context()
         {
             return avformat_alloc_context_impl();
         }
         
+        /// <summary>
+        /// Frees an <see cref="AVFormatContext"/> and all of the streams that were loaded from it.
+        /// </summary>
+        /// <param name="s">(<see cref="AVFormatContext"/>*) The context to free</param>
         public static void avformat_free_context(IntPtr s)
         {
             avformat_free_context_impl(s);
         }
-        
+
+        /// <summary>
+        /// Opens a media file and reads some of the information in its header. This doesn't open all of
+        /// the streams or the codecs for them, but it is the starting point to gain access to that stuff.
+        /// </summary>
+        /// <param name="ps">(<see cref="AVFormatContext"/>*) The context to load the file's info into</param>
+        /// <param name="url">The URL of the file to open</param>
+        /// <param name="fmt">(<see cref="AVInputFormat"/>*) Set this to a specific format if you want to force
+        /// FFmpeg to load the file with that format, or <see cref="IntPtr.Zero"/> to let it figure out the
+        /// format automatically.</param>
+        /// <param name="options">(<see cref="AVDictionary"/>*) A collection of optiosn for the context
+        /// and the demuxer to use while loading, or <see cref="IntPtr.Zero"/> for the default options.</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR avformat_open_input(ref IntPtr ps, string url, IntPtr fmt, ref IntPtr options)
         {
             return avformat_open_input_impl(ref ps, url, fmt, ref options);
         }
         
+        /// <summary>
+        /// Closes and frees an <see cref="AVFormatContext"/> along with all of its streams and contents.
+        /// This also sets <paramref name="s"/> to <see cref="IntPtr.Zero"/>.
+        /// </summary>
+        /// <param name="s">(<see cref="AVFormatContext"/>*) The format context to close</param>
         public static void avformat_close_input(ref IntPtr s)
         {
             avformat_close_input_impl(ref s);
         }
-        
+
+        /// <summary>
+        /// Reads the streams contained within an <see cref="AVFormatContext"/> to get information
+        /// about them including quantity, duration, codec, etc.
+        /// </summary>
+        /// <param name="ic">(<see cref="AVFormatContext"/>*) The format context for the media file
+        /// to read</param>
+        /// <param name="options">(<see cref="AVDictionary"/>*) Options for reading the streams,
+        /// or <see cref="IntPtr.Zero"/> for automatic / default reading.</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR avformat_find_stream_info(IntPtr ic, ref IntPtr options)
         {
             return avformat_find_stream_info_impl(ic, ref options);
         }
         
-        public static void av_dump_format(IntPtr ic, int index, string url, int is_output)
+        /// <summary>
+        /// This is a debug function that prints detailed information about a media file
+        /// to FFmpeg's logging output. It includes duration, number of streams, codec info,
+        /// bitrate, file container, and pretty much everything else. It's very verbose.
+        /// </summary>
+        /// <param name="ic">(<see cref="AVFormatContext"/>*) The format context for the media file</param>
+        /// <param name="index">The index of the stream to get information for</param>
+        /// <param name="url">The URL of the file (this is just printed as part of the output, it isn't
+        /// really used for any functionality)</param>
+        /// <param name="is_output">True if this is an output context, false if it's an input context.</param>
+        public static void av_dump_format(IntPtr ic, int index, string url, bool is_output)
         {
             av_dump_format_impl(ic, index, url, is_output);
         }
-        
+
+        /// <summary>
+        /// Reads the next available frame from a stream into an <see cref="AVPacket"/>. This data will be
+        /// encoded with whatever codec the stream uses. To decode it, use
+        /// <see cref="AVCodecInterop.avcodec_send_packet(IntPtr, IntPtr)"/> and 
+        /// <see cref="AVCodecInterop.avcodec_receive_frame(IntPtr, IntPtr)"/>.
+        /// </summary>
+        /// <param name="s">(<see cref="AVFormatContext"/>*) The format context for the media file to read</param>
+        /// <param name="pkt">(<see cref="AVPacket"/>*) The packet to read the stream frame into</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR av_read_frame(IntPtr s, IntPtr pkt)
         {
             return av_read_frame_impl(s, pkt);
         }
-        
+
+        /// <summary>
+        /// Seeks a stream to a specific keyframe at the given timestamp.
+        /// </summary>
+        /// <param name="s">(<see cref="AVFormatContext"/>*) The context for the media file</param>
+        /// <param name="stream_index">The index of the stream to see</param>
+        /// <param name="timestamp">The timestamp to seek to, in <see cref="AVStream.time_base"/> units.</param>
+        /// <param name="flags">Flags that set seeking behavior</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR av_seek_frame(IntPtr s, int stream_index, long timestamp, AVSEEK_FLAG flags)
         {
             return av_seek_frame_impl(s, stream_index, timestamp, flags);
         }
-        
+
+        /// <summary>
+        /// Seeks an entire file (all opened streams) to the keyframe at the given timestamp.
+        /// </summary>
+        /// <param name="s">(<see cref="AVFormatContext"/>*) The context for the media file</param>
+        /// <param name="stream_index">The index of the stream to use as the time base reference</param>
+        /// <param name="min_ts">The smallest/minimum allowable timestamp</param>
+        /// <param name="ts">The target timestamp</param>
+        /// <param name="max_ts">The largest/maximum allowable timestamp</param>
+        /// <param name="flags">Flags that set seeking behavior</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR avformat_seek_file(IntPtr s, int stream_index, long min_ts, long ts, long max_ts, AVSEEK_FLAG flags)
         {
             return avformat_seek_file_impl(s, stream_index, min_ts, ts, max_ts, flags);
