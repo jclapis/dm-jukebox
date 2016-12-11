@@ -1,12 +1,9 @@
-﻿/* 
- * This file contains C# wrappers for some of the functions exported by libavcodec.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * https://www.ffmpeg.org/doxygen/trunk/index.html or the source code at
- * https://github.com/FFmpeg/FFmpeg.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -16,6 +13,11 @@ namespace DMJukebox.Interop
     /// <summary>
     /// This is a utility class that holds the P/Invoke wrappers for libavcodec.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://www.ffmpeg.org/doxygen/trunk/index.html
+    /// or the source code at https://github.com/FFmpeg/FFmpeg.
+    /// </remarks>
     internal static class AVCodecInterop
     {
         /// <summary>
@@ -241,56 +243,123 @@ namespace DMJukebox.Interop
 
         #region Public API
         
+        /// <summary>
+        /// Returns information about the decoder for the given codec type.
+        /// </summary>
+        /// <param name="id">The codec to get the decoder for</param>
+        /// <returns>(<see cref="AVCodec"/>*) The decoder for the codec type</returns>
         public static IntPtr avcodec_find_decoder(AVCodecID id)
         {
             return avcodec_find_decoder_impl(id);
         }
         
+        /// <summary>
+        /// Sets up an <see cref="AVCodecContext"/> with support for the given <see cref="AVCodec"/>.
+        /// </summary>
+        /// <param name="avctx">(<see cref="AVCodecContext"/>*) The context to prepare</param>
+        /// <param name="codec">(<see cref="AVCodec"/>*) The codec to prepare the context with</param>
+        /// <param name="options">(<see cref="AVDictionary"/>*) A dictionary holding options for the assignment.
+        /// When the function returns, this will be filled with the options that weren't found.</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR avcodec_open2(IntPtr avctx, IntPtr codec, ref IntPtr options)
         {
             return avcodec_open2_impl(avctx, codec, ref options);
         }
-        
+
+        /// <summary>
+        /// Sends a packet full of encoded audio data from an audio stream to the decoder for decoding.
+        /// </summary>
+        /// <param name="avctx">(<see cref="AVCodecContext"/>*) The decoder to decode the packet with</param>
+        /// <param name="avpkt">(<see cref="AVPacket"/>*) The input packet with the encoded audio data</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR avcodec_send_packet(IntPtr avctx, IntPtr avpkt)
         {
             return avcodec_send_packet_impl(avctx, avpkt);
         }
-        
+
+        /// <summary>
+        /// Retrieves raw, decoded audio from the decoder. Call this after <see cref="avcodec_send_packet(IntPtr, IntPtr)"/>
+        /// to get the decoded input data.
+        /// </summary>
+        /// <param name="avctx">(<see cref="AVCodecContext"/>*) The decoder holding the decoded data</param>
+        /// <param name="frame">(<see cref="AVFrame"/>*) The output frame to hold the decoded data</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR avcodec_receive_frame(IntPtr avctx, IntPtr frame)
         {
             return avcodec_receive_frame_impl(avctx, frame);
         }
         
+        /// <summary>
+        /// Allocates an <see cref="AVPacket"/> and sets all of its fields to the default values.
+        /// This doesn't allocate any data buffers though, those have to be done with
+        /// <see cref="av_new_packet(IntPtr, int)"/>.
+        /// </summary>
+        /// <returns>(<see cref="AVPacket"/>*) The new packet</returns>
         public static IntPtr av_packet_alloc()
         {
             return av_packet_alloc_impl();
         }
         
+        /// <summary>
+        /// Deletes and frees an <see cref="AVPacket"/>. The pointer to it in <paramref name="pkt"/>
+        /// will be set to <see cref="IntPtr.Zero"/>.
+        /// </summary>
+        /// <param name="pkt">(<see cref="AVPacket"/>*) The packet to free</param>
         public static void av_packet_free(ref IntPtr pkt)
         {
             av_packet_free_impl(ref pkt);
         }
-        
+
+        /// <summary>
+        /// Reinitializes an <see cref="AVPacket"/>, setting its fields to the default values
+        /// and allocating its data buffer with the given size.
+        /// </summary>
+        /// <param name="pkt">(<see cref="AVPacket"/>*) The packet to reset</param>
+        /// <param name="size">The size of the buffer to allocate, in bytes</param>
+        /// <returns><see cref="AVERROR.AVERROR_SUCCESS"/> on a success, or an error code on a failure.</returns>
         public static AVERROR av_new_packet(IntPtr pkt, int size)
         {
             return av_new_packet_func(pkt, size);
         }
         
+        /// <summary>
+        /// Reinitializes an <see cref="AVPacket"/>, setting its fields to the default values
+        /// but leaving the data buffer alone.
+        /// </summary>
+        /// <param name="pkt">(<see cref="AVPacket"/>*) The packet to reset</param>
         public static void av_init_packet(IntPtr pkt)
         {
             av_init_packet_impl(pkt);
         }
         
+        /// <summary>
+        /// Wipes an <see cref="AVPacket"/>, resetting the fields to their default values
+        /// and decrementing the reference counter on the data buffer.
+        /// </summary>
+        /// <param name="pkt">(<see cref="AVPacket"/>*) The packet to wipe</param>
         public static void av_packet_unref(IntPtr pkt)
         {
             av_packet_unref_impl(pkt);
         }
         
+        /// <summary>
+        /// Wipes and resets the internal state of an <see cref="AVCodecContext"/> and clears
+        /// out its internal buffers. This should be used after seeking around in a stream,
+        /// such as restarting it from the beginning.
+        /// </summary>
+        /// <param name="avctx">(<see cref="AVCodecContext"/>*) The context to reset</param>
         public static void avcodec_flush_buffers(IntPtr avctx)
         {
             avcodec_flush_buffers_impl(avctx);
         }
         
+        /// <summary>
+        /// Returns the precise number of bits that an audio sample will contain, based on the
+        /// codec it was encoded with. If the number is unknown, this will return zero.
+        /// </summary>
+        /// <param name="codec_id">The codec that the sample was encoded with</param>
+        /// <returns>The number of bits that a frame of audio encoded with the given codec
+        /// contains, or zero if the amount isn't known.</returns>
         public static int av_get_exact_bits_per_sample(AVCodecID codec_id)
         {
             return av_get_exact_bits_per_sample_impl(codec_id);

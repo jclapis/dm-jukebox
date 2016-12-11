@@ -1,6 +1,9 @@
-﻿/*
- * Copyright (c) 2016 Joe Clapis.
- */
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
 
 using DMJukebox.Interop;
 using System;
