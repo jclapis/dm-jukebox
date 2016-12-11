@@ -37,25 +37,59 @@ namespace DMJukebox.Interop
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVFormatContext
     {
+        /// <summary>
+        /// (<see cref="AVClass"/>*) A class that holds logging and
+        /// other options.
+        /// </summary>
         public IntPtr av_class;
         
+        /// <summary>
+        /// (<see cref="AVInputFormat"/>*) The input container format
+        /// </summary>
         public IntPtr iformat;
         
+        /// <summary>
+        /// (<see cref="AVOutputFormat"/>*) The output container format
+        /// </summary>
         public IntPtr oformat;
         
+        /// <summary>
+        /// Private data used internally.
+        /// </summary>
         public IntPtr priv_data;
         
+        /// <summary>
+        /// (<see cref="AVIOContext"/>*) The context for I/O operations
+        /// </summary>
         public IntPtr pb;
 
+        /// <summary>
+        /// A set of AVFMTCTX flags describing some of the common stream
+        /// properties. I haven't implemented the enum because this field
+        /// probably won't be used.
+        /// </summary>
         public int ctx_flags;
         
+        /// <summary>
+        /// The number of streams contained within the file
+        /// </summary>
         public uint nb_streams;
         
+        /// <summary>
+        /// (<see cref="AVStream"/>**) An array of stream pointers for the
+        /// streams contained in the file
+        /// </summary>
         public IntPtr streams;
         
+        /// <summary>
+        /// The name for this file
+        /// </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
         public string filename;
         
+        // This is basically all I need so I'm not going to document the rest
+        // of the struct until there's some reason to do so or I have time.
+
         public long start_time;
         
         public long duration;

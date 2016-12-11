@@ -46,6 +46,9 @@ namespace DMJukebox.Interop
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
         public string codec_name;
         
+        /// <summary>
+        /// The ID of the codec that was used to encode this stream's data
+        /// </summary>
         public AVCodecID codec_id;
         
         public uint codec_tag;
@@ -58,6 +61,9 @@ namespace DMJukebox.Interop
         
         public IntPtr opaque;
         
+        /// <summary>
+        /// The bit rate (in bits per second) of data in this stream
+        /// </summary>
         public long bit_rate;
         
         public int bit_rate_tolerance;
@@ -226,20 +232,41 @@ namespace DMJukebox.Interop
         
         public AVFieldOrder field_order;
         
+        /// <summary>
+        /// The sample rate, in Hz, of audio data encoded in this stream
+        /// </summary>
         public int sample_rate;
         
+        /// <summary>
+        /// The number of audio channels contained within this stream
+        /// </summary>
         public int channels;
         
+        /// <summary>
+        /// The binary format used to represent audio data in the stream
+        /// </summary>
         public AVSampleFormat sample_fmt;
         
+        /// <summary>
+        /// The number of samples contained within a single audio frame
+        /// from this stream
+        /// </summary>
         public int frame_size;
         
         public int frame_number;
         
+        /// <summary>
+        /// The alignment size of packets returned by the parent <see cref="AVFormatContext"/>
+        /// when reading data from this stream (I think this is the maximum size of a packet).
+        /// I only need this when calculating the size of raw PCM / WAV packets.
+        /// </summary>
         public int block_align;
         
         public int cutoff;
         
+        /// <summary>
+        /// The stream's audio speaker channel layout
+        /// </summary>
         public AV_CH_LAYOUT channel_layout;
 
         // Left off at avcodec.h line 2468.

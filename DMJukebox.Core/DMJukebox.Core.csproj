@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioTrack.cs" />
+    <Compile Include="AVUtil\AV_FRAME_FLAGS.cs" />
     <Compile Include="Configuration\Configuration.cs" />
     <Compile Include="Configuration\DiscordSettings.cs" />
     <Compile Include="DecodedAudioBuffer.cs" />

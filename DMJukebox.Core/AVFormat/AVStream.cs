@@ -25,22 +25,45 @@ namespace DMJukebox.Interop
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVStream
     {
+        /// <summary>
+        /// The index of this stream in the parent <see cref="AVFormatContext"/>
+        /// </summary>
         public int index;
         
+        /// <summary>
+        /// Unique ID for the stream
+        /// </summary>
         public int id;
         
+        /// <summary>
+        /// (<see cref="AVCodecContext"/>*) The context for the stream's codec
+        /// </summary>
         public IntPtr codec;
 
         public IntPtr priv_data;
         
         public AVFrac pts;
         
+        /// <summary>
+        /// The unit of time (in seconds) that describes the base unit to use
+        /// in each of the timestamps from this stream, as well as packets and
+        /// frames from it.
+        /// </summary>
         public AVRational time_base;
         
+        /// <summary>
+        /// The timestamp of the stream's first frame
+        /// </summary>
         public long start_time;
         
+        /// <summary>
+        /// The length of the stream, in <see cref="time_base"/> units.
+        /// </summary>
         public long duration;
         
+        /// <summary>
+        /// The number of frames contained within the stream, or 0 if not specified.
+        /// </summary>
         public long nb_frames;
 
         public AV_DISPOSITION disposition;

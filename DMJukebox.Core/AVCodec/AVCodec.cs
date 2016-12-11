@@ -25,8 +25,14 @@ namespace DMJukebox.Interop
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVCodec
     {
+        /// <summary>
+        /// The unique name for this codec
+        /// </summary>
         public string name;
 
+        /// <summary>
+        /// A human-readable version of this codec's name
+        /// </summary>
         public string long_name;
 
         public AVMediaType type;

@@ -26,16 +26,38 @@ namespace DMJukebox.Interop
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct AVPacket
     {
+        /// <summary>
+        /// (<see cref="AVBufferRef"/>*) The AV buffer that holds the data
+        /// for this packet (not used)
+        /// </summary>
         public IntPtr buf;
 
+        /// <summary>
+        /// The timestamp where this packet is located in the parent stream,
+        /// in <see cref="AVStream.time_base"/> units.
+        /// </summary>
         public long pts;
         
+        /// <summary>
+        /// The decompression timestamp, which defines when this packet should
+        /// be decompressed, in <see cref="AVStream.time_base"/> units.
+        /// </summary>
         public long dts;
 
+        /// <summary>
+        /// (byte*) The data buffer for this packet
+        /// </summary>
         public IntPtr data;
 
+        /// <summary>
+        /// The size of the data buffer
+        /// </summary>
         public int size;
 
+        /// <summary>
+        /// The index of the parent <see cref="AVStream"/> within its
+        /// <see cref="AVFormatContext"/>'s list of streams
+        /// </summary>
         public int stream_index;
         
         public AV_PKT_FLAG flags;
@@ -44,8 +66,16 @@ namespace DMJukebox.Interop
 
         public int side_data_elems;
         
+        /// <summary>
+        /// The duration of the packet, in <see cref="AVStream.time_base"/>
+        /// units.
+        /// </summary>
         public long duration;
         
+        /// <summary>
+        /// The byte position of the packet within the parent
+        /// <see cref="AVStream"/>
+        /// </summary>
         public long pos;
         
         public long convergence_duration;

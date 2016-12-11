@@ -5,33 +5,32 @@
  * 
  * =================================================== */
 
-using System.Runtime.InteropServices;
+using System;
 
 namespace DMJukebox.Interop
 {
     /// <summary>
-    /// This is a C# implementation of the AVRational struct in FFmpeg.
-    /// It represents a rational (fractional) number as a discrete
-    /// numerator and denominator pair to avoid losses in converting to
-    /// floats or doubles.
+    /// This is a C# implementation of the AV_FRAME_FLAGS enum in FFmpeg.
+    /// It describes some extra details about processing an <see cref="AVFrame"/>.
     /// </summary>
     /// <remarks>
-    /// This struct is defined in rational.h of the libavutil project.
+    /// This enum is defined in frame.h of the libavutil project.
+    /// It isn't technically an enum in FFmpeg, just a bunch of macros.
     /// For more information, please see the documentation at
     /// https://www.ffmpeg.org/doxygen/trunk/index.html
     /// or the source code at https://github.com/FFmpeg/FFmpeg.
     /// </remarks>
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal struct AVRational
+    [Flags]
+    internal enum AV_FRAME_FLAGS
     {
         /// <summary>
-        /// The numerator
+        /// The frame might be corrupted or encountered errors during decoding
         /// </summary>
-        public int num;
+        AV_FRAME_FLAG_CORRUPT = 1,
 
         /// <summary>
-        /// The denominator
+        /// This frame should be decoded but not displayed.
         /// </summary>
-        public int den;
+        AV_FRAME_FLAG_DISCARD = 4
     }
 }
