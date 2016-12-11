@@ -1,13 +1,9 @@
-﻿/* 
- * This file contains a C# implementation of the SoundIo struct
- * as defined in soundio.h of the libsoundio project, for interop use.
+﻿/* ===================================================
  * 
- * For more information, please see the documentation at
- * http://libsound.io/doc-1.1.0/soundio_8h.html or the source code at
- * https://github.com/andrewrk/libsoundio.
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
  * 
- * Copyright (c) 2016 Joe Clapis.
- */
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -34,6 +30,16 @@ namespace DMJukebox.Interop
     internal delegate void jack_error_callback(
         [MarshalAs(UnmanagedType.LPStr)] string msg);
 
+    /// <summary>
+    /// This is a C# implementation of the SoundIo struct in libsoundio.
+    /// It holds the state/context for working with the library.
+    /// </summary>
+    /// <remarks>
+    /// This struct is defined in soundio.h of libsoundio.
+    /// For more information, please see the documentation at
+    /// http://libsound.io/doc-1.1.0/soundio_8h.html
+    /// or the source code at https://github.com/andrewrk/libsoundio.
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct SoundIo
     {
