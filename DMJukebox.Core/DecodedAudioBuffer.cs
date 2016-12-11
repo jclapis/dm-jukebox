@@ -1,6 +1,9 @@
-﻿/*
- * Copyright (c) 2016 Joe Clapis.
- */
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
 
 using System;
 using System.Runtime.CompilerServices;
@@ -9,8 +12,8 @@ using System.Runtime.InteropServices;
 namespace DMJukebox
 {
     /// <summary>
-    /// DecodedAudioBuffer is a circular buffer for storing decoded data from an audio track and merging it into the
-    /// aggregated playback buffer.
+    /// DecodedAudioBuffer is a circular buffer for storing decoded data from an <see cref="AudioTrack"/>
+    /// and merging it into the aggregated playback buffer.
     /// </summary>
     internal class DecodedAudioBuffer
     {
@@ -58,8 +61,8 @@ namespace DMJukebox
         /// <summary>
         /// Writes incoming data from the decoder to the buffer.
         /// </summary>
-        /// <param name="IncomingLeftChannelData">Pointer to the new decoded left channel data from the output frame</param>
-        /// <param name="IncomingRightChannelData">Pointer to the new decoded right channel data from the output frame</param>
+        /// <param name="IncomingLeftChannelData">(byte*) The new decoded left channel data from the output frame</param>
+        /// <param name="IncomingRightChannelData">(byte*) The new decoded right channel data from the output frame</param>
         /// <param name="NumberOfSamplesToWrite">The number of samples to write into this buffer from the unmanaged buffers</param>
         public void AddIncomingData(IntPtr IncomingLeftChannelData, IntPtr IncomingRightChannelData, int NumberOfSamplesToWrite)
         {
@@ -67,7 +70,8 @@ namespace DMJukebox
             // that the frame_size provided by ffmpeg was a lie).
             if (AvailableData + NumberOfSamplesToWrite > BufferSize)
             {
-                throw new Exception("Circular buffer overflow, this should never happen but it did. Disaster.");
+                throw new Exception($"Circular buffer overflow while adding incoming data in {nameof(DecodedAudioBuffer)}. " + 
+                    "This should never happen but it did. Disaster.");
             }
 
             // If we don't need to do a wrap-around and can just write straight into the buffer from the current position,
@@ -98,7 +102,7 @@ namespace DMJukebox
         /// Writes stored, decoded audio data into the aggregated buffer for playback. This will combine the data from the stream
         /// that owns this buffer into the playback buffer and takes care of stream-specific volume control.
         /// </summary>
-        /// <param name="PlaybackBuffer">The playback buffer</param>
+        /// <param name="PlaybackBuffer">The playback buffer, in interleaved (packed) format</param>
         /// <param name="NumberOfSamplesToWrite">The number of decoded samples to write into the playback buffers</param>
         /// <param name="Volume">The volume control to apply to this data (0.0 = muted, 1.0 = full volume)</param>
         /// <param name="OverwriteExistingData">True to replace whatever's in the playback buffer with the decoded data
@@ -117,11 +121,12 @@ namespace DMJukebox
             // If it doesn't, it should continuously read from the stream and store the decoded data here until it can cover the playback buffers.
             if (NumberOfSamplesToWrite > AvailableData)
             {
-                throw new Exception("Circular buffer underflow, this should never happen but it did. Disaster.");
+                throw new Exception($"Circular buffer underflow while writing data from {nameof(DecodedAudioBuffer)} into the " +
+                    "playback buffer. This should never happen but it did. Disaster.");
             }
 
             // This isn't a mass copy like AddIncomingData is, we have to iterate through the buffers piece-by-piece in order to
-            // apply volume control and clamp it.
+            // apply volume control and clamp the aggregated value.
             for (int i = 0; i < NumberOfSamplesToWrite; i++)
             {
                 int leftPlaybackIndex = i * 2;
@@ -131,7 +136,7 @@ namespace DMJukebox
                 if (!OverwriteExistingData)
                 {
                     // If this is the first stream, then whatever is in the buffer is considered old and gets overwritten.
-                    // If it isn't the first stream, then the new value gets added to the old value.
+                    // If it isn't the first stream, then the old value gets added to the new value.
                     newLeftValue += PlaybackBuffer[leftPlaybackIndex];
                     newRightValue += PlaybackBuffer[rightPlaybackIndex];
                 }
