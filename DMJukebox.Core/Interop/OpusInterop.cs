@@ -10,6 +10,14 @@ using System.Runtime.InteropServices;
 
 namespace DMJukebox.Interop
 {
+    /// <summary>
+    /// This is a utility class that holds the P/Invoke wrappers for libopus.
+    /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at 
+    /// https://opus-codec.org/docs/opus_api-1.1.3/index.html
+    /// or the source code at https://git.xiph.org/?p=opus.git.
+    /// </remarks>
     internal static class OpusInterop
     {
         /// <summary>
