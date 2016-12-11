@@ -1,6 +1,9 @@
-﻿/*
- * Copyright (c) 2016 Joe Clapis.
- */
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
 
 using DMJukebox.Interop;
 using System;
@@ -20,17 +23,17 @@ namespace DMJukebox
         private const string StreamName = "DM Jukebox Local Audio Playback";
 
         /// <summary>
-        /// This is the SoundIo context object that libsoundio uses.
+        /// This is the <see cref="SoundIo"/> context object that libsoundio uses.
         /// </summary>
         private readonly IntPtr SoundIoPtr;
 
         /// <summary>
-        /// This is the SoundIoDevice (the audio playback device).
+        /// This is the <see cref="SoundIoDevice"/> (the audio playback device).
         /// </summary>
         private readonly IntPtr SoundIoDevicePtr;
 
         /// <summary>
-        /// This is the SoundIoOutStream (the stream for writing data to the speakers).
+        /// This is the <see cref="SoundIoOutStream"/> (the stream for writing data to the speakers).
         /// </summary>
         private IntPtr SoundIoOutStreamPtr;
 
@@ -207,7 +210,7 @@ namespace DMJukebox
         /// <summary>
         /// Adds samples of decoded, playback-ready data to this player so they can be sent out to the speakers.
         /// </summary>
-        /// <param name="PlaybackData">The buffer with the data to write</param>
+        /// <param name="PlaybackData">The buffer with the data to write, in interleaved (packed) format</param>
         /// <param name="NumberOfSamplesToWrite">The number of samples from each channel to add to the player</param>
         public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
         {

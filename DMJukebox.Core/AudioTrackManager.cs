@@ -1,6 +1,9 @@
-﻿/*
- * Copyright (c) 2016 Joe Clapis.
- */
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
 
 using DMJukebox.Discord;
 using DMJukebox.Interop;
@@ -14,39 +17,82 @@ using System.Threading.Tasks;
 namespace DMJukebox
 {
     /// <summary>
-    /// AudioTrackManager is the main public interface for DMJukebox's core. This is what you use to
-    /// create AudioTracks. Internally this is what runs all of the playback logic.
+    /// AudioTrackManager is the main interface for DMJukebox's core. This is what you use to
+    /// create AudioTracks and initialize things.
     /// </summary>
-    public class AudioTrackManager
+    public class AudioTrackManager : IDisposable
     {
+        /// <summary>
+        /// A synchronization object for adding or removing tracks
+        /// from the <see cref="ActiveTracks"/> collection.
+        /// </summary>
         private readonly object ActiveTrackLock;
 
-        private readonly object StopLock;
-
+        /// <summary>
+        /// This is a synchronization object that will block the
+        /// <see cref="PlayTask"/>, leaving it idle, until at least
+        /// one track has started playback.
+        /// </summary>
         private readonly AutoResetEvent ActiveTrackWaiter;
 
-        private bool _IsClosing;
-
+        /// <summary>
+        /// A list of all of the tracks loaded into the system
+        /// </summary>
         private readonly Dictionary<string, AudioTrack> Tracks;
 
+        /// <summary>
+        /// A list of tracks that are actively playing audio
+        /// </summary>
         private readonly HashSet<AudioTrack> ActiveTracks;
 
+        /// <summary>
+        /// The player used for playing audio to the local speakers
+        /// </summary>
         private readonly LocalSoundPlayer LocalPlayer;
 
+        /// <summary>
+        /// The client used for sending data to Discord
+        /// </summary>
         private readonly DiscordClient Discord;
 
+        /// <summary>
+        /// This task runs the actual audio processing and playback
+        /// code.
+        /// </summary>
         private Task PlayTask;
 
+        /// <summary>
+        /// This is the name of the configuration file to save
+        /// for serializing the persistent program configuration.
+        /// </summary>
         private const string ConfigurationFile = "Jukebox.cfg";
 
-        public Configuration Configuration { get; }
-
-        internal const int NumberOfPlaybackSamplesPerFrame = 480;
-
+        /// <summary>
+        /// This little buffer is the heart of the entire program.
+        /// It stores all of the data from each actively playing track,
+        /// merged together into a single aggregate audio frame and
+        /// adjusted for their individual volume settings. Thus, this
+        /// buffer stores the data that's ready for playback.
+        /// </summary>
         private readonly float[] PlaybackBuffer;
 
-        private static readonly AudioTrackManager Instance;
+        /// <summary>
+        /// This is a synchronization object used to read and write
+        /// the <see cref="IsClosing"/> flag in a thread-safe manner
+        /// </summary>
+        private readonly object StopLock;
 
+        /// <summary>
+        /// This is just a backing field for the <see cref="IsClosing"/>
+        /// property.
+        /// </summary>
+        private bool _IsClosing;
+
+        /// <summary>
+        /// A flag that the <see cref="PlayTask"/> uses to see if
+        /// it needs to stop. This is thread-safe so it can be
+        /// written and read by the different threads in the program.
+        /// </summary>
         private bool IsClosing
         {
             get
@@ -66,15 +112,41 @@ namespace DMJukebox
             }
         }
 
+        /// <summary>
+        /// The number of samples per channel that are stored within
+        /// the audio merge and playback buffer. This gets used as a
+        /// base value for some of the other internal classes to use
+        /// when determining the size of their own buffers.
+        /// </summary>
+        internal const int NumberOfSamplesInPlaybackBuffer = 480;
+
+        /// <summary>
+        /// The playback mode / the destination for output audio.
+        /// </summary>
         public PlaybackMode PlaybackMode { get; set; }
 
+        /// <summary>
+        /// The configuration for this manager, used to store
+        /// persistent state between runs of the application.
+        /// </summary>
+        public Configuration Configuration { get; }
+
+        /// <summary>
+        /// Initializes FFmpeg when the program starts up / the first time
+        /// AudioTrackManager gets used
+        /// </summary>
         static AudioTrackManager()
         {
             AVFormatInterop.av_register_all();
         }
 
+        /// <summary>
+        /// Creates a new AudioTrackManager instance and initializes the audio
+        /// loading / playback system.
+        /// </summary>
         public AudioTrackManager()
         {
+            // Load the config file if it exists, or create an empty one if it doesn't.
             if(File.Exists(ConfigurationFile))
             {
                 using (FileStream stream = new FileStream(ConfigurationFile, FileMode.Open, FileAccess.Read))
@@ -89,23 +161,29 @@ namespace DMJukebox
                 Configuration = new Configuration();
             }
 
+            // Initialization
             ActiveTrackWaiter = new AutoResetEvent(false);
             ActiveTrackLock = new object();
             StopLock = new object();
             Tracks = new Dictionary<string, AudioTrack>();
             ActiveTracks = new HashSet<AudioTrack>();
             LocalPlayer = new LocalSoundPlayer();
-            PlaybackBuffer = new float[NumberOfPlaybackSamplesPerFrame * 2];
+            PlaybackBuffer = new float[NumberOfSamplesInPlaybackBuffer * 2];
             IsClosing = false;
             PlayTask = Task.Run((Action)PlaybackLoop);
-            Discord = new DiscordClient();
 
+            // Set up the Discord client with the config settings
+            Discord = new DiscordClient();
             if (Configuration.DiscordSettings != null)
             {
                 SetDiscordSettings(Configuration.DiscordSettings);
             }
         }
 
+        /// <summary>
+        /// Sets the configuration for connecting to Discord.
+        /// </summary>
+        /// <param name="Settings">The new Discord settings</param>
         public void SetDiscordSettings(DiscordSettings Settings)
         {
             Discord.AuthenticationToken = Settings.BotTokenID;
@@ -116,6 +194,9 @@ namespace DMJukebox
             SaveConfig();
         }
 
+        /// <summary>
+        /// Saves the configuration out to the config file.
+        /// </summary>
         private void SaveConfig()
         {
             using (FileStream stream = new FileStream(ConfigurationFile, FileMode.Create, FileAccess.Write))
@@ -126,26 +207,18 @@ namespace DMJukebox
             }
         }
 
+        /// <summary>
+        /// Connects to the Discord voice server for audio playback.
+        /// </summary>
+        /// <returns>The task running the connection method</returns>
         public async Task ConnectToDiscord()
         {
             await Discord.Connect();
         }
 
-        public void SetDiscordToken(string Token)
-        {
-            Discord.AuthenticationToken = Token;
-        }
-
-        public void Close()
-        {
-            StopAllTracks();
-            IsClosing = true;
-            if (PlayTask != null && PlayTask.Status == TaskStatus.Running)
-            {
-                PlayTask.Wait(2000);
-            }
-        }
-
+        /// <summary>
+        /// Stops all of the currently playing tracks.
+        /// </summary>
         public void StopAllTracks()
         {
             lock(ActiveTrackLock)
@@ -158,6 +231,12 @@ namespace DMJukebox
             }
         }
 
+        /// <summary>
+        /// Creates a new audio track from the file at the given path.
+        /// </summary>
+        /// <param name="FilePath">The path of the media file to load</param>
+        /// <returns>An audio track representing the first audio stream
+        /// contained within the file, ready for playback.</returns>
         public AudioTrack CreateTrack(string FilePath)
         {
             if (Tracks.ContainsKey(FilePath))
@@ -172,14 +251,11 @@ namespace DMJukebox
             }
         }
 
-        public void RemoveTrack(AudioTrack Track)
-        {
-            Tracks.Remove(Track.Info.Path);
-            ActiveTracks.Remove(Track);
-            Track.Dispose();
-            // TODO: Stop playback
-        }
-
+        /// <summary>
+        /// Adds a track to the active track list so it will be
+        /// played.
+        /// </summary>
+        /// <param name="Track">The track to add</param>
         internal void AddTrackToPlaybackList(AudioTrack Track)
         {
             lock (ActiveTrackLock)
@@ -193,6 +269,11 @@ namespace DMJukebox
             }
         }
 
+        /// <summary>
+        /// Removes a track from the list of active tracks once it has been
+        /// stopped or it ends.
+        /// </summary>
+        /// <param name="Track">The track to remove</param>
         internal void RemoveTrackFromPlaybackList(AudioTrack Track)
         {
             lock(ActiveTrackLock)
@@ -202,6 +283,11 @@ namespace DMJukebox
             }
         }
 
+        /// <summary>
+        /// This function is the body of the <see cref="PlayTask"/>. It reads audio from the active tracks,
+        /// merges their data together, and sends it out to the output for playback. All of the actual
+        /// processing is done in here.
+        /// </summary>
         private void PlaybackLoop()
         {
             while (!IsClosing)
@@ -209,6 +295,8 @@ namespace DMJukebox
                 List<AudioTrack> endedTracks = null;
                 int maxSamplesReceived = 0; // Keep track of the largest number of samples received during this loop
                 bool isFirstStream = true;
+
+                // Wait until there's at least one track being played
                 if (ActiveTracks.Count == 0)
                 {
                     ActiveTrackWaiter.WaitOne();
@@ -224,6 +312,7 @@ namespace DMJukebox
                     }
                 }
 
+                // Merge audio data from each of the active tracks into a single playback buffer
                 lock (ActiveTrackLock)
                 {
                     foreach (AudioTrack track in ActiveTracks)
@@ -234,7 +323,7 @@ namespace DMJukebox
                         int availableData = track.AvailableData;
 
                         // Read new frames until we have enough data to work with.
-                        while (availableData < NumberOfPlaybackSamplesPerFrame)
+                        while (availableData < NumberOfSamplesInPlaybackBuffer)
                         {
                             // Not enough data left, we have to decode a new frame from the stream.
                             trackEnded = !track.ProcessNextFrame();
@@ -253,7 +342,7 @@ namespace DMJukebox
                                 // previous loop doesn't leak into this one.
                                 if (isFirstStream)
                                 {
-                                    Array.Clear(PlaybackBuffer, availableData * 2, (NumberOfPlaybackSamplesPerFrame - availableData) * 2);
+                                    Array.Clear(PlaybackBuffer, availableData * 2, (NumberOfSamplesInPlaybackBuffer - availableData) * 2);
                                 }
                                 break;
                             }
@@ -268,13 +357,13 @@ namespace DMJukebox
                         }
 
                         // Otherwise, merge the new data into the buffers!
-                        track.WriteDataIntoPlaybackBuffer(PlaybackBuffer, NumberOfPlaybackSamplesPerFrame, isFirstStream);
-                        maxSamplesReceived = Math.Max(maxSamplesReceived, NumberOfPlaybackSamplesPerFrame);
+                        track.WriteDataIntoPlaybackBuffer(PlaybackBuffer, NumberOfSamplesInPlaybackBuffer, isFirstStream);
+                        maxSamplesReceived = Math.Max(maxSamplesReceived, NumberOfSamplesInPlaybackBuffer);
                         isFirstStream = false;
                     }
                 }
 
-                // Now the merge buffers have the aggregated sound data from all of the streams, with volume control already done,
+                // Now the merge buffer has the aggregated sound data from all of the streams, with volume control already done,
                 // so all that's left to do is send the data off to the output.
                 switch(PlaybackMode)
                 {
@@ -314,8 +403,33 @@ namespace DMJukebox
                         }
                     }
                 }
+
+            } // End of the overall while loop
+        }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // Shut down the playback task and wait for it to return
+                    IsClosing = true;
+                    PlayTask.Wait();
+                }
+
+                disposedValue = true;
             }
         }
+        
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
 
     }
 }

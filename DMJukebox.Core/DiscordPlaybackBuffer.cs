@@ -1,6 +1,9 @@
-﻿/*
- * Copyright (c) 2016 Joe Clapis.
- */
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
 
 using System;
 using System.Runtime.InteropServices;
@@ -10,12 +13,18 @@ namespace DMJukebox
 {
     /// <summary>
     /// DiscordPlaybackBuffer is a thread-safe circular buffer that takes incoming aggregated playback data, buffers it, and
-    /// writes it to the SoundChannelAreas for the local audio playback system.
+    /// writes it to the output buffer that will ultimately be sent to Discord.
     /// </summary>
     internal class DiscordPlaybackBuffer
     {
-        public const int BufferSize = AudioTrackManager.NumberOfPlaybackSamplesPerFrame * 20;
+        /// <summary>
+        /// The size of the internal buffer
+        /// </summary>
+        private readonly int BufferSize;
 
+        /// <summary>
+        /// The internal buffer for storing playback data
+        /// </summary>
         private readonly float[] InternalBuffer;
 
         /// <summary>
@@ -47,19 +56,25 @@ namespace DMJukebox
         /// <summary>
         /// The number of samples that are ready for reading
         /// </summary>
-        public int AvailableData { get; private set; }
+        private int AvailableData;
 
         /// <summary>
         /// Creates a new DiscordPlaybackBuffer instance.
         /// </summary>
-        public DiscordPlaybackBuffer()
+        public DiscordPlaybackBuffer(int BufferSize)
         {
+            this.BufferSize = BufferSize;
             InternalBuffer = new float[BufferSize];
             Lock = new object();
             ReadNotifier = new AutoResetEvent(false);
             WriteNotifier = new AutoResetEvent(false);
         }
 
+        /// <summary>
+        /// Adds playback data ready for streaming into the buffer.
+        /// </summary>
+        /// <param name="PlaybackData">The playback audio to add, in interleaved (packed) format</param>
+        /// <param name="NumberOfSamplesToWrite">The number of samples to write into this buffer</param>
         public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
         {
             NumberOfSamplesToWrite *= 2; // Since this data is interleaved, we really want to write twice as much.
@@ -110,7 +125,13 @@ namespace DMJukebox
             ReadNotifier.Set();
         }
 
-        unsafe public void WritePlaybackDataToAudioBuffer(IntPtr AudioBuffer, int NumberOfSamplesToWrite)
+        /// <summary>
+        /// Writes buffered playback audio into the output buffer for Discord.
+        /// </summary>
+        /// <param name="AudioBuffer">The output buffer which will be sent to Discord</param>
+        /// <param name="NumberOfSamplesToWrite">The number of samples to write from the
+        /// internal buffer to the Discord output</param>
+        public void WritePlaybackDataToAudioBuffer(IntPtr AudioBuffer, int NumberOfSamplesToWrite)
         {
             NumberOfSamplesToWrite *= 2; // Since this data is interleaved, we really want to write twice as much.
 
@@ -129,12 +150,15 @@ namespace DMJukebox
                 }
             }
 
+            // Do a straight copy if there's enough contiguous data to write all at once.
             int headroom = BufferSize - CurrentReadPosition;
             if (headroom >= NumberOfSamplesToWrite)
             {
                 Marshal.Copy(InternalBuffer, CurrentReadPosition, AudioBuffer, NumberOfSamplesToWrite);
                 CurrentReadPosition += NumberOfSamplesToWrite;
             }
+
+            // Otherwise, we have to break the operation into two writes because of wrap-around.
             else
             {
                 int overflow = NumberOfSamplesToWrite - headroom;

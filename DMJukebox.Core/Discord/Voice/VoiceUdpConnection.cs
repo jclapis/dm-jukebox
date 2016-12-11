@@ -79,7 +79,7 @@ namespace DMJukebox.Discord.Voice
             IPEndPoint localEndpoint = new IPEndPoint(IPAddress.Any, 0);
             Client = new UdpClient(localEndpoint);
 
-            PlaybackAudio = Marshal.AllocHGlobal(AudioTrackManager.NumberOfPlaybackSamplesPerFrame * 2 * sizeof(float));
+            PlaybackAudio = Marshal.AllocHGlobal(AudioTrackManager.NumberOfSamplesInPlaybackBuffer * 2 * sizeof(float));
             OpusOutputBuffer = Marshal.AllocHGlobal(4096);
             SendBuffer = new byte[4096 + 12 + EncryptionOverhead];
             NonceBufferPtr = Marshal.AllocHGlobal(24);
@@ -101,10 +101,10 @@ namespace DMJukebox.Discord.Voice
             }
             Timer = new Stopwatch();
             double ticksPerMillisecond = Stopwatch.Frequency / 1000.0;
-            double millisecondsPerFrame = AudioTrackManager.NumberOfPlaybackSamplesPerFrame / 48.0; // Samples per frame / 48000 Hz * 1000 ms/s
+            double millisecondsPerFrame = AudioTrackManager.NumberOfSamplesInPlaybackBuffer / 48.0; // Samples per frame / 48000 Hz * 1000 ms/s
             TicksPerFrame = (long)(ticksPerMillisecond * millisecondsPerFrame);
 
-            PlaybackBuffer = new DiscordPlaybackBuffer();
+            PlaybackBuffer = new DiscordPlaybackBuffer(AudioTrackManager.NumberOfSamplesInPlaybackBuffer * 20);
         }
 
         unsafe public IPEndPoint DiscoverAddress()
@@ -170,7 +170,7 @@ namespace DMJukebox.Discord.Voice
                 }
 
                 // Get playback data from the buffer first
-                PlaybackBuffer.WritePlaybackDataToAudioBuffer(PlaybackAudio, AudioTrackManager.NumberOfPlaybackSamplesPerFrame);
+                PlaybackBuffer.WritePlaybackDataToAudioBuffer(PlaybackAudio, AudioTrackManager.NumberOfSamplesInPlaybackBuffer);
 
                 ushort sequenceNumber = Sequence;
 
@@ -194,7 +194,7 @@ namespace DMJukebox.Discord.Voice
                 int encodedDataSize;
                 fixed (byte* sendBufferPointer = &SendBuffer[12])
                 {
-                    encodedDataSize = OpusInterop.opus_encode_float(OpusEncoderPtr, PlaybackAudio, AudioTrackManager.NumberOfPlaybackSamplesPerFrame, OpusOutputBuffer, 4096);
+                    encodedDataSize = OpusInterop.opus_encode_float(OpusEncoderPtr, PlaybackAudio, AudioTrackManager.NumberOfSamplesInPlaybackBuffer, OpusOutputBuffer, 4096);
                     if (encodedDataSize < 0)
                     {
                         OpusErrorCode error = (OpusErrorCode)encodedDataSize;
@@ -234,7 +234,7 @@ namespace DMJukebox.Discord.Voice
                 {
                     Sequence++;
                 }
-                Timestamp = unchecked(Timestamp + AudioTrackManager.NumberOfPlaybackSamplesPerFrame); // TODO: clean this up
+                Timestamp = unchecked(Timestamp + AudioTrackManager.NumberOfSamplesInPlaybackBuffer); // TODO: clean this up
             }
         }
 

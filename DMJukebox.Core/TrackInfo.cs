@@ -1,6 +1,9 @@
-﻿/*
- * Copyright (c) 2016 Joe Clapis.
- */
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
 
 using System;
 
@@ -10,7 +13,7 @@ namespace DMJukebox
     /// TrackInfo describes some of the behind-the-scenes details about a track.
     /// </summary>
     /// <remarks>
-    /// The stuff in here is far from all we have access to, we have all of ffmpeg at our disposal so we
+    /// The stuff in here is far from all we have access to, we have all of FFmpeg at our disposal so we
     /// can technically put anything we want in here. If people start asking for specific things like
     /// sample size or something, I'll add it to TrackInfo.
     /// </remarks>

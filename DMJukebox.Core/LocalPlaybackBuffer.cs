@@ -1,15 +1,17 @@
-﻿/*
- * Copyright (c) 2016 Joe Clapis.
- */
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
 
-using System;
 using System.Threading;
 
 namespace DMJukebox
 {
     /// <summary>
     /// LocalPlaybackBuffer is a thread-safe circular buffer that takes incoming aggregated playback data, buffers it, and
-    /// writes it to the SoundChannelAreas for the local audio playback system.
+    /// writes it to the SoundChannelAreas for the local audio playback system upon request.
     /// </summary>
     internal class LocalPlaybackBuffer
     {
@@ -77,7 +79,7 @@ namespace DMJukebox
         /// Adds incoming aggregated playback data from the audio track decoding and mixing system into this buffer, making
         /// it ready for local playback.
         /// </summary>
-        /// <param name="PlaybackData">The incoming playback data</param>
+        /// <param name="PlaybackData">The incoming playback data, in interleaved (packed) format</param>
         /// <param name="NumberOfSamplesToWrite">The number of samples to copy from the incoming data</param>
         public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
         {
@@ -148,8 +150,8 @@ namespace DMJukebox
         /// <summary>
         /// Writes data from the playback buffers out to the sound areas, which will then be played on the local system's output.
         /// </summary>
-        /// <param name="LeftChannelArea">The SoundChannelArea for the left channel</param>
-        /// <param name="RightChannelArea">The SoundChannelArea for the right channel</param>
+        /// <param name="LeftChannelArea">The <see cref="Interop.SoundIoChannelArea"/> buffer for the left channel</param>
+        /// <param name="RightChannelArea">The <see cref="Interop.SoundIoChannelArea"/> buffer for the right channel</param>
         /// <param name="NumberOfSamplesToWrite">The number of samples to write from the internal buffer into the sound areas</param>
         /// <param name="StepSize">The step size of the areas (how many bytes belong to each sample, per channel)</param>
         unsafe public void WritePlaybackDataToSoundAreas(float* LeftChannelArea, float* RightChannelArea, int NumberOfSamplesToWrite, int StepSize)
