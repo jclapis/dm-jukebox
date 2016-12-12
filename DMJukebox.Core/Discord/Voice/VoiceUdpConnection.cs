@@ -26,7 +26,7 @@ namespace DMJukebox.Discord.Voice
     /// For more information, please see the documentation at
     /// https://discordapp.com/developers/docs/topics/voice-connections.
     /// </remarks>
-    internal class VoiceUdpConnection
+    internal class VoiceUdpConnection : IDisposable
     {
         /// <summary>
         /// This is the amount of overhead, in bytes, that libsodium's encryption
@@ -81,7 +81,7 @@ namespace DMJukebox.Discord.Voice
         /// (byte*) This is the nonce buffer, which is part of the
         /// encryption process.
         /// </summary>
-        private readonly IntPtr NonceBufferPtr;
+        private IntPtr NonceBufferPtr;
 
         /// <summary>
         /// (byte*) This buffer holds the secret key used for encryption
@@ -427,6 +427,54 @@ namespace DMJukebox.Discord.Voice
         {
             PlaybackBuffer.AddPlaybackData(PlaybackData, NumberOfSamplesToWrite);
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if(PlaybackTask != null && PlaybackTask.Status == TaskStatus.Running)
+                    {
+                        StopSending();
+                    }
+                    Client.Dispose();
+                }
+
+                if(NonceBufferPtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(NonceBufferPtr);
+                    NonceBufferPtr = IntPtr.Zero;
+                }
+                if(SecretKeyPtr != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(SecretKeyPtr);
+                    SecretKeyPtr = IntPtr.Zero;
+                }
+                if(OpusEncoderPtr != IntPtr.Zero)
+                {
+                    OpusInterop.opus_encoder_destroy(OpusEncoderPtr);
+                    OpusEncoderPtr = IntPtr.Zero;
+                }
+
+                disposedValue = true;
+            }
+        }
+        
+        ~VoiceUdpConnection()
+        {
+            Dispose(false);
+        }
+        
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
 
     }
 }
