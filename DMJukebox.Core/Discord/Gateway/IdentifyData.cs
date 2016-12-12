@@ -1,4 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
+
+using Newtonsoft.Json;
 
 namespace DMJukebox.Discord
 {
@@ -6,6 +13,10 @@ namespace DMJukebox.Discord
     /// This is sent by the client to the server as a handshake and
     /// authentication message.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://discordapp.com/developers/docs/topics/gateway.
+    /// </remarks>
     [JsonObject]
     internal class IdentifyData
     {

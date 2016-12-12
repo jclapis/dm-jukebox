@@ -1,4 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
+
+using Newtonsoft.Json;
 
 namespace DMJukebox.Discord
 {
@@ -6,6 +13,10 @@ namespace DMJukebox.Discord
     /// This structure is used to notify the server when the
     /// client joins or leaves a voice channel.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://discordapp.com/developers/docs/topics/voice-connections.
+    /// </remarks>
     [JsonObject]
     internal class VoiceStateUpdateData
     {

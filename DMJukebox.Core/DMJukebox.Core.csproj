@@ -86,9 +86,7 @@
     <Compile Include="AVUtil\AV_CH_LAYOUT.cs" />
     <Compile Include="AVUtil\FF_DECODE_ERROR.cs" />
     <Compile Include="DiscordPlaybackBuffer.cs" />
-    <Compile Include="Discord\ClientStep.cs" />
     <Compile Include="Discord\DiscordClient.cs" />
-    <Compile Include="Discord\DiscordPlayer.cs" />
     <Compile Include="Discord\Gateway\GatewayConnection.cs" />
     <Compile Include="Discord\Gateway\GatewayConnectionStep.cs" />
     <Compile Include="Discord\Gateway\HelloData.cs" />

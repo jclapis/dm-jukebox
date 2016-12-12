@@ -1,10 +1,21 @@
-﻿using Newtonsoft.Json;
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
+
+using Newtonsoft.Json;
 
 namespace DMJukebox.Discord.Voice
 {
     /// <summary>
     /// This payload is used to establish a connection to a Discord voice server.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://discordapp.com/developers/docs/topics/voice-connections.
+    /// </remarks>
     [JsonObject]
     internal class VoiceIdentifyData
     {

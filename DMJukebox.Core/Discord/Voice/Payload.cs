@@ -1,29 +1,25 @@
-﻿using Newtonsoft.Json;
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
+
+using Newtonsoft.Json;
 
 namespace DMJukebox.Discord.Voice
 {
     /// <summary>
     /// This structure is used to transfer information back and forth to the
-    /// Discord server.
+    /// Discord voice server.
     /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://discordapp.com/developers/docs/topics/voice-connections.
+    /// </remarks>
     [JsonObject]
     internal class Payload
     {
-        /// <summary>
-        /// This is the event name for the payload. It only gets used on 
-        /// Dispatch messages (Code 0).
-        /// </summary>
-        [JsonProperty("t")]
-        public string EventName { get; set; }
-
-        /// <summary>
-        /// This is the sequence number, which is used by the heartbeat
-        /// and resume session systems. This only gets used on Dispatch
-        /// messages (Code 0).
-        /// </summary>
-        [JsonProperty("s")]
-        public int? SequenceNumber { get; set; }
-
         /// <summary>
         /// This is the OP Code for the payload (what kind of message
         /// it is)

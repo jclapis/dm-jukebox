@@ -1,4 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿/* ===================================================
+ * 
+ * This file is part of the DM Jukebox project.
+ * Copyright (c) 2016 Joe Clapis. All Rights Reserved.
+ * 
+ * =================================================== */
+
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net;
@@ -9,18 +16,51 @@ using System.Threading.Tasks;
 
 namespace DMJukebox.Discord.Voice
 {
+    /// <summary>
+    /// This class handles the connection to the Discord voice server
+    /// (specifically, the websocket used to set the connection up
+    /// and maintain it).
+    /// </summary>
+    /// <remarks>
+    /// For more information, please see the documentation at
+    /// https://discordapp.com/developers/docs/topics/voice-connections.
+    /// </remarks>
     internal class VoiceClient
     {
+        /// <summary>
+        /// This is the websocket client that connects to the voice
+        /// server
+        /// </summary>
         private readonly ClientWebSocket Socket;
 
+        /// <summary>
+        /// A synchronization object for cancelling long asynchronous
+        /// operations
+        /// </summary>
         private readonly CancellationToken CancelToken;
 
+        /// <summary>
+        /// This is a synchronization object that's used to write
+        /// methods in a thread-safe way
+        /// </summary>
         private readonly object WriteLock;
 
+        /// <summary>
+        /// This is a synchronization object that's used to close
+        /// the receive task in a thread-safe way
+        /// </summary>
         private readonly object CloseLock;
 
+        /// <summary>
+        /// This is just a backing field for the 
+        /// <see cref="IsClosing"/> property.
+        /// </summary>
         private bool _IsClosing;
 
+        /// <summary>
+        /// This flag is used to tell the receieve task when it
+        /// needs to shut down.
+        /// </summary>
         private bool IsClosing
         {
             get
@@ -40,32 +80,80 @@ namespace DMJukebox.Discord.Voice
             }
         }
 
+        /// <summary>
+        /// This is a reusable buffer for storing received messages
+        /// sent from the server
+        /// </summary>
         private readonly byte[] ReceiveBuffer;
 
+        /// <summary>
+        /// This is a reusable buffer for storing messages sent
+        /// to the server
+        /// </summary>
         private readonly byte[] SendBuffer;
 
+        /// <summary>
+        /// This is the ArraySegment mapped to the receive buffer,
+        /// which the websocket client uses to receive data.
+        /// </summary>
         private readonly ArraySegment<byte> ReceiveBufferSegment;
 
+        /// <summary>
+        /// This is the task that receives messages from the server.
+        /// </summary>
         private Task ReceiveLoopTask;
 
+        /// <summary>
+        /// This is the task that sends heartbeat messages to the
+        /// server.
+        /// </summary>
         private Task HeartbeatLoopTask;
 
-        private int LatestSequenceNumber;
-
+        /// <summary>
+        /// This is the current step in the connection process.
+        /// </summary>
         private VoiceConnectionStep ConnectionStep;
 
+        /// <summary>
+        /// This is the ID of the server / guild that owns the voice
+        /// channel you want to connect to.
+        /// </summary>
         public string GuildID { get; set; }
 
+        /// <summary>
+        /// This is the synchronization source, which is used during
+        /// voice data encryption.
+        /// </summary>
         private uint SynchronizationSource;
 
+        /// <summary>
+        /// This is the interval to wait between sending heartbeat
+        /// message to the server
+        /// </summary>
         private int HeartbeatInterval;
 
+        /// <summary>
+        /// This is the hostname of the Discord voice server.
+        /// </summary>
         private string VoiceServerHostname;
 
+        /// <summary>
+        /// This class manages the UDP connection for sending
+        /// audio data to Discord.
+        /// </summary>
         private VoiceUdpConnection VoiceChannel;
 
+        /// <summary>
+        /// This is a synchronization object that blocks until
+        /// the connection process is complete.
+        /// </summary>
         private AutoResetEvent ConnectWaiter;
 
+        /// <summary>
+        /// Creates a new VoiceClient instance.
+        /// </summary>
+        /// <param name="CancelToken">A cancellation token that
+        /// can be used to interrupt asynchronous tasks</param>
         public VoiceClient(CancellationToken CancelToken)
         {
             this.CancelToken = CancelToken;
@@ -78,13 +166,27 @@ namespace DMJukebox.Discord.Voice
             ReceiveBufferSegment = new ArraySegment<byte>(ReceiveBuffer);
         }
 
+        /// <summary>
+        /// Connects to the Discord voice server, opening the
+        /// channel so you can begin sending audio data to it.
+        /// </summary>
+        /// <param name="BotUserID">The ID of the bot account to connect with</param>
+        /// <param name="VoiceSessionID">The ID of the voice connection's session</param>
+        /// <param name="VoiceSessionToken">The unique authentication token for this
+        /// voice session</param>
+        /// <param name="VoiceServerHostname">The hostname of the voice server to
+        /// connect to</param>
+        /// <returns>The task running the method</returns>
         public async Task Connect(string BotUserID, string VoiceSessionID, string VoiceSessionToken, string VoiceServerHostname)
         {
+            // A little initialization action
             ConnectionStep = VoiceConnectionStep.Disconnected;
             this.VoiceServerHostname = VoiceServerHostname.Substring(0, VoiceServerHostname.IndexOf(':'));
             Uri endpointUri = new Uri($"wss://{this.VoiceServerHostname}");
             await Socket.ConnectAsync(endpointUri, CancelToken);
             ReceiveLoopTask = Task.Run(ReceiveWebsocketMessageLoop);
+
+            // Send an Identify message to the server, starting the connection process
             VoiceIdentifyData identifyData = new VoiceIdentifyData
             {
                 ServerID = GuildID,
@@ -102,6 +204,10 @@ namespace DMJukebox.Discord.Voice
             ConnectWaiter.WaitOne();
         }
 
+        /// <summary>
+        /// This is the body for the <see cref="HeartbeatLoopTask"/>, which sends
+        /// heartbeat messages to the server.
+        /// </summary>
         private void HeartbeatLoop()
         {
             while (!IsClosing)
@@ -110,12 +216,11 @@ namespace DMJukebox.Discord.Voice
                 {
                     Payload heartbeatMessage = new Payload
                     {
-                        OpCode = OpCode.Heartbeat,
-                        Data = LatestSequenceNumber
+                        OpCode = OpCode.Heartbeat
                     };
                     SendWebsocketMessage(heartbeatMessage);
                     Task.Delay(HeartbeatInterval, CancelToken).Wait();
-                    System.Diagnostics.Debug.WriteLine($"Sent heartbeat with seq {LatestSequenceNumber}");
+                    System.Diagnostics.Debug.WriteLine($"Sent a voice heartbeat");
                 }
                 catch (TaskCanceledException)
                 {
@@ -124,6 +229,10 @@ namespace DMJukebox.Discord.Voice
             }
         }
 
+        /// <summary>
+        /// Sends a message to the voice server.
+        /// </summary>
+        /// <param name="Message">The message to send</param>
         private void SendWebsocketMessage(Payload Message)
         {
             string serializedMessage = JsonConvert.SerializeObject(Message);
@@ -135,6 +244,11 @@ namespace DMJukebox.Discord.Voice
             }
         }
 
+        /// <summary>
+        /// This is the body of the <see cref="ReceiveLoopTask"/>, which receives
+        /// messages from the server.
+        /// </summary>
+        /// <returns>The task running the method</returns>
         private async Task ReceiveWebsocketMessageLoop()
         {
             while (!IsClosing)
@@ -156,7 +270,7 @@ namespace DMJukebox.Discord.Voice
                         string message = Encoding.UTF8.GetString(ReceiveBuffer, 0, result.Count);
                         System.Diagnostics.Debug.WriteLine($"Received a message from the Voice Server: {message}");
                         Payload payload = JsonConvert.DeserializeObject<Payload>(message);
-                        Task parseTask = Task.Run(() => ParsePayloadData(payload));
+                        Task parseTask = Task.Run(() => HandleMessage(payload));
                         break;
 
                     case WebSocketMessageType.Binary:
@@ -167,27 +281,28 @@ namespace DMJukebox.Discord.Voice
             }
         }
 
-        private void ParsePayloadData(Payload Payload)
+        /// <summary>
+        /// Handles messages from the server, routing them to the appropriate functionality.
+        /// </summary>
+        /// <param name="Message">The message from the server</param>
+        private void HandleMessage(Payload Message)
         {
-            if (Payload.SequenceNumber != null)
+            switch (Message.OpCode)
             {
-                LatestSequenceNumber = Payload.SequenceNumber.Value;
-            }
-
-            switch (Payload.OpCode)
-            {
+                // If we're waiting for one of these, process it. Otherwise, ignore it.
                 case OpCode.Ready:
                     if (ConnectionStep == VoiceConnectionStep.WaitForReady)
                     {
-                        ReadyData readyData = ((JObject)Payload.Data).ToObject<ReadyData>();
+                        ReadyData readyData = ((JObject)Message.Data).ToObject<ReadyData>();
                         HandleReady(readyData);
                     }
                     break;
 
+                // If we're waiting for one of these, process it. Otherwise, ignore it.
                 case OpCode.SessionDescription:
                     if(ConnectionStep == VoiceConnectionStep.WaitForSessionDescription)
                     {
-                        SessionDescription description = ((JObject)Payload.Data).ToObject<SessionDescription>();
+                        SessionDescription description = ((JObject)Message.Data).ToObject<SessionDescription>();
                         VoiceChannel.SecretKey = description.SecretKey;
                         ConnectWaiter.Set();
                     }
@@ -198,11 +313,16 @@ namespace DMJukebox.Discord.Voice
                     break;
 
                 default:
-                    System.Diagnostics.Debug.WriteLine($"VoiceClient got a message with code {Payload.OpCode}, ignoring it.");
+                    System.Diagnostics.Debug.WriteLine($"VoiceClient got a message with code {Message.OpCode}, ignoring it.");
                     break;
             }
         }
 
+        /// <summary>
+        /// Handles an <see cref="OpCode.Ready"/> message from the server, sent in response
+        /// to an <see cref="OpCode.Identify"/> message.
+        /// </summary>
+        /// <param name="Data">The payload from the Ready message</param>
         private void HandleReady(ReadyData Data)
         {
             SynchronizationSource = Data.SynchronizationSource;
@@ -210,6 +330,8 @@ namespace DMJukebox.Discord.Voice
             VoiceChannel = new VoiceUdpConnection(VoiceServerHostname, Data.Port, SynchronizationSource);
             IPEndPoint localEndpoint = VoiceChannel.DiscoverAddress();
 
+            // Once we get one of these, we can send a SelectProtocol message
+            // to set up the UDP connection.
             SelectProtocolData data = new SelectProtocolData
             {
                 Port = localEndpoint.Port,
@@ -232,11 +354,21 @@ namespace DMJukebox.Discord.Voice
             SendWebsocketMessage(payload);
         }
 
+        /// <summary>
+        /// Adds audio data to be played back over Discord.
+        /// </summary>
+        /// <param name="PlaybackData">The audio data to play. This must be in
+        /// interleaved format, 48 kHz and stereo.</param>
+        /// <param name="NumberOfSamplesToWrite">The number of samples per channel
+        /// to play from the incoming data</param>
         public void AddPlaybackData(float[] PlaybackData, int NumberOfSamplesToWrite)
         {
             VoiceChannel.AddPlaybackData(PlaybackData, NumberOfSamplesToWrite);
         }
 
+        /// <summary>
+        /// Starts playing audio over Discord once it's connected.
+        /// </summary>
         public void Start()
         {
             SetSpeaking data = new SetSpeaking
@@ -246,7 +378,6 @@ namespace DMJukebox.Discord.Voice
             };
             Payload message = new Payload
             {
-                SequenceNumber = LatestSequenceNumber,
                 OpCode = OpCode.Speaking,
                 Data = data
             };
@@ -254,6 +385,9 @@ namespace DMJukebox.Discord.Voice
             VoiceChannel.StartSending();
         }
 
+        /// <summary>
+        /// Stops playing audio over Discord.
+        /// </summary>
         public void Stop()
         {
             SetSpeaking data = new SetSpeaking
@@ -263,7 +397,6 @@ namespace DMJukebox.Discord.Voice
             };
             Payload message = new Payload
             {
-                SequenceNumber = LatestSequenceNumber,
                 OpCode = OpCode.Speaking,
                 Data = data
             };
