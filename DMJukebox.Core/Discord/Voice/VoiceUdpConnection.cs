@@ -84,16 +84,6 @@ namespace DMJukebox.Discord.Voice
         private readonly IntPtr NonceBufferPtr;
 
         /// <summary>
-        /// (byte*) This is a buffer that stores encoded audio 
-        /// data from Opus.
-        /// </summary>
-        /// <remarks>
-        /// TODO: Pull this out of global scope and make it a local
-        /// within <see cref="PlayAudioLoop"/>?
-        /// </remarks>
-        private readonly IntPtr OpusOutputBuffer;
-
-        /// <summary>
         /// (byte*) This buffer holds the secret key used for encryption
         /// </summary>
         private IntPtr SecretKeyPtr;
@@ -184,7 +174,6 @@ namespace DMJukebox.Discord.Voice
             Client = new UdpClient(localEndpoint);
 
             // Set up some of the buffers
-            OpusOutputBuffer = Marshal.AllocHGlobal(4096);
             SendBuffer = new byte[4096 + 12 + EncryptionOverhead];
             NonceBufferPtr = Marshal.AllocHGlobal(24);
             Marshal.Copy(SendBuffer, 0, NonceBufferPtr, 24); // Zero out the nonce buffer
@@ -279,11 +268,14 @@ namespace DMJukebox.Discord.Voice
             PlaybackTask.Wait();
 
             // Discord requires us to send 5 silence frames once playback stops
-            Marshal.Copy(OpusSilenceFrame, 0, OpusOutputBuffer, OpusSilenceFrame.Length);
+            // TODO: Should I just make this a global unmanaged buffer like the others?
+            IntPtr silenceBuffer = Marshal.AllocHGlobal(OpusSilenceFrame.Length);
+            Marshal.Copy(OpusSilenceFrame, 0, silenceBuffer, OpusSilenceFrame.Length);
             for(int i = 0; i < 5; i++)
             {
-                PrepareAndSendPacketToDiscord(OpusSilenceFrame.Length);
+                PrepareAndSendPacketToDiscord(silenceBuffer, OpusSilenceFrame.Length);
             }
+            Marshal.FreeHGlobal(silenceBuffer);
 
             // Once all that's out of the way, we can reset everything
             Timer.Stop();
@@ -300,9 +292,9 @@ namespace DMJukebox.Discord.Voice
         /// </summary>
         private void PlayAudioLoop()
         {
-            // This is a buffer that holds the raw playback audio, which will be sent to Opus for encoding
-            IntPtr playbackAudio = Marshal.AllocHGlobal(AudioTrackManager.NumberOfSamplesInPlaybackBuffer * 2 * sizeof(float));
-
+            int outputBufferSize = 4096; // 4096 is just a crazy high upper bound, it'll never get this big
+            IntPtr rawPlaybackAudioBuffer = Marshal.AllocHGlobal(AudioTrackManager.NumberOfSamplesInPlaybackBuffer * 2 * sizeof(float));
+            IntPtr opusEncodedAudioBuffer = Marshal.AllocHGlobal(outputBufferSize); 
             try
             {
                 while (true)
@@ -316,22 +308,26 @@ namespace DMJukebox.Discord.Voice
                     }
 
                     // Get playback data from the buffer first
-                    PlaybackBuffer.WritePlaybackDataToAudioBuffer(playbackAudio, AudioTrackManager.NumberOfSamplesInPlaybackBuffer);
+                    PlaybackBuffer.WritePlaybackDataToAudioBuffer(rawPlaybackAudioBuffer, AudioTrackManager.NumberOfSamplesInPlaybackBuffer);
                     if (IsStopping)
                     {
                         return;
                     }
 
                     // Encode the audio with Opus, then process it and send it to Discord
-                    int encodedDataSize = EncodeRawAudioWithOpus(playbackAudio);
-                    PrepareAndSendPacketToDiscord(encodedDataSize);
+                    int encodedDataSize = EncodeRawAudioWithOpus(rawPlaybackAudioBuffer, opusEncodedAudioBuffer, outputBufferSize);
+                    PrepareAndSendPacketToDiscord(opusEncodedAudioBuffer, encodedDataSize);
                 }
             }
             finally
             {
-                if(playbackAudio != IntPtr.Zero)
+                if(rawPlaybackAudioBuffer != IntPtr.Zero)
                 {
-                    Marshal.FreeHGlobal(playbackAudio);
+                    Marshal.FreeHGlobal(rawPlaybackAudioBuffer);
+                }
+                if(opusEncodedAudioBuffer != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(opusEncodedAudioBuffer);
                 }
             }
         }
@@ -341,9 +337,10 @@ namespace DMJukebox.Discord.Voice
         /// </summary>
         /// <param name="PlaybackAudio">The audio to encode</param>
         /// <returns>The number of bytes that Opus wrote to the output buffer</returns>
-        private int EncodeRawAudioWithOpus(IntPtr PlaybackAudio)
+        private int EncodeRawAudioWithOpus(IntPtr RawInputBuffer, IntPtr EncodedOutputBuffer, int OutputBufferSize)
         {
-            int encodedDataSize = OpusInterop.opus_encode_float(OpusEncoderPtr, PlaybackAudio, AudioTrackManager.NumberOfSamplesInPlaybackBuffer, OpusOutputBuffer, 4096);
+            int encodedDataSize = OpusInterop.opus_encode_float(
+                OpusEncoderPtr, RawInputBuffer, AudioTrackManager.NumberOfSamplesInPlaybackBuffer, EncodedOutputBuffer, OutputBufferSize);
             if (encodedDataSize < 0)
             {
                 OpusErrorCode error = (OpusErrorCode)encodedDataSize;
@@ -358,7 +355,7 @@ namespace DMJukebox.Discord.Voice
         /// line of code in the entire DMJukebox.Core.Discord folder is all there
         /// just to support this one function.
         /// </summary>
-        unsafe private void PrepareAndSendPacketToDiscord(int EncodedDataSize)
+        unsafe private void PrepareAndSendPacketToDiscord(IntPtr OpusEncodedAudioBuffer, int EncodedDataSize)
         {
             // Write the sequence number in big-endian format
             ushort sequenceNumber = Sequence;
@@ -380,7 +377,7 @@ namespace DMJukebox.Discord.Voice
             // Encrypt the packet
             fixed (byte* sendBufferPointer = &SendBuffer[12])
             {
-                int encryptionResult = SodiumInterop.crypto_secretbox_easy((IntPtr)sendBufferPointer, OpusOutputBuffer, (ulong)EncodedDataSize, NonceBufferPtr, SecretKeyPtr);
+                int encryptionResult = SodiumInterop.crypto_secretbox_easy((IntPtr)sendBufferPointer, OpusEncodedAudioBuffer, (ulong)EncodedDataSize, NonceBufferPtr, SecretKeyPtr);
                 if (encryptionResult != 0)
                 {
                     System.Diagnostics.Debug.WriteLine($"Encrypting voice data failed with code {encryptionResult}.");
