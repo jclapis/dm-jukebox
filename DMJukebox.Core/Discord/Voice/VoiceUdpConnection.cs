@@ -282,6 +282,8 @@ namespace DMJukebox.Discord.Voice
             Timer.Reset();
             TimeOfNextSend = 0;
             Timestamp = 0;
+            Sequence = 0;
+            PlaybackBuffer.Reset();
         }
 
         /// <summary>
