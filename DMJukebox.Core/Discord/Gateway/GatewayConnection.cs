@@ -24,7 +24,7 @@ namespace DMJukebox.Discord.Gateway
     /// For more information, please see the documentation at
     /// https://discordapp.com/developers/docs/topics/gateway.
     /// </remarks>
-    internal class GatewayConnection
+    internal class GatewayConnection : IDisposable
     {
         /// <summary>
         /// Discord requests a name for the client as part
@@ -107,6 +107,11 @@ namespace DMJukebox.Discord.Gateway
         }
 
         /// <summary>
+        /// This is the source of the cancel token
+        /// </summary>
+        private readonly CancellationTokenSource CancelSource;
+
+        /// <summary>
         /// This is a token used to interrupt and cancel
         /// asynchronous operations.
         /// </summary>
@@ -129,7 +134,7 @@ namespace DMJukebox.Discord.Gateway
         /// sending heartbeat messages to the server.
         /// </summary>
         private int HeartbeatInterval;
-        
+
         /// <summary>
         /// This is the latest "sequence number" we received
         /// from the gateway's messages. It comes from 
@@ -243,9 +248,10 @@ namespace DMJukebox.Discord.Gateway
         /// </summary>
         /// <param name="CancelToken">A token for cancelling
         /// asynchronous operations</param>
-        public GatewayConnection(CancellationToken CancelToken)
+        public GatewayConnection()
         {
-            this.CancelToken = CancelToken;
+            CancelSource = new CancellationTokenSource();
+            CancelToken = CancelSource.Token;
             CloseLock = new object();
             WriteLock = new object();
             SendBuffer = new byte[65536];
@@ -287,20 +293,24 @@ namespace DMJukebox.Discord.Gateway
         {
             while (!IsClosing)
             {
+                Payload heartbeatMessage = new Payload
+                {
+                    OpCode = OpCode.Heartbeat,
+                    Data = LatestSequenceNumber
+                };
+                SendWebsocketMessage(heartbeatMessage);
+                System.Diagnostics.Debug.WriteLine($"Sent heartbeat with seq {LatestSequenceNumber}");
                 try
                 {
-                    Payload heartbeatMessage = new Payload
-                    {
-                        OpCode = OpCode.Heartbeat,
-                        Data = LatestSequenceNumber
-                    };
-                    SendWebsocketMessage(heartbeatMessage);
                     Task.Delay(HeartbeatInterval, CancelToken).Wait();
-                    System.Diagnostics.Debug.WriteLine($"Sent heartbeat with seq {LatestSequenceNumber}");
+                }
+                catch (AggregateException)
+                {
+                    return;
                 }
                 catch (TaskCanceledException)
                 {
-
+                    return;
                 }
             }
         }
@@ -329,21 +339,34 @@ namespace DMJukebox.Discord.Gateway
         {
             while (!IsClosing)
             {
-                // Read bytes from the websocket over and over until the whole message has been processed
-                WebSocketReceiveResult result = await Socket.ReceiveAsync(ReceiveBufferSegment, CancelToken);
-                int receiveOffset = 0;
-                int totalBytesReceived = result.Count;
-                while(!result.EndOfMessage)
+                WebSocketReceiveResult result = null;
+                int totalBytesReceived = 0;
+                try
                 {
-                    int bytesReceived = result.Count;
-                    receiveOffset += bytesReceived;
-                    if(receiveOffset >= ReceiveBuffer.Length)
+                    // Read bytes from the websocket over and over until the whole message has been processed
+                    result = await Socket.ReceiveAsync(ReceiveBufferSegment, CancelToken);
+                    int receiveOffset = 0;
+                    totalBytesReceived = result.Count;
+                    while (!result.EndOfMessage)
                     {
-                        throw new Exception("Too many bytes received (limit is 64k for now)");
+                        int bytesReceived = result.Count;
+                        receiveOffset += bytesReceived;
+                        if (receiveOffset >= ReceiveBuffer.Length)
+                        {
+                            throw new Exception("Too many bytes received (limit is 64k for now)");
+                        }
+                        ArraySegment<byte> segment = new ArraySegment<byte>(ReceiveBuffer, receiveOffset, ReceiveBuffer.Length - receiveOffset);
+                        result = await Socket.ReceiveAsync(segment, CancelToken);
+                        totalBytesReceived += result.Count;
                     }
-                    ArraySegment<byte> segment = new ArraySegment<byte>(ReceiveBuffer, receiveOffset, ReceiveBuffer.Length - receiveOffset);
-                    result = await Socket.ReceiveAsync(segment, CancelToken);
-                    totalBytesReceived += result.Count;
+                }
+                catch (AggregateException)
+                {
+                    return;
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
                 }
 
                 switch (result.MessageType)
@@ -514,6 +537,58 @@ namespace DMJukebox.Discord.Gateway
             ConnectionStep = GatewayConnectionStep.Connected;
             ConnectWaiter.Set();
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (Socket.State == WebSocketState.Open)
+                    {
+                        Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Shutting down", CancellationToken.None).Wait();
+                    }
+                    IsClosing = true;
+                    CancelSource.Cancel();
+                    if (HeartbeatLoopTask != null && HeartbeatLoopTask.Status != TaskStatus.Canceled)
+                    {
+                        try
+                        {
+                            HeartbeatLoopTask.Wait();
+                        }
+                        catch (AggregateException)
+                        {
+
+                        }
+                        HeartbeatLoopTask = null;
+                    }
+                    if (ReceiveLoopTask != null && ReceiveLoopTask.Status != TaskStatus.Canceled)
+                    {
+                        try
+                        {
+                            ReceiveLoopTask.Wait();
+                        }
+                        catch (AggregateException)
+                        {
+
+                        }
+                        ReceiveLoopTask = null;
+                    }
+                    Socket.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
 
     }
 }

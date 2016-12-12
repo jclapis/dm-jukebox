@@ -10,7 +10,6 @@ using DMJukebox.Discord.Voice;
 using Newtonsoft.Json;
 using System;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DMJukebox.Discord
@@ -19,7 +18,7 @@ namespace DMJukebox.Discord
     /// This class handles all of the connection and audio delivery code for
     /// talking to the Discord server.
     /// </summary>
-    internal class DiscordClient
+    internal class DiscordClient : IDisposable
     {
         /// <summary>
         /// This is the internal implementation for managing a connection to
@@ -32,11 +31,6 @@ namespace DMJukebox.Discord
         /// the Discord voice server
         /// </summary>
         private readonly VoiceClient Voice;
-
-        /// <summary>
-        /// A token for cancelling asynchronous operations
-        /// </summary>
-        private readonly CancellationTokenSource CancelSource;
 
         /// <summary>
         /// This is the endpoint for Discord's REST API, which is used to 
@@ -97,9 +91,8 @@ namespace DMJukebox.Discord
         /// </summary>
         public DiscordClient()
         {
-            CancelSource = new CancellationTokenSource();
-            Gateway = new GatewayConnection(CancelSource.Token);
-            Voice = new VoiceClient(CancelSource.Token);
+            Gateway = new GatewayConnection();
+            Voice = new VoiceClient();
         }
 
         /// <summary>
@@ -148,6 +141,30 @@ namespace DMJukebox.Discord
         {
             Voice.Stop();
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Stop();
+                    Voice.Dispose();
+                    Gateway.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
 
     }
 }

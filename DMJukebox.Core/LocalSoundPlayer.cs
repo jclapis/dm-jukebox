@@ -218,7 +218,6 @@ namespace DMJukebox
         }
 
         #region IDisposable Support
-
         private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
@@ -230,6 +229,7 @@ namespace DMJukebox
                     // TODO: dispose managed state (managed objects).
                 }
 
+                Stop();
                 if(SoundIoOutStreamPtr != IntPtr.Zero)
                 {
                     SoundIoInterop.soundio_outstream_destroy(SoundIoOutStreamPtr);
@@ -257,7 +257,6 @@ namespace DMJukebox
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
         #endregion
     }
 }

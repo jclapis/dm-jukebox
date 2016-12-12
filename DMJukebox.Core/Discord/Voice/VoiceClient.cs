@@ -25,7 +25,7 @@ namespace DMJukebox.Discord.Voice
     /// For more information, please see the documentation at
     /// https://discordapp.com/developers/docs/topics/voice-connections.
     /// </remarks>
-    internal class VoiceClient
+    internal class VoiceClient : IDisposable
     {
         /// <summary>
         /// This is the websocket client that connects to the voice
@@ -38,6 +38,11 @@ namespace DMJukebox.Discord.Voice
         /// operations
         /// </summary>
         private readonly CancellationToken CancelToken;
+
+        /// <summary>
+        /// The source for the cancel token
+        /// </summary>
+        private readonly CancellationTokenSource CancelSource;
 
         /// <summary>
         /// This is a synchronization object that's used to write
@@ -152,11 +157,10 @@ namespace DMJukebox.Discord.Voice
         /// <summary>
         /// Creates a new VoiceClient instance.
         /// </summary>
-        /// <param name="CancelToken">A cancellation token that
-        /// can be used to interrupt asynchronous tasks</param>
-        public VoiceClient(CancellationToken CancelToken)
+        public VoiceClient()
         {
-            this.CancelToken = CancelToken;
+            CancelSource = new CancellationTokenSource();
+            CancelToken = CancelSource.Token;
             ConnectWaiter = new AutoResetEvent(false);
             CloseLock = new object();
             WriteLock = new object();
@@ -212,19 +216,23 @@ namespace DMJukebox.Discord.Voice
         {
             while (!IsClosing)
             {
+                Payload heartbeatMessage = new Payload
+                {
+                    OpCode = OpCode.Heartbeat
+                };
+                SendWebsocketMessage(heartbeatMessage);
+                System.Diagnostics.Debug.WriteLine($"Sent a voice heartbeat");
                 try
                 {
-                    Payload heartbeatMessage = new Payload
-                    {
-                        OpCode = OpCode.Heartbeat
-                    };
-                    SendWebsocketMessage(heartbeatMessage);
                     Task.Delay(HeartbeatInterval, CancelToken).Wait();
-                    System.Diagnostics.Debug.WriteLine($"Sent a voice heartbeat");
+                }
+                catch (AggregateException)
+                {
+                    return;
                 }
                 catch (TaskCanceledException)
                 {
-
+                    return;
                 }
             }
         }
@@ -253,21 +261,34 @@ namespace DMJukebox.Discord.Voice
         {
             while (!IsClosing)
             {
-                // Read bytes from the websocket over and over until the whole message has been processed
-                WebSocketReceiveResult result = await Socket.ReceiveAsync(ReceiveBufferSegment, CancelToken);
-                int receiveOffset = 0;
-                int totalBytesReceived = result.Count;
-                while (!result.EndOfMessage)
+                WebSocketReceiveResult result = null;
+                int totalBytesReceived = 0;
+                try
                 {
-                    int bytesReceived = result.Count;
-                    receiveOffset += bytesReceived;
-                    if (receiveOffset >= ReceiveBuffer.Length)
+                    // Read bytes from the websocket over and over until the whole message has been processed
+                    result = await Socket.ReceiveAsync(ReceiveBufferSegment, CancelToken);
+                    int receiveOffset = 0;
+                    totalBytesReceived = result.Count;
+                    while (!result.EndOfMessage)
                     {
-                        throw new Exception("Too many bytes received (limit is 64k for now)");
+                        int bytesReceived = result.Count;
+                        receiveOffset += bytesReceived;
+                        if (receiveOffset >= ReceiveBuffer.Length)
+                        {
+                            throw new Exception("Too many bytes received (limit is 64k for now)");
+                        }
+                        ArraySegment<byte> segment = new ArraySegment<byte>(ReceiveBuffer, receiveOffset, ReceiveBuffer.Length - receiveOffset);
+                        result = await Socket.ReceiveAsync(segment, CancelToken);
+                        totalBytesReceived += result.Count;
                     }
-                    ArraySegment<byte> segment = new ArraySegment<byte>(ReceiveBuffer, receiveOffset, ReceiveBuffer.Length - receiveOffset);
-                    result = await Socket.ReceiveAsync(segment, CancelToken);
-                    totalBytesReceived += result.Count;
+                }
+                catch (AggregateException)
+                {
+                    return;
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
                 }
 
                 switch (result.MessageType)
@@ -311,7 +332,7 @@ namespace DMJukebox.Discord.Voice
 
                 // If we're waiting for one of these, process it. Otherwise, ignore it.
                 case OpCode.SessionDescription:
-                    if(ConnectionStep == VoiceConnectionStep.WaitForSessionDescription)
+                    if (ConnectionStep == VoiceConnectionStep.WaitForSessionDescription)
                     {
                         SessionDescription description = ((JObject)Message.Data).ToObject<SessionDescription>();
                         VoiceChannel.SecretKey = description.SecretKey;
@@ -401,19 +422,81 @@ namespace DMJukebox.Discord.Voice
         /// </summary>
         public void Stop()
         {
-            SetSpeaking data = new SetSpeaking
+            if (Socket.State == WebSocketState.Open)
             {
-                IsSpeaking = false,
-                Delay = 0
-            };
-            Payload message = new Payload
+                SetSpeaking data = new SetSpeaking
+                {
+                    IsSpeaking = false,
+                    Delay = 0
+                };
+                Payload message = new Payload
+                {
+                    OpCode = OpCode.Speaking,
+                    Data = data
+                };
+                SendWebsocketMessage(message);
+            }
+            if (VoiceChannel != null)
             {
-                OpCode = OpCode.Speaking,
-                Data = data
-            };
-            SendWebsocketMessage(message);
-            VoiceChannel.StopSending();
+                VoiceChannel.StopSending();
+            }
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (Socket.State == WebSocketState.Open)
+                    {
+                        Socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Shutting down", CancellationToken.None).Wait();
+                    }
+                    IsClosing = true;
+                    CancelSource.Cancel();
+                    if (HeartbeatLoopTask != null && HeartbeatLoopTask.Status != TaskStatus.Canceled)
+                    {
+                        try
+                        {
+                            HeartbeatLoopTask.Wait();
+                        }
+                        catch (AggregateException)
+                        {
+
+                        }
+                        HeartbeatLoopTask = null;
+                    }
+                    if (ReceiveLoopTask != null && ReceiveLoopTask.Status != TaskStatus.Canceled)
+                    {
+                        try
+                        {
+                            ReceiveLoopTask.Wait();
+                        }
+                        catch (AggregateException)
+                        {
+
+                        }
+                        ReceiveLoopTask = null;
+                    }
+                    if (VoiceChannel != null)
+                    {
+                        VoiceChannel.Dispose();
+                    }
+                    Socket.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
 
     }
 }

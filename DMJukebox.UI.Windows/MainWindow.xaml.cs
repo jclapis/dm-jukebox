@@ -71,7 +71,7 @@ namespace DMJukebox
 
         protected override void OnClosing(CancelEventArgs e)
         {
-
+            HandleExitButton(null, null);
         }
 
         private void HandleAddTrackButton(object sender, RoutedEventArgs e)
@@ -101,8 +101,8 @@ namespace DMJukebox
 
         private void HandleExitButton(object sender, RoutedEventArgs e)
         {
-            Manager.StopAllTracks();
-            //Player.Dispose();
+            //Manager.StopAllTracks();
+            Manager.Dispose();
             Application.Current.Shutdown();
         }
 

@@ -325,6 +325,10 @@ namespace DMJukebox
                     }
 
                     ActiveTrackWaiter.WaitOne();
+                    if(IsClosing)
+                    {
+                        return;
+                    }
                     switch(PlaybackMode)
                     {
                         case PlaybackMode.LocalSpeakers:
@@ -444,7 +448,11 @@ namespace DMJukebox
                 {
                     // Shut down the playback task and wait for it to return
                     IsClosing = true;
+                    ActiveTrackWaiter.Set();
                     PlayTask.Wait();
+
+                    LocalPlayer.Dispose();
+                    Discord.Dispose();
                 }
 
                 disposedValue = true;

@@ -265,7 +265,10 @@ namespace DMJukebox.Discord.Voice
             }
             // Unblock the playback thread if it's stuck waiting for new audio frames
             PlaybackBuffer.ReleasePlaybackWaiter();
-            PlaybackTask.Wait();
+            if(PlaybackTask != null)
+            {
+                PlaybackTask.Wait();
+            }
 
             // Discord requires us to send 5 silence frames once playback stops
             // TODO: Should I just make this a global unmanaged buffer like the others?
