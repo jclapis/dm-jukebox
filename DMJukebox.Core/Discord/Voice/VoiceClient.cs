@@ -253,10 +253,21 @@ namespace DMJukebox.Discord.Voice
         {
             while (!IsClosing)
             {
+                // Read bytes from the websocket over and over until the whole message has been processed
                 WebSocketReceiveResult result = await Socket.ReceiveAsync(ReceiveBufferSegment, CancelToken);
-                if (!result.EndOfMessage)
+                int receiveOffset = 0;
+                int totalBytesReceived = result.Count;
+                while (!result.EndOfMessage)
                 {
-                    throw new Exception("Too many bytes received (limit is 64k for now)");
+                    int bytesReceived = result.Count;
+                    receiveOffset += bytesReceived;
+                    if (receiveOffset >= ReceiveBuffer.Length)
+                    {
+                        throw new Exception("Too many bytes received (limit is 64k for now)");
+                    }
+                    ArraySegment<byte> segment = new ArraySegment<byte>(ReceiveBuffer, receiveOffset, ReceiveBuffer.Length - receiveOffset);
+                    result = await Socket.ReceiveAsync(segment, CancelToken);
+                    totalBytesReceived += result.Count;
                 }
 
                 switch (result.MessageType)
@@ -267,7 +278,7 @@ namespace DMJukebox.Discord.Voice
                         return;
 
                     case WebSocketMessageType.Text:
-                        string message = Encoding.UTF8.GetString(ReceiveBuffer, 0, result.Count);
+                        string message = Encoding.UTF8.GetString(ReceiveBuffer, 0, totalBytesReceived);
                         System.Diagnostics.Debug.WriteLine($"Received a message from the Voice Server: {message}");
                         Payload payload = JsonConvert.DeserializeObject<Payload>(message);
                         Task parseTask = Task.Run(() => HandleMessage(payload));
