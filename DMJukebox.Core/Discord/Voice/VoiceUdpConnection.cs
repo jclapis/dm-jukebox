@@ -277,7 +277,10 @@ namespace DMJukebox.Discord.Voice
             {
                 IsStopping = true;
             }
+            // Unblock the playback thread if it's stuck waiting for new audio frames
+            PlaybackBuffer.ReleasePlaybackWaiter();
             PlaybackTask.Wait();
+
             Timer.Stop();
             Timer.Reset();
             TimeOfNextSend = 0;
@@ -305,6 +308,10 @@ namespace DMJukebox.Discord.Voice
 
                 // Get playback data from the buffer first
                 PlaybackBuffer.WritePlaybackDataToAudioBuffer(PlaybackAudio, AudioTrackManager.NumberOfSamplesInPlaybackBuffer);
+                if(IsStopping)
+                {
+                    return;
+                }
 
                 // Write the sequence number in big-endian format
                 ushort sequenceNumber = Sequence;

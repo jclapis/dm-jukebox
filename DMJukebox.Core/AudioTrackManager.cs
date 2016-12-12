@@ -81,6 +81,14 @@ namespace DMJukebox
         /// the <see cref="IsClosing"/> flag in a thread-safe manner
         /// </summary>
         private readonly object StopLock;
+        
+        /// <summary>
+        /// This is a flag used in <see cref="PlaybackLoop"/> when it
+        /// detects that there are no more active tracks to play. If
+        /// there were some in the previous iteration, it needs to tell
+        /// the playback endpoint to stop.
+        /// </summary>
+        private bool WasPreviouslyPlaying;
 
         /// <summary>
         /// This is just a backing field for the <see cref="IsClosing"/>
@@ -299,6 +307,23 @@ namespace DMJukebox
                 // Wait until there's at least one track being played
                 if (ActiveTracks.Count == 0)
                 {
+                    // Stop the players if they were just playing, because now there's
+                    // nothing left to play.
+                    if (WasPreviouslyPlaying)
+                    {
+                        switch (PlaybackMode)
+                        {
+                            case PlaybackMode.LocalSpeakers:
+                                LocalPlayer.Stop();
+                                break;
+
+                            case PlaybackMode.Discord:
+                                Discord.Stop();
+                                break;
+                        }
+                        WasPreviouslyPlaying = false;
+                    }
+
                     ActiveTrackWaiter.WaitOne();
                     switch(PlaybackMode)
                     {
@@ -310,6 +335,7 @@ namespace DMJukebox
                             Discord.Start();
                             break;
                     }
+                    WasPreviouslyPlaying = true;
                 }
 
                 // Merge audio data from each of the active tracks into a single playback buffer

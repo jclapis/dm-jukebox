@@ -59,6 +59,13 @@ namespace DMJukebox
         private int AvailableData;
 
         /// <summary>
+        /// This is a flag that lets <see cref="WritePlaybackDataToAudioBuffer(IntPtr, int)"/> know
+        /// when the reader thread is actually closing instead of trying to read data, so it should
+        /// just break out and return without sending anything to the output buffers.
+        /// </summary>
+        private bool IsResetting;
+
+        /// <summary>
         /// Creates a new DiscordPlaybackBuffer instance.
         /// </summary>
         public DiscordPlaybackBuffer(int BufferSize)
@@ -144,6 +151,11 @@ namespace DMJukebox
             while (isNotReady)
             {
                 ReadNotifier.WaitOne();
+                if(IsResetting)
+                {
+                    IsResetting = false;
+                    return;
+                }
                 lock (Lock)
                 {
                     isNotReady = NumberOfSamplesToWrite > AvailableData;
@@ -156,6 +168,10 @@ namespace DMJukebox
             {
                 Marshal.Copy(InternalBuffer, CurrentReadPosition, AudioBuffer, NumberOfSamplesToWrite);
                 CurrentReadPosition += NumberOfSamplesToWrite;
+                if(CurrentReadPosition == BufferSize)
+                {
+                    CurrentReadPosition = 0;
+                }
             }
 
             // Otherwise, we have to break the operation into two writes because of wrap-around.
@@ -173,6 +189,18 @@ namespace DMJukebox
             }
             WriteNotifier.Set();
 
+        }
+
+        /// <summary>
+        /// Sometimes, the playback thread in <see cref="WritePlaybackDataToAudioBuffer(IntPtr, int)"/> 
+        /// is stuck waiting for new data to come in (for <see cref="ReadNotifier"/> to get set) when 
+        /// we're actually closing down the playback thread. Use this to set it and unblock the playback
+        /// thread while setting the flag that tells it we're shutting down so it just returns.
+        /// </summary>
+        public void ReleasePlaybackWaiter()
+        {
+            IsResetting = true;
+            ReadNotifier.Set();
         }
 
         /// <summary>
