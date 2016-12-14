@@ -121,7 +121,7 @@
     <Compile Include="Interop\SoundIoInterop.cs" />
     <Compile Include="Interop\SWResampleInterop.cs" />
     <Compile Include="LocalSoundPlayer.cs" />
-    <Compile Include="AudioTrackManager.cs" />
+    <Compile Include="JukeboxCore.cs" />
     <Compile Include="Opus\OPUS_APPLICATION.cs" />
     <Compile Include="Opus\OpusChannelCount.cs" />
     <Compile Include="Opus\OpusErrorCode.cs" />

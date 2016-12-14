@@ -37,7 +37,7 @@ namespace DMJukebox
         /// This is a handle to the manager for this stream, so this can notify it when playback
         /// starts and stops.
         /// </summary>
-        private AudioTrackManager Manager;
+        private JukeboxCore Manager;
 
         /// <summary>
         /// This is the <see cref="AVFormatContext"/> for this file.
@@ -158,7 +158,7 @@ namespace DMJukebox
         /// This doesn't have to be unsafe, but I do a lot of struct reading and writing and honestly I'm
         /// just too lazy to copy it back and forth from unmanaged memory every time something changes.
         /// </remarks>
-        unsafe internal AudioTrack(AudioTrackManager Manager, string FilePath, string Name = null, float Volume = 1.0f, bool Loop = false)
+        unsafe internal AudioTrack(JukeboxCore Manager, string FilePath, string Name = null, float Volume = 1.0f, bool Loop = false)
         {
             // So first things first, let's make sure the file path is actually valid.
             if(!File.Exists(FilePath))

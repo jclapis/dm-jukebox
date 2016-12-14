@@ -12,16 +12,22 @@ using System.Windows;
 namespace DMJukebox
 {
     /// <summary>
-    /// Interaction logic for TrackInfoWindow.xaml
+    /// TrackInfoWindow shows a few statistics / details about a track.
     /// </summary>
     internal partial class TrackInfoWindow : Window
     {
+        /// <summary>
+        /// Creates a new TrackInfoWindow instance.
+        /// </summary>
+        /// <param name="TrackName">The name of the track</param>
+        /// <param name="Info">The info for the track</param>
         public TrackInfoWindow(string TrackName, TrackInfo Info)
         {
             InitializeComponent();
             Title = $"Info for {TrackName}";
             PathBlock.Text = Info.Path;
-
+            
+            // Duration formatting
             TimeSpan duration = Info.Duration;
             StringBuilder builder = new StringBuilder();
             if(duration.Hours > 0)

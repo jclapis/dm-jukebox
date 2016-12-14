@@ -17,10 +17,10 @@ using System.Threading.Tasks;
 namespace DMJukebox
 {
     /// <summary>
-    /// AudioTrackManager is the main interface for DMJukebox's core. This is what you use to
-    /// create AudioTracks and initialize things.
+    /// JukeboxCore is the main interface for DMJukebox's core. This is what you use to
+    /// create <see cref="AudioTrack"/>s, connect to Discord, and initialize things.
     /// </summary>
-    public class AudioTrackManager : IDisposable
+    public class JukeboxCore : IDisposable
     {
         /// <summary>
         /// A synchronization object for adding or removing tracks
@@ -141,18 +141,18 @@ namespace DMJukebox
 
         /// <summary>
         /// Initializes FFmpeg when the program starts up / the first time
-        /// AudioTrackManager gets used
+        /// JukeboxCore gets used
         /// </summary>
-        static AudioTrackManager()
+        static JukeboxCore()
         {
             AVFormatInterop.av_register_all();
         }
 
         /// <summary>
-        /// Creates a new AudioTrackManager instance and initializes the audio
+        /// Creates a new JukeboxCore instance and initializes the audio
         /// loading / playback system.
         /// </summary>
-        public AudioTrackManager()
+        public JukeboxCore()
         {
             // Load the config file if it exists, or create an empty one if it doesn't.
             if(File.Exists(ConfigurationFile))

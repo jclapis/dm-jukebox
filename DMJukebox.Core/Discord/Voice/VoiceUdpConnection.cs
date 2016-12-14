@@ -184,7 +184,7 @@ namespace DMJukebox.Discord.Voice
             SendBuffer[9] = ssrcPointer[2];
             SendBuffer[10] = ssrcPointer[1];
             SendBuffer[11] = ssrcPointer[0];
-            PlaybackBuffer = new DiscordPlaybackBuffer(AudioTrackManager.NumberOfSamplesInPlaybackBuffer * 20);
+            PlaybackBuffer = new DiscordPlaybackBuffer(JukeboxCore.NumberOfSamplesInPlaybackBuffer * 20);
 
             // Set up Opus
             OpusErrorCode encoderCreationResult;
@@ -197,7 +197,7 @@ namespace DMJukebox.Discord.Voice
             // Set up the timer
             Timer = new Stopwatch();
             double ticksPerMillisecond = Stopwatch.Frequency / 1000.0;
-            double millisecondsPerFrame = AudioTrackManager.NumberOfSamplesInPlaybackBuffer / 48.0; // Samples per frame / 48000 Hz * 1000 ms/s
+            double millisecondsPerFrame = JukeboxCore.NumberOfSamplesInPlaybackBuffer / 48.0; // Samples per frame / 48000 Hz * 1000 ms/s
             TicksPerFrame = (long)(ticksPerMillisecond * millisecondsPerFrame);
         }
 
@@ -296,7 +296,7 @@ namespace DMJukebox.Discord.Voice
         private void PlayAudioLoop()
         {
             int outputBufferSize = 4096; // 4096 is just a crazy high upper bound, it'll never get this big
-            IntPtr rawPlaybackAudioBuffer = Marshal.AllocHGlobal(AudioTrackManager.NumberOfSamplesInPlaybackBuffer * 2 * sizeof(float));
+            IntPtr rawPlaybackAudioBuffer = Marshal.AllocHGlobal(JukeboxCore.NumberOfSamplesInPlaybackBuffer * 2 * sizeof(float));
             IntPtr opusEncodedAudioBuffer = Marshal.AllocHGlobal(outputBufferSize); 
             try
             {
@@ -311,7 +311,7 @@ namespace DMJukebox.Discord.Voice
                     }
 
                     // Get playback data from the buffer first
-                    PlaybackBuffer.WritePlaybackDataToAudioBuffer(rawPlaybackAudioBuffer, AudioTrackManager.NumberOfSamplesInPlaybackBuffer);
+                    PlaybackBuffer.WritePlaybackDataToAudioBuffer(rawPlaybackAudioBuffer, JukeboxCore.NumberOfSamplesInPlaybackBuffer);
                     if (IsStopping)
                     {
                         return;
@@ -343,7 +343,7 @@ namespace DMJukebox.Discord.Voice
         private int EncodeRawAudioWithOpus(IntPtr RawInputBuffer, IntPtr EncodedOutputBuffer, int OutputBufferSize)
         {
             int encodedDataSize = OpusInterop.opus_encode_float(
-                OpusEncoderPtr, RawInputBuffer, AudioTrackManager.NumberOfSamplesInPlaybackBuffer, EncodedOutputBuffer, OutputBufferSize);
+                OpusEncoderPtr, RawInputBuffer, JukeboxCore.NumberOfSamplesInPlaybackBuffer, EncodedOutputBuffer, OutputBufferSize);
             if (encodedDataSize < 0)
             {
                 OpusErrorCode error = (OpusErrorCode)encodedDataSize;
@@ -414,7 +414,7 @@ namespace DMJukebox.Discord.Voice
             {
                 Sequence++;
             }
-            Timestamp = unchecked(Timestamp + AudioTrackManager.NumberOfSamplesInPlaybackBuffer); // TODO: clean this up
+            Timestamp = unchecked(Timestamp + JukeboxCore.NumberOfSamplesInPlaybackBuffer); // TODO: clean this up
 
             // Finally, set the time that the next frame needs to be sent.
             TimeOfNextSend += TicksPerFrame;
