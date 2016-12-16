@@ -48,7 +48,7 @@ namespace DMJukebox.Interop
         /// <summary>
         /// The Dylib for OSX
         /// </summary>
-        private const string MacAVUtilLibrary = "avutil-55.so";
+        private const string MacAVUtilLibrary = "avutil-55.dylib";
 
         // These regions contain the DllImport function definitions for each OS. Since we can't really set
         // the path of DllImport dynamically (and loading them dynamically using LoadLibrary / dlopen is complicated

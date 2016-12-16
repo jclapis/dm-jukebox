@@ -130,7 +130,7 @@ namespace DMJukebox.Interop
 
         // These fields represent function pointers towards each of the extern functions. They get set
         // to the proper platform-specific functions by the static constructor. For example, if this is
-        // running on a Windows machine, each of these pointers will point to the various swr_XXX_windows
+        // running on a Windows machine, each of these pointers will point to the various XXX_windows
         // extern functions listed above.
 
         private static swr_alloc_delegate swr_alloc_impl;
