@@ -64,20 +64,6 @@ namespace DMJukebox
         private readonly MainWindow MainWindow;
 
         /// <summary>
-        /// Temporary constructor for demo / debug purposes - this will
-        /// go away once I get the whole playlist system working.
-        /// </summary>
-        public TrackControl()
-        {
-            InitializeComponent();
-            HandleClickOutOfNameBoxDelegate = new MouseButtonEventHandler(HandleClickOutOfNameBox);
-            Uri playIconUri = new Uri("pack://application:,,,/Resources/Play.png");
-            Uri stopIconUri = new Uri("pack://application:,,,/Resources/Stop.png");
-            PlayIcon = new BitmapImage(playIconUri);
-            StopIcon = new BitmapImage(stopIconUri);
-        }
-
-        /// <summary>
         /// Creates a new TrackControl instance.
         /// </summary>
         /// <param name="Track">The track that this control represents</param>
@@ -89,6 +75,9 @@ namespace DMJukebox
             this.MainWindow = MainWindow;
 
             NameLabelBlock.Text = Track.Name;
+            LoopBox.IsChecked = Track.IsLoopEnabled;
+            VolumeSlider.Value = Track.Volume;
+
             HandleClickOutOfNameBoxDelegate = new MouseButtonEventHandler(HandleClickOutOfNameBox);
             Uri playIconUri = new Uri("pack://application:,,,/Resources/Play.png");
             Uri stopIconUri = new Uri("pack://application:,,,/Resources/Stop.png");

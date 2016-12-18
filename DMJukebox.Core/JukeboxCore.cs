@@ -428,6 +428,10 @@ namespace DMJukebox
             {
                 throw new Exception($"A track has already been added for file \"{FilePath}\"");
             }
+            if(string.IsNullOrWhiteSpace(Name))
+            {
+                Name = Path.GetFileNameWithoutExtension(FilePath);
+            }
             lock (ActiveTrackLock)
             {
                 AudioTrack track = new AudioTrack
@@ -442,7 +446,9 @@ namespace DMJukebox
                 {
                     Order = Playlist._Tracks.Count;
                 }
+                Playlist._Tracks.Add(track);
                 Tracks.Add(FilePath, track);
+                SaveConfig();
                 return track;
             }
         }
@@ -638,7 +644,7 @@ namespace DMJukebox
                     // Shut down the playback task and wait for it to return
                     IsClosing = true;
                     ActiveTrackWaiter.Set();
-                    PlayTask.Wait();
+                    //PlayTask.Wait();
 
                     LocalPlayer.Dispose();
                     Discord.Dispose();

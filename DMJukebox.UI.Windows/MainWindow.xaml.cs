@@ -19,6 +19,7 @@
 
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -43,6 +44,11 @@ namespace DMJukebox
         private readonly JukeboxCore Core;
 
         /// <summary>
+        /// A lookup from playlists to their UI controls
+        /// </summary>
+        private readonly Dictionary<Playlist, Expander> PlaylistControlMap;
+
+        /// <summary>
         /// Creates a new MainWindow instance.
         /// </summary>
         public MainWindow()
@@ -50,6 +56,7 @@ namespace DMJukebox
             InitializeComponent();
             try
             {
+                PlaylistControlMap = new Dictionary<Playlist, Expander>();
                 Core = new JukeboxCore();
 
                 // Set up the playback mode dropdown
@@ -67,20 +74,7 @@ namespace DMJukebox
 
                 foreach (Playlist playlist in Core.Playlists)
                 {
-                    PlaylistGrid.RowDefinitions.Add(new RowDefinition
-                    {
-                        Height = GridLength.Auto
-                    });
-                    Expander expander = new Expander
-                    {
-                        Header = playlist.Name,
-                        BorderBrush = new SolidColorBrush(Colors.SlateGray),
-                        BorderThickness = new Thickness(1),
-                        Margin = new Thickness(0, 5, 0, 0),
-                        VerticalAlignment = VerticalAlignment.Top
-                    };
-                    PlaylistGrid.Children.Add(expander);
-                    Grid.SetRow(expander, PlaylistGrid.RowDefinitions.Count - 1);
+                    AddPlaylist(playlist);
                 }
             }
             catch (Exception ex)
@@ -132,14 +126,16 @@ namespace DMJukebox
                 string filename = dialog.FileName;
                 try
                 {
-                    AudioTrack track = Core.CreateTrack(filename, Core.Playlists.Last()); // Temporarily use the last playlist until I fix the UI
-                    ActiveTrackGrid.RowDefinitions.Add(new RowDefinition
+                    Playlist playlist = Core.Playlists.Last();
+                    AudioTrack track = Core.CreateTrack(filename, playlist); // Temporarily use the last playlist until I fix the UI
+                    AddTrack(track, playlist);
+                    /*ActiveTrackGrid.RowDefinitions.Add(new RowDefinition
                     {
                         Height = GridLength.Auto
                     });
                     TrackControl control = new TrackControl(track, this);
                     ActiveTrackGrid.Children.Add(control);
-                    Grid.SetRow(control, ActiveTrackGrid.Children.Count - 1);
+                    Grid.SetRow(control, ActiveTrackGrid.Children.Count - 1);*/
                 }
                 catch (Exception ex)
                 {
@@ -219,7 +215,7 @@ namespace DMJukebox
         /// </summary>
         /// <param name="Sender">Not used</param>
         /// <param name="Args">Not used</param>
-        private void AddPlaylist(object Sender, RoutedEventArgs Args)
+        private void HandleAddPlaylistButton(object Sender, RoutedEventArgs Args)
         {
             AddPlaylistWindow window = new AddPlaylistWindow();
             window.Owner = this;
@@ -227,22 +223,57 @@ namespace DMJukebox
             if(result == true)
             {
                 string name = window.PlaylistName;
-                Core.CreatePlaylist(name);
-                PlaylistGrid.RowDefinitions.Add(new RowDefinition
-                {
-                    Height = GridLength.Auto
-                });
-                Expander expander = new Expander
-                {
-                    Header = name,
-                    BorderBrush = new SolidColorBrush(Colors.SlateGray),
-                    BorderThickness = new Thickness(1),
-                    Margin = new Thickness(0, 5, 0, 0),
-                    VerticalAlignment = VerticalAlignment.Top
-                };
-                PlaylistGrid.Children.Add(expander);
-                Grid.SetRow(expander, PlaylistGrid.RowDefinitions.Count - 1);
+                Playlist playlist = Core.CreatePlaylist(name);
+                AddPlaylist(playlist);
             }
+        }
+
+        /// <summary>
+        /// Adds a playlist to the UI.
+        /// </summary>
+        /// <param name="Playlist">The playlist to add</param>
+        private void AddPlaylist(Playlist Playlist)
+        {
+            // Create the playlist's expander
+            PlaylistGrid.RowDefinitions.Add(new RowDefinition
+            {
+                Height = GridLength.Auto
+            });
+            Expander expander = new Expander
+            {
+                Header = Playlist.Name,
+                BorderBrush = new SolidColorBrush(Colors.SlateGray),
+                BorderThickness = new Thickness(1),
+                Margin = new Thickness(0, 5, 0, 0),
+                VerticalAlignment = VerticalAlignment.Top,
+                Content = new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal
+                }
+            };
+            PlaylistGrid.Children.Add(expander);
+            Grid.SetRow(expander, PlaylistGrid.RowDefinitions.Count - 1);
+            PlaylistControlMap.Add(Playlist, expander);
+
+            // Add all of the tracks from that playlist to the UI
+            foreach(AudioTrack track in Playlist.Tracks)
+            {
+                AddTrack(track, Playlist);
+            }
+        }
+
+        /// <summary>
+        /// Adds a <see cref="TrackControl"/> to the UI for the provided
+        /// track, inside the provided playlist.
+        /// </summary>
+        /// <param name="Track">The track to add a control for</param>
+        /// <param name="Playlist">The playlist the track belongs to</param>
+        private void AddTrack(AudioTrack Track, Playlist Playlist)
+        {
+            Expander expander = PlaylistControlMap[Playlist];
+            TrackControl control = new TrackControl(Track, this);
+            WrapPanel panel = (WrapPanel)expander.Content;
+            panel.Children.Add(control);
         }
 
     }
