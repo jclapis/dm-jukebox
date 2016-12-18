@@ -36,7 +36,7 @@
         <Menu Grid.Row="0">
             <MenuItem Header="_File" Height="26">
                 <MenuItem Header="Add _Track" Click="HandleAddTrackButton"/>
-                <MenuItem Header="Add _Playlist"/>
+                <MenuItem Header="Add _Playlist" Click="AddPlaylist"/>
                 <MenuItem Header="E_xit" Click="HandleExitButton"/>
             </MenuItem>
             <MenuItem Header="_Help" Height="26">
@@ -72,50 +72,9 @@
                 </Grid>
             </GroupBox>
 
-            <GroupBox Grid.Column="1" Header="Tracks" Margin="5">
+            <GroupBox Grid.Column="1" Header="Playlists" Margin="5">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Expander Grid.Row="0" Header="Sound Effects" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
-                            <WrapPanel Orientation="Horizontal" Background="#FFE5E5E5">
-                            </WrapPanel>
-                        </Expander>
-                        <Expander Grid.Row="1" Header="Uncategorized" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
-                            <WrapPanel Orientation="Horizontal" Background="#FFE5E5E5">
-                            </WrapPanel>
-                        </Expander>
-                        <Expander Grid.Row="2" Header="Tension" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
-                            <WrapPanel x:Name="TensionPanel" Orientation="Horizontal">
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                                <dm:TrackControl></dm:TrackControl>
-                            </WrapPanel>
-                        </Expander>
-                        <Expander Grid.Row="3" Header="Battle Music" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
-                            <WrapPanel Orientation="Horizontal" Background="#FFE5E5E5">
-                            </WrapPanel>
-                        </Expander>
-                        <Expander Grid.Row="4" Header="Town Ambience" BorderBrush="SlateGray" BorderThickness="1" Margin="0,5,0,0" VerticalAlignment="Top">
-                            <WrapPanel x:Name="BattlePanel" Orientation="Horizontal" Background="#FFE5E5E5">
-                                <dm:TrackControl/>
-                                <dm:TrackControl/>
-                                <dm:TrackControl/>
-                            </WrapPanel>
-                        </Expander>
-                    </Grid>
+                    <Grid x:Name="PlaylistGrid"/>
                 </ScrollViewer>
             </GroupBox>
         </Grid>

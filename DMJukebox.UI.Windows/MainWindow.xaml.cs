@@ -20,9 +20,11 @@
 using Microsoft.Win32;
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace DMJukebox
 {
@@ -62,25 +64,30 @@ namespace DMJukebox
                     Value = PlaybackMode.Discord
                 });
                 PlaybackModeBox.SelectedIndex = 0;
+
+                foreach (Playlist playlist in Core.Playlists)
+                {
+                    PlaylistGrid.RowDefinitions.Add(new RowDefinition
+                    {
+                        Height = GridLength.Auto
+                    });
+                    Expander expander = new Expander
+                    {
+                        Header = playlist.Name,
+                        BorderBrush = new SolidColorBrush(Colors.SlateGray),
+                        BorderThickness = new Thickness(1),
+                        Margin = new Thickness(0, 5, 0, 0),
+                        VerticalAlignment = VerticalAlignment.Top
+                    };
+                    PlaylistGrid.Children.Add(expander);
+                    Grid.SetRow(expander, PlaylistGrid.RowDefinitions.Count - 1);
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error during startup: {ex.GetDetails()}");
                 Application.Current.Shutdown();
             }
-
-            // These are placeholder tracks to help test the playlist resizing function
-            ((TrackControl)TensionPanel.Children[0]).SetName("Woedica");
-            ((TrackControl)TensionPanel.Children[1]).SetName("Temple of Skean");
-            ((TrackControl)TensionPanel.Children[2]).SetName("Veiled Mist");
-            ((TrackControl)TensionPanel.Children[3]).SetName("Ancient Sorrow");
-            ((TrackControl)TensionPanel.Children[4]).SetName("Succession of Witches");
-            ((TrackControl)TensionPanel.Children[5]).SetName("The Monastery");
-            ((TrackControl)TensionPanel.Children[6]).SetName("13th Age - Mystery 2");
-            ((TrackControl)TensionPanel.Children[7]).SetName("LIMB Clinic");
-            ((TrackControl)TensionPanel.Children[8]).SetName("Od Nua B");
-            ((TrackControl)TensionPanel.Children[9]).SetName("Unmarked Stone");
-
 
             // Ignore this, old FFmpeg debugging code
             /* LoggerDelegate = Logger;
@@ -105,7 +112,10 @@ namespace DMJukebox
         /// <param name="Args">Not used</param>
         protected override void OnClosing(CancelEventArgs Args)
         {
-            Core.Dispose();
+            if(Core != null)
+            {
+                Core.Dispose();
+            }
         }
 
         /// <summary>
@@ -122,7 +132,7 @@ namespace DMJukebox
                 string filename = dialog.FileName;
                 try
                 {
-                    AudioTrack track = Core.CreateTrack(filename);
+                    AudioTrack track = Core.CreateTrack(filename, Core.Playlists.Last()); // Temporarily use the last playlist until I fix the UI
                     ActiveTrackGrid.RowDefinitions.Add(new RowDefinition
                     {
                         Height = GridLength.Auto
@@ -201,6 +211,37 @@ namespace DMJukebox
             if (settingsWindow.ShowDialog() == true)
             {
                 Core.SetDiscordSettings(settingsWindow.Settings);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new playlist.
+        /// </summary>
+        /// <param name="Sender">Not used</param>
+        /// <param name="Args">Not used</param>
+        private void AddPlaylist(object Sender, RoutedEventArgs Args)
+        {
+            AddPlaylistWindow window = new AddPlaylistWindow();
+            window.Owner = this;
+            bool? result = window.ShowDialog();
+            if(result == true)
+            {
+                string name = window.PlaylistName;
+                Core.CreatePlaylist(name);
+                PlaylistGrid.RowDefinitions.Add(new RowDefinition
+                {
+                    Height = GridLength.Auto
+                });
+                Expander expander = new Expander
+                {
+                    Header = name,
+                    BorderBrush = new SolidColorBrush(Colors.SlateGray),
+                    BorderThickness = new Thickness(1),
+                    Margin = new Thickness(0, 5, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Top
+                };
+                PlaylistGrid.Children.Add(expander);
+                Grid.SetRow(expander, PlaylistGrid.RowDefinitions.Count - 1);
             }
         }
 

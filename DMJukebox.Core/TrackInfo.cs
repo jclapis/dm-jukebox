@@ -32,11 +32,6 @@ namespace DMJukebox
     public class TrackInfo
     {
         /// <summary>
-        /// The filesystem path for the audio track's file.
-        /// </summary>
-        public string Path { get; }
-
-        /// <summary>
         /// The name of the codec used to encode the file
         /// </summary>
         public string CodecName { get; }
@@ -64,15 +59,13 @@ namespace DMJukebox
         /// <summary>
         /// Creates a new TrackInfo instance.
         /// </summary>
-        /// <param name="Path">The filesystem path for the audio track's file.</param>
         /// <param name="CodecName">The name of the codec used to encode the file</param>
         /// <param name="NumberOfChannels">The number of channels contained within the audio stream</param>
         /// <param name="Bitrate">The bit rate (bits per second) of the audio track </param>
         /// <param name="SampleRate">The sample rate (number of samples per second) for the track</param>
         /// <param name="Duration">The length of the track</param>
-        internal TrackInfo(string Path, string CodecName, int NumberOfChannels, long Bitrate, int SampleRate, TimeSpan Duration)
+        internal TrackInfo(string CodecName, int NumberOfChannels, long Bitrate, int SampleRate, TimeSpan Duration)
         {
-            this.Path = Path;
             this.CodecName = CodecName;
             this.NumberOfChannels = NumberOfChannels;
             this.Bitrate = Bitrate;

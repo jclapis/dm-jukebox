@@ -32,12 +32,13 @@ namespace DMJukebox
         /// Creates a new TrackInfoWindow instance.
         /// </summary>
         /// <param name="TrackName">The name of the track</param>
+        /// <param name="Path">The file path of the track</param>
         /// <param name="Info">The info for the track</param>
-        public TrackInfoWindow(string TrackName, TrackInfo Info)
+        public TrackInfoWindow(string TrackName, string Path, TrackInfo Info)
         {
             InitializeComponent();
             Title = $"Info for {TrackName}";
-            PathBlock.Text = Info.Path;
+            PathBlock.Text = Path;
             
             // Duration formatting
             TimeSpan duration = Info.Duration;

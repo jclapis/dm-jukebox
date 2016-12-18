@@ -17,28 +17,35 @@
  * 
  * ====================================================================== */
 
-using Newtonsoft.Json;
-using System.Collections.Generic;
+using System.Windows;
 
 namespace DMJukebox
 {
     /// <summary>
-    /// Configuration stores the persistent configuration settings for the 
-    /// Jukebox core.
+    /// This window is used to get the name for a new playlist.
     /// </summary>
-    [JsonObject]
-    public class Configuration
+    internal partial class AddPlaylistWindow : Window
     {
-        /// <summary>
-        /// The settings for connecting to Discord
-        /// </summary>
-        [JsonProperty]
-        public DiscordSettings DiscordSettings { get; set; }
+        public string PlaylistName { get; private set; }
 
         /// <summary>
-        /// The serialized playlists
+        /// Creates a new AddPlaylistWindow instance.
         /// </summary>
-        [JsonProperty]
-        internal List<Playlist> Playlists { get; set; }
+        public AddPlaylistWindow()
+        {
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// Submits the name of the playlist.
+        /// </summary>
+        /// <param name="Sender">Not used</param>
+        /// <param name="Args">Not used</param>
+        private void DoneButton_Click(object Sender, RoutedEventArgs Args)
+        {
+            PlaylistName = PlaylistNameBox.Text;
+            DialogResult = true;
+        }
+
     }
 }

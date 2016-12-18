@@ -234,7 +234,7 @@ namespace DMJukebox
         /// <param name="Args">Not used</param>
         private void HandleLoopBoxChecked(object Sender, RoutedEventArgs Args)
         {
-            Track.Loop = true;
+            Track.IsLoopEnabled = true;
         }
 
         /// <summary>
@@ -244,7 +244,7 @@ namespace DMJukebox
         /// <param name="Args">Not used</param>
         private void HandleLoopBoxUnchecked(object Sender, RoutedEventArgs Args)
         {
-            Track.Loop = false;
+            Track.IsLoopEnabled = false;
         }
 
         /// <summary>
@@ -269,7 +269,7 @@ namespace DMJukebox
         /// <param name="Args">Not used</param>
         private void HandleInfoButtonClick(object Sender, RoutedEventArgs Args)
         {
-            TrackInfoWindow infoWindow = new TrackInfoWindow(Track.Name, Track.Info);
+            TrackInfoWindow infoWindow = new TrackInfoWindow(Track.Name, Track.FilePath, Track.Info);
             infoWindow.Owner = MainWindow;
             infoWindow.ShowDialog();
         }

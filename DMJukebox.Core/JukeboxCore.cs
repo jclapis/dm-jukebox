@@ -22,6 +22,7 @@ using DMJukebox.Interop;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,21 @@ namespace DMJukebox
     /// </summary>
     public class JukeboxCore : IDisposable
     {
+        /// <summary>
+        /// Comparer used for sorting <see cref="Playlist"/> objects.
+        /// </summary>
+        private static readonly PlaylistComparer PlaylistComparer;
+
+        /// <summary>
+        /// Comparer used for sorting <see cref="AudioTrack"/> objects. 
+        /// </summary>
+        private static readonly AudioTrackComparer AudioTrackComparer;
+
+        /// <summary>
+        /// This is the internal collection of playlists.
+        /// </summary>
+        private readonly List<Playlist> _Playlists;
+
         /// <summary>
         /// A synchronization object for adding or removing tracks
         /// from the <see cref="ActiveTracks"/> collection.
@@ -93,7 +109,7 @@ namespace DMJukebox
         /// the <see cref="IsClosing"/> flag in a thread-safe manner
         /// </summary>
         private readonly object StopLock;
-        
+
         /// <summary>
         /// This is a flag used in <see cref="PlaybackLoop"/> when it
         /// detects that there are no more active tracks to play. If
@@ -152,12 +168,25 @@ namespace DMJukebox
         public Configuration Configuration { get; }
 
         /// <summary>
+        /// The playlists that have been added / loaded into the system
+        /// </summary>
+        public IReadOnlyCollection<Playlist> Playlists
+        {
+            get
+            {
+                return new ReadOnlyCollection<Playlist>(_Playlists);
+            }
+        }
+
+        /// <summary>
         /// Initializes FFmpeg when the program starts up / the first time
         /// JukeboxCore gets used
         /// </summary>
         static JukeboxCore()
         {
             AVFormatInterop.av_register_all();
+            PlaylistComparer = new PlaylistComparer();
+            AudioTrackComparer = new AudioTrackComparer();
         }
 
         /// <summary>
@@ -167,7 +196,7 @@ namespace DMJukebox
         public JukeboxCore()
         {
             // Load the config file if it exists, or create an empty one if it doesn't.
-            if(File.Exists(ConfigurationFile))
+            if (File.Exists(ConfigurationFile))
             {
                 using (FileStream stream = new FileStream(ConfigurationFile, FileMode.Open, FileAccess.Read))
                 using (StreamReader reader = new StreamReader(stream))
@@ -179,6 +208,8 @@ namespace DMJukebox
             else
             {
                 Configuration = new Configuration();
+                Configuration.DiscordSettings = new DiscordSettings();
+                Configuration.Playlists = new List<Playlist>();
             }
 
             // Initialization
@@ -194,9 +225,27 @@ namespace DMJukebox
 
             // Set up the Discord client with the config settings
             Discord = new DiscordClient();
-            if (Configuration.DiscordSettings != null)
+            SetDiscordSettings(Configuration.DiscordSettings);
+
+            // Set up the playlists and tracks
+            _Playlists = Configuration.Playlists;
+            if (_Playlists.Count > 0)
             {
-                SetDiscordSettings(Configuration.DiscordSettings);
+                _Playlists.Sort(PlaylistComparer);
+                foreach (Playlist playlist in _Playlists)
+                {
+                    if(playlist._Tracks == null)
+                    {
+                        playlist._Tracks = new List<AudioTrack>();
+                    }
+                    playlist._Tracks.Sort(AudioTrackComparer);
+                    foreach (AudioTrack track in playlist._Tracks)
+                    {
+                        track.Manager = this;
+                        track.Load();
+                        Tracks.Add(track.FilePath, track);
+                    }
+                }
             }
         }
 
@@ -241,7 +290,7 @@ namespace DMJukebox
         /// </summary>
         public void StopAllTracks()
         {
-            lock(ActiveTrackLock)
+            lock (ActiveTrackLock)
             {
                 foreach (AudioTrack track in ActiveTracks)
                 {
@@ -252,12 +301,128 @@ namespace DMJukebox
         }
 
         /// <summary>
-        /// Creates a new audio track from the file at the given path.
+        /// Creates a new playlist.
+        /// </summary>
+        /// <param name="Name">The playlist's name</param>
+        /// <param name="IsLoopEnabled">Whether looping should be enabled for the playlist,
+        /// so it repeats once its reached the end of its tracks</param>
+        /// <param name="IsShuffleEnabled">Whether shuffle should be enabled for the playlist,
+        /// so the tracks are played in random order</param>
+        /// <param name="Order">The order of the playlist relative to the other playlists</param>
+        /// <returns></returns>
+        public Playlist CreatePlaylist(string Name, bool IsLoopEnabled = false, bool IsShuffleEnabled = false, int Order = -1)
+        {
+            Playlist playlist = new Playlist
+            {
+                Name = Name,
+                IsLoopEnabled = IsLoopEnabled,
+                IsShuffleEnabled = IsShuffleEnabled,
+                _Order = Order
+            };
+            if (Order == -1)
+            {
+                playlist._Order = _Playlists.Count;
+            }
+            _Playlists.Add(playlist);
+            SaveConfig();
+            return playlist;
+        }
+
+        /// <summary>
+        /// Changes the order of a playlist and updates the others to reflect the
+        /// new order.
+        /// </summary>
+        /// <param name="Playlist">The playlist to update</param>
+        /// <param name="NewOrder">The new order to set for the playlist</param>
+        internal void UpdatePlaylistOrder(Playlist Playlist, int NewOrder)
+        {
+            if (Playlist._Order == NewOrder)
+            {
+                return;
+            }
+
+            // Clamp the new order to the proper bounds
+            if (NewOrder < 0)
+            {
+                NewOrder = 0;
+            }
+            if (NewOrder >= _Playlists.Count)
+            {
+                NewOrder = _Playlists.Count - 1;
+            }
+
+            // Handle the case where the playlist is moved down
+            if (Playlist._Order < NewOrder)
+            {
+                foreach (Playlist otherPlaylist in _Playlists)
+                {
+                    if (ReferenceEquals(otherPlaylist, Playlist))
+                    {
+                        continue;
+                    }
+                    if (otherPlaylist._Order > Playlist._Order &&
+                        otherPlaylist._Order <= NewOrder)
+                    {
+                        otherPlaylist._Order--;
+                    }
+                }
+            }
+
+            // Handle the case where the playlist is moved up
+            else
+            {
+                foreach (Playlist otherPlaylist in _Playlists)
+                {
+                    if (ReferenceEquals(otherPlaylist, Playlist))
+                    {
+                        continue;
+                    }
+                    if (otherPlaylist._Order < Playlist._Order &&
+                        otherPlaylist._Order >= NewOrder)
+                    {
+                        otherPlaylist._Order++;
+                    }
+                }
+            }
+            Playlist._Order = NewOrder;
+        }
+
+        /// <summary>
+        /// Removes a playlist from the system.
+        /// </summary>
+        /// <param name="Playlist"></param>
+        public void RemovePlaylist(Playlist Playlist)
+        {
+            _Playlists.Remove(Playlist);
+            
+            foreach(AudioTrack track in Playlist._Tracks)
+            {
+                track.Stop();
+                Tracks.Remove(track.FilePath);
+                track.Dispose();
+            }
+
+            foreach(Playlist otherPlaylist in _Playlists)
+            {
+                if(otherPlaylist._Order > Playlist._Order)
+                {
+                    otherPlaylist._Order--;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates a new audio track.
         /// </summary>
         /// <param name="FilePath">The path of the media file to load</param>
+        /// <param name="Playlist">The playlist to add the track to</param>
+        /// <param name="Name">The name of the track</param>
+        /// <param name="IsLoopEnabled">Whether or not the track should loop when it ends</param>
+        /// <param name="Volume">The volume level for the track</param>
+        /// <param name="Order">The order of the track in its parent playlist</param>
         /// <returns>An audio track representing the first audio stream
         /// contained within the file, ready for playback.</returns>
-        public AudioTrack CreateTrack(string FilePath)
+        public AudioTrack CreateTrack(string FilePath, Playlist Playlist, string Name = null, bool IsLoopEnabled = false, float Volume = 1.0f, int Order = -1)
         {
             if (Tracks.ContainsKey(FilePath))
             {
@@ -265,9 +430,20 @@ namespace DMJukebox
             }
             lock (ActiveTrackLock)
             {
-                AudioTrack stream = new AudioTrack(this, FilePath);
-                Tracks.Add(FilePath, stream);
-                return stream;
+                AudioTrack track = new AudioTrack
+                {
+                    Manager = this,
+                    FilePath = FilePath,
+                    Name = Name,
+                    IsLoopEnabled = IsLoopEnabled,
+                    Volume = Volume
+                };
+                if (Order == -1)
+                {
+                    Order = Playlist._Tracks.Count;
+                }
+                Tracks.Add(FilePath, track);
+                return track;
             }
         }
 
@@ -296,7 +472,7 @@ namespace DMJukebox
         /// <param name="Track">The track to remove</param>
         internal void RemoveTrackFromPlaybackList(AudioTrack Track)
         {
-            lock(ActiveTrackLock)
+            lock (ActiveTrackLock)
             {
                 ActiveTracks.Remove(Track);
                 Track.Reset();
@@ -337,11 +513,11 @@ namespace DMJukebox
                     }
 
                     ActiveTrackWaiter.WaitOne();
-                    if(IsClosing)
+                    if (IsClosing)
                     {
                         return;
                     }
-                    switch(PlaybackMode)
+                    switch (PlaybackMode)
                     {
                         case PlaybackMode.LocalSpeakers:
                             LocalPlayer.Start();
@@ -407,7 +583,7 @@ namespace DMJukebox
 
                 // Now the merge buffer has the aggregated sound data from all of the streams, with volume control already done,
                 // so all that's left to do is send the data off to the output.
-                switch(PlaybackMode)
+                switch (PlaybackMode)
                 {
                     case PlaybackMode.LocalSpeakers:
                         LocalPlayer.AddPlaybackData(PlaybackBuffer, maxSamplesReceived);
@@ -432,7 +608,7 @@ namespace DMJukebox
                         // Clean up if playback is done.
                         if (ActiveTracks.Count == 0)
                         {
-                            switch(PlaybackMode)
+                            switch (PlaybackMode)
                             {
                                 case PlaybackMode.LocalSpeakers:
                                     LocalPlayer.Stop();
@@ -454,6 +630,7 @@ namespace DMJukebox
 
         protected virtual void Dispose(bool disposing)
         {
+            SaveConfig();
             if (!disposedValue)
             {
                 if (disposing)
@@ -470,7 +647,7 @@ namespace DMJukebox
                 disposedValue = true;
             }
         }
-        
+
         public void Dispose()
         {
             Dispose(true);

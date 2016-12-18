@@ -17,28 +17,23 @@
  * 
  * ====================================================================== */
 
-using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace DMJukebox
 {
-    /// <summary>
-    /// Configuration stores the persistent configuration settings for the 
-    /// Jukebox core.
-    /// </summary>
-    [JsonObject]
-    public class Configuration
+    internal class PlaylistComparer : IComparer<Playlist>
     {
-        /// <summary>
-        /// The settings for connecting to Discord
-        /// </summary>
-        [JsonProperty]
-        public DiscordSettings DiscordSettings { get; set; }
+        public int Compare(Playlist First, Playlist Second)
+        {
+            return First.Order.CompareTo(Second.Order);
+        }
+    }
 
-        /// <summary>
-        /// The serialized playlists
-        /// </summary>
-        [JsonProperty]
-        internal List<Playlist> Playlists { get; set; }
+    internal class AudioTrackComparer : IComparer<AudioTrack>
+    {
+        public int Compare(AudioTrack First, AudioTrack Second)
+        {
+            return First.Order.CompareTo(Second.Order);
+        }
     }
 }

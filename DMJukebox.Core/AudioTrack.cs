@@ -18,6 +18,7 @@
  * ====================================================================== */
 
 using DMJukebox.Interop;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -35,6 +36,7 @@ namespace DMJukebox
     /// Who knows. Until I find a good reason to implement multi-stream selection, this is just going
     /// to load the first one it finds.
     /// </remarks>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     public class AudioTrack : IDisposable
     {
         /// <summary>
@@ -46,15 +48,9 @@ namespace DMJukebox
         private const int WavSize = 4096;
 
         /// <summary>
-        /// This is a handle to the manager for this stream, so this can notify it when playback
-        /// starts and stops.
-        /// </summary>
-        private JukeboxCore Manager;
-
-        /// <summary>
         /// This is the <see cref="AVFormatContext"/> for this file.
         /// </summary>
-        private readonly IntPtr FormatContextPtr;
+        private IntPtr FormatContextPtr;
 
         /// <summary>
         /// This is the <see cref="AVPacket"/> that holds encoded data read from the file.
@@ -85,7 +81,7 @@ namespace DMJukebox
         /// <summary>
         /// This is the AVStream describing the selected audio stream from the input file.
         /// </summary>
-        private readonly AVStream Stream;
+        private AVStream Stream;
 
         /// <summary>
         /// This is the channel layout that describes the input. Compressed audio comes with this
@@ -94,12 +90,12 @@ namespace DMJukebox
         /// the SwrContext needs to know what format the incoming data is in before it can convert
         /// it to Discord format and we have to set it manually on each of those input frames.
         /// </summary>
-        private readonly AV_CH_LAYOUT ChannelLayout;
+        private AV_CH_LAYOUT ChannelLayout;
 
         /// <summary>
         /// This buffer holds the decoded and converted data from the file, ready for playback.
         /// </summary>
-        private readonly DecodedAudioBuffer Buffer;
+        private DecodedAudioBuffer Buffer;
 
         /// <summary>
         /// This is just a backing field for the Volume property.
@@ -118,15 +114,23 @@ namespace DMJukebox
         }
 
         /// <summary>
+        /// This is a handle to the manager for this stream, so this can notify it when playback
+        /// starts and stops.
+        /// </summary>
+        internal JukeboxCore Manager { get; set; }
+
+        /// <summary>
         /// This is the name of the track. It defaults to the file name, but you can set it to whatever
         /// you want. It's just used for display purposes so you know what track it is.
         /// </summary>
+        [JsonProperty]
         public string Name { get; set; }
 
         /// <summary>
         /// The volume of this track. You can set this to any value between
         /// 0.0 (muted) and 1.0 (full volume).
         /// </summary>
+        [JsonProperty]
         public float Volume
         {
             get
@@ -145,13 +149,25 @@ namespace DMJukebox
         /// looping (so the track will start over from the beginning when the file ends), or false to
         /// disable looping (so when the file ends, playback of this track stops).
         /// </summary>
-        public bool Loop { get; set; }
+        [JsonProperty]
+        public bool IsLoopEnabled { get; set; }
+
+        /// <summary>
+        /// The filesystem path for the audio track's file.
+        /// </summary>
+        [JsonProperty]
+        public string FilePath { get; internal set; }
+
+        /// <summary>
+        /// The order of the track in its parent playlist
+        /// </summary>
+        public int Order { get; set; }
 
         /// <summary>
         /// This describes some of the details about the track for your information. It doesn't have
         /// any bearing on playback, just here if you want to see what's going on inside the track.
         /// </summary>
-        public TrackInfo Info { get; }
+        public TrackInfo Info { get; private set; }
 
         /// <summary>
         /// This event is triggered when playback for this track stops.
@@ -161,27 +177,25 @@ namespace DMJukebox
         /// <summary>
         /// Creates a new AudioTrack instance.
         /// </summary>
-        /// <param name="Manager">The manager that created this track</param>
-        /// <param name="FilePath">The path of the file to open</param>
-        /// <param name="Name">The name to give the track</param>
-        /// <param name="Volume">The playback volume for the track</param>
-        /// <param name="Loop">Whether or not to enable playback looping for the track</param>
+        internal AudioTrack()
+        {
+
+        }
+
+        /// <summary>
+        /// Loads the AudioTrack's details once it's been initialized.
+        /// </summary>
         /// <remarks>
         /// This doesn't have to be unsafe, but I do a lot of struct reading and writing and honestly I'm
         /// just too lazy to copy it back and forth from unmanaged memory every time something changes.
         /// </remarks>
-        unsafe internal AudioTrack(JukeboxCore Manager, string FilePath, string Name = null, float Volume = 1.0f, bool Loop = false)
+        unsafe internal void Load()
         {
             // So first things first, let's make sure the file path is actually valid.
             if(!File.Exists(FilePath))
             {
                 throw new FileNotFoundException($"\"{FilePath}\" is not a valid file; it doesn't seem to exist.");
             }
-
-            this.Manager = Manager;
-            this.Volume = Volume;
-            this.Name = Name ?? Path.GetFileNameWithoutExtension(FilePath);
-            this.Loop = Loop;
 
             // Create the FormatContext
             FormatContextPtr = AVFormatInterop.avformat_alloc_context();
@@ -308,7 +322,7 @@ namespace DMJukebox
             double timeBaseInSeconds = Stream.time_base.num / (double)Stream.time_base.den;
             double durationInSeconds = Stream.duration * timeBaseInSeconds;
             TimeSpan duration = TimeSpan.FromSeconds(durationInSeconds);
-            Info = new TrackInfo(FilePath, codec.long_name, codecContext.channels, codecContext.bit_rate, codecContext.sample_rate, duration);
+            Info = new TrackInfo(codec.long_name, codecContext.channels, codecContext.bit_rate, codecContext.sample_rate, duration);
         }
 
         /// <summary>
@@ -344,7 +358,7 @@ namespace DMJukebox
                     if (result == AVERROR.AVERROR_EOF)
                     {
                         // If this file isn't looping, just return to signal that the file's done.
-                        if (!Loop)
+                        if (!IsLoopEnabled)
                         {
                             return false;
                         }
